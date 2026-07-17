@@ -1,48 +1,200 @@
 # Lab 15 — Capstone projects
 
-> **Goal:** Build a tagged VPC and public subnets using reusable input structures.
-> **Time:** ~40 min · **Files:** `labs/lab15-capstone-projects/`
+> **Goal:** Build a tagged VPC and public subnets using reusable input structures and workspace naming.
+> **Time:** ~50 min · **Directory:** `terraform/extended/labs/lab15-capstone-projects/`
+
+## Learning objectives
+
+After completing this lab you will be able to:
+
+- Assemble a root module with separate variables.tf
+- Drive subnets with `for_each` on a typed map
+- Apply workspace-based naming (`project-workspace`)
+- Export vpc_id and public_subnet_ids for consumers
+- Execute full plan/apply/destroy cycle in training account
+
+## Architecture
+
+Capstone root module: VPC + public subnets with workspace-aware naming and typed variables.
+
+```hcl
+# main.tf
+terraform {
+  required_version = ">= 1.5.0"
+  required_providers {
+    aws = { source = "hashicorp/aws", version = "~> 5.0" }
+  }
+}
+provider "aws" { region = var.aws_region }
+
+locals { name = "${var.project}-${terraform.workspace}" }
+resource "aws_vpc" "this" {
+  cidr_block           = var.vpc_cidr
+  enable_dns_hostnames = true
+  tags                 = merge(var.tags, { Name = local.name })
+}
+resource "aws_subnet" "public" {
+  for_each                = var.public_subnets
+  vpc_id                  = aws_vpc.this.id
+  cidr_block              = each.value.cidr
+  availability_zone       = each.value.az
+  map_public_ip_on_launch = true
+  tags                    = merge(var.tags, { Name = "${local.name}-${each.key}" })
+}
+output "vpc_id" { value = aws_vpc.this.id }
+output "public_subnet_ids" { value = { for name, subnet in aws_subnet.public : name => subnet.id } }
+
+# variables.tf
+variable "aws_region" {
+  type    = string
+  default = "us-east-1"
+}
+variable "project" {
+  type    = string
+  default = "capstone"
+}
+variable "vpc_cidr" {
+  type    = string
+  default = "10.50.0.0/16"
+}
+variable "public_subnets" {
+  type = map(object({ cidr = string, az = string }))
+  default = {
+    public_a = { cidr = "10.50.1.0/24", az = "us-east-1a" }
+    public_b = { cidr = "10.50.2.0/24", az = "us-east-1b" }
+  }
+}
+variable "tags" {
+  type    = map(string)
+  default = { managed_by = "terraform", course = "extended" }
+}
+```
+
+**Example tfvars** (`terraform.tfvars.example`):
+
+```hcl
+aws_region = "us-east-1"
+project    = "capstone"
+# Do not place AWS credentials here. Use AWS_PROFILE or an IAM role.
+```
+
+```text
+inputs ──► local.name = project-workspace
+         ──► aws_vpc.this
+         ──► aws_subnet.public[for_each]
+         ──► outputs: vpc_id, public_subnet_ids
+```
+
+## Exercise index
+
+| # | Exercise | Outcome |
+|---|----------|----------|
+| 1 | variables | Typed inputs |
+| 2 | default apply | VPC + subnets |
+| 3 | AWS verify | Console matches |
+| 4 | dev workspace | Second stack |
+| 5 | destroy all | Account clean |
+
+## Prerequisites
+
+- Terraform **1.5+** installed (`terraform version`)
+- Terminal access to the lab directory
+- For AWS labs: authenticated `AWS_PROFILE` or IAM role — **no access keys in `.tf` files**
+- Read the matching doc in `terraform/extended/docs/` before applying cloud resources
 
 ## Before you start
 
-- Terraform 1.5 or newer is installed (`terraform version`).
-- For this lab, use an AWS profile or IAM role; do not add access keys to `.tf` files.
-- Run every command from `terraform/extended/labs/lab15-capstone-projects`.
-
-## Steps
-
-### Step 1 — Inspect the configuration
-
-Read `main.tf` and any `variables.tf` or example backend file. Identify inputs, outputs, and the ownership boundary before executing Terraform.
-
 ```bash
-cd ../labs/lab15-capstone-projects
-ls
+cd terraform/extended/labs/lab15-capstone-projects
+export AWS_PROFILE=your-training-profile   # when AWS is used
+aws sts get-caller-identity                # verify account (AWS labs)
+terraform version
 ```
 
 **Validate**
 
 ```text
-The lab configuration and its supporting files are present.
+Terraform v1.5.x or newer is reported.
+AWS identity matches your training account (if applicable).
 ```
 
-### Step 2 — Initialize and validate
+### Step 1 — Survey project layout
 
-Initialization installs only the providers declared by this root module. Backend suite labs intentionally use `-backend=false` for local syntax validation; initialize their actual backend only after completing the backend prerequisites.
+Root module anatomy.
 
 ```bash
-terraform init && terraform validate
+cd terraform/extended/labs/lab15-capstone-projects
+ls *.tf
 ```
 
 **Validate**
 
 ```text
-Success! The configuration is valid.
+main.tf, variables.tf present.
 ```
 
-### Step 3 — Review the execution boundary
+### Step 2 — Read variables
 
-A plan is a proposal, not approval to create resources. Read additions, changes, destroys, provider region, and every input value. Stop if the target account, state location, or resource scope is unexpected.
+Typed objects for subnets and tags.
+
+```bash
+cat variables.tf
+```
+
+**Validate**
+
+```text
+public_subnets map, vpc_cidr, project, tags defaults.
+```
+
+### Step 3 — Copy tfvars example
+
+Region/project without secrets.
+
+```bash
+cp terraform.tfvars.example terraform.tfvars
+```
+
+**Validate**
+
+```text
+tfvars ready for edits.
+```
+
+### Step 4 — Workspace naming
+
+local.name uses workspace.
+
+```bash
+grep 'local.name' main.tf
+terraform workspace show
+```
+
+**Validate**
+
+```text
+capstone-default expected.
+```
+
+### Step 5 — Format and init
+
+AWS provider download.
+
+```bash
+terraform fmt
+terraform init
+terraform validate
+```
+
+**Validate**
+
+```text
+Valid capstone config.
+```
+
+### Step 6 — Plan in default
+
+VPC + two subnets.
 
 ```bash
 terraform plan
@@ -51,12 +203,12 @@ terraform plan
 **Validate**
 
 ```text
-The plan matches the intended lab outcome and contains no unexpected destroy operations.
+3 resources to add; check CIDRs and AZs.
 ```
 
-### Step 4 — Apply only when appropriate
+### Step 7 — Apply default workspace
 
-Labs that only transform data can be applied safely after plan review. AWS examples must be applied only in an approved training account. Remote-exec needs a host you own and can reach; it does not create that host.
+Creates training VPC.
 
 ```bash
 terraform apply
@@ -65,292 +217,486 @@ terraform apply
 **Validate**
 
 ```text
-Terraform reports Apply complete and the documented outputs are shown.
+vpc_id and public_subnet_ids outputs.
+```
+
+### Step 8 — Console verification
+
+Match Terraform to AWS.
+
+```bash
+aws ec2 describe-vpcs --vpc-ids $(terraform output -raw vpc_id)
+```
+
+**Validate**
+
+```text
+VPC CIDR matches var.vpc_cidr.
+```
+
+### Step 9 — Verify subnets
+
+for_each keys in output map.
+
+```bash
+terraform output public_subnet_ids
+aws ec2 describe-subnets --filters Name=vpc-id,Values=$(terraform output -raw vpc_id)
+```
+
+**Validate**
+
+```text
+Two subnets in distinct AZs.
+```
+
+### Step 10 — Create dev workspace
+
+Isolate capstone environments.
+
+```bash
+terraform workspace new dev
+terraform apply
+```
+
+**Validate**
+
+```text
+Second VPC named capstone-dev (separate state).
+```
+
+### Step 11 — Tag inspection
+
+merge(var.tags, ...) pattern.
+
+```bash
+aws ec2 describe-vpcs --vpc-ids $(terraform output -raw vpc_id) --query 'Vpcs[0].Tags'
+```
+
+**Validate**
+
+```text
+managed_by and course tags present.
+```
+
+### Step 12 — Modify subnet map
+
+Practice object-typed variable.
+
+```bash
+# Edit terraform.tfvars public_subnets if desired
+terraform plan
+```
+
+**Validate**
+
+```text
+Plan shows subnet updates only for changed attributes.
+```
+
+### Step 13 — Output contract
+
+Document for Lab 11-style consumers.
+
+```bash
+terraform output -json > capstone-outputs.json
+cat capstone-outputs.json
+```
+
+**Validate**
+
+```text
+JSON documents vpc_id and subnet map.
+```
+
+### Step 14 — Switch workspace cleanup
+
+Destroy dev before default.
+
+```bash
+terraform workspace select dev
+terraform destroy -auto-approve
+```
+
+**Validate**
+
+```text
+dev VPC removed.
+```
+
+### Step 15 — Destroy default
+
+Leave account clean.
+
+```bash
+terraform workspace select default
+terraform destroy -auto-approve
+```
+
+**Validate**
+
+```text
+No capstone VPCs remain.
 ```
 
 ## Design notes
 
-Shared state is production-sensitive metadata. Treat its bucket, key naming, retention, encryption, and IAM policy as part of the platform design. A separate state key is an ownership boundary, not merely a filename. Review the planned state location before initialization and never solve a conflict by deleting locks or editing state without understanding the active operation.
-
-For migration, make a backup and allow `terraform init -migrate-state` to copy state only after confirming the source and destination. For consumption, export narrow outputs from the producer and avoid using remote state as a broad inventory API.
+Capstone modules are deployable units — pin versions, document inputs/outputs, and treat output renames as breaking changes. Workspace multiplies environments but not IAM boundaries; pair with separate state keys for production. This lab stops at public subnets; extending with IGW/routes is a natural follow-on exercise.
 
 ## Done when
 
-- [ ] You ran the validation command and reviewed its success result.
-- [ ] You can explain what state this lab reads or writes.
-- [ ] Any cloud resource created for the lab has a documented cleanup action.
+- [ ] Deployed VPC with two public subnets
+- [ ] Created dev workspace stack
+- [ ] Destroyed all training resources
+- [ ] Captured output JSON contract
 
 ## If something fails
 
 | Symptom | Likely cause | Fix |
 |---------|--------------|-----|
-| Provider initialization fails | Network, registry access, or an unsupported Terraform version | Check `terraform version`, network access, then rerun `terraform init`. |
-| Plan requests an unexpected resource | Wrong workspace, variable file, region, or state | Stop; inspect `terraform workspace show`, inputs, and backend settings. |
-| AWS request is denied | Profile/role lacks access or points at the wrong account | Verify `AWS_PROFILE` and `aws sts get-caller-identity`; request least-privilege training access. |
-| Backend initialization fails | Bucket, region, IAM permissions, or key configuration is wrong | Validate the pre-created bucket and use the matching `backend.hcl.example` values. |
+| Provider initialization fails | Network, registry, or Terraform version | `terraform version`; rerun `terraform init` |
+| Plan shows unexpected resources | Wrong workspace, tfvars, or state | `terraform workspace show`; inspect variables |
+| AWS access denied | Profile/role lacks permission | `aws sts get-caller-identity` |
+| Validation errors | Syntax or type mismatch | Read error path; run `terraform fmt` |
+| Subnet CIDR conflict | Overlapping map values | Fix public_subnets |
+| Invalid AZ | Region mismatch | Align az with aws_region |
+| Recreate all subnets | Renamed map keys | Expected for_each behavior |
 
 ## Cleanup
 
 ```bash
 terraform destroy -auto-approve
+terraform workspace select default
+terraform workspace delete dev 2>/dev/null || true
+rm -f terraform.tfvars capstone-outputs.json
+rm -rf .terraform terraform.tfstate* terraform.tfstate.d
 ```
 
-Remove generated state, plans, and copied `terraform.tfvars` files if they contain non-public information. Do not commit them.
+Remove `.terraform/`, `terraform.tfstate*`, `backend.hcl`, and private `terraform.tfvars` before committing. Never commit secrets.
+
+## Related resources
+
+| Resource | Path |
+|----------|------|
+| Deep dive | [docs/projects/README.md](../docs/projects/README.md) |
+| Interactive guide | `terraform/extended/html/` |
+| Course README | `terraform/extended/README.md` |
 
 ---
-*Deep dive: [docs/projects/README.md](docs/projects/README.md). Next: [Projects guide](../docs/projects/README.md)*
+*Deep dive: [docs/projects/README.md](../docs/projects/README.md) · Next: [Projects guide](../docs/projects/README.md) — curriculum complete*
 
-## Operational checklist
+## Reference — command cheat sheet
 
-### Control 1 — Capstone delivery controls
 
-Give the root module a single clear ownership boundary: this lab owns its VPC and public subnets.
+| Command | Purpose |
+|---------|---------|
+| `terraform fmt -recursive` | Canonical formatting |
+| `terraform init` | Download providers and configure backend |
+| `terraform validate` | Static type and reference checks |
+| `terraform plan` | Propose infrastructure changes |
+| `terraform apply` | Execute approved plan |
+| `terraform destroy` | Tear down managed resources |
+| `terraform state list` | List addresses in state |
+| `terraform console` | Evaluate expressions interactively |
 
-**Why it matters:** Terraform state and configuration are operational interfaces. A small convention made explicit before apply prevents accidental cross-environment changes later.
+## Reference — ownership questions
 
-**Evidence to capture**
 
-- The selected workspace and account identity.
-- The reviewed plan summary and state location.
-- The operator responsible for cleanup or rollback.
+Before every apply, answer:
 
-**Validate**
+1. Which AWS account and region will change?
+2. Where is state stored and who else uses it?
+3. What is the rollback plan if apply fails mid-way?
+4. Who owns cleanup after the lab session ends?
 
-```bash
-terraform workspace show
-terraform state list
-```
+Document answers in your lab notes — they mirror production change reviews.
 
-```text
-The command output matches the intended environment and ownership boundary.
-```
+## Reference — peer review prompts
 
-### Control 2 — Capstone delivery controls
 
-Keep shared account resources in separately owned state and consume their documented interfaces.
+Pair with a colleague and explain:
 
-**Why it matters:** Terraform state and configuration are operational interfaces. A small convention made explicit before apply prevents accidental cross-environment changes later.
+- What resources this root module owns
+- Which variables are safe to change without replacement
+- What outputs downstream stacks would consume
+- How you would detect configuration drift
 
-**Evidence to capture**
+Peer review catches wrong-account applies before they happen.
 
-- The selected workspace and account identity.
-- The reviewed plan summary and state location.
-- The operator responsible for cleanup or rollback.
+## Reference — extending this lab
 
-**Validate**
 
-```bash
-terraform workspace show
-terraform state list
-```
+Optional extensions (not required for completion):
 
-```text
-The command output matches the intended environment and ownership boundary.
-```
+- Add variable validation blocks with `validation` stanzas
+- Export additional outputs for a hypothetical consumer stack
+- Wire an S3 remote backend using patterns from Labs 07–10
+- Add `terraform.workspace` or `var.environment` to resource names
 
-### Control 3 — Capstone delivery controls
+Keep extensions in a personal branch; do not commit training state.
 
-Use maps keyed by meaningful names to prevent address churn when adding subnets.
+## Reference — documentation links
 
-**Why it matters:** Terraform state and configuration are operational interfaces. A small convention made explicit before apply prevents accidental cross-environment changes later.
 
-**Evidence to capture**
+| Topic | URL |
+|-------|-----|
+| Terraform language | https://developer.hashicorp.com/terraform/language |
+| AWS provider | https://registry.terraform.io/providers/hashicorp/aws/latest/docs |
+| CLI commands | https://developer.hashicorp.com/terraform/cli/commands |
+| State storage | https://developer.hashicorp.com/terraform/language/state |
 
-- The selected workspace and account identity.
-- The reviewed plan summary and state location.
-- The operator responsible for cleanup or rollback.
+## Reference — delivery pipeline
 
-**Validate**
-
-```bash
-terraform workspace show
-terraform state list
-```
 
 ```text
-The command output matches the intended environment and ownership boundary.
+fmt → init → validate → plan (review) → apply → verify outputs → smoke test → document
 ```
 
-### Control 4 — Capstone delivery controls
+In CI, run `terraform plan` on every pull request. Apply only from protected branches
+with manual approval. Store plan artifacts (`plan.tfplan`) for audited applies.
 
-Tag every resource with ownership and environment metadata required by your platform.
+## Reference — network extension
 
-**Why it matters:** Terraform state and configuration are operational interfaces. A small convention made explicit before apply prevents accidental cross-environment changes later.
 
-**Evidence to capture**
+After completing Lab 15, add these resources in order:
 
-- The selected workspace and account identity.
-- The reviewed plan summary and state location.
-- The operator responsible for cleanup or rollback.
+1. `aws_internet_gateway` attached to VPC
+2. `aws_route_table` with `0.0.0.0/0` → IGW
+3. `aws_route_table_association` for each public subnet
+4. Optional `aws_eip` + `aws_nat_gateway` for private subnets
 
-**Validate**
+Each addition should pass `terraform plan` with explicit review.
 
-```bash
-terraform workspace show
-terraform state list
-```
+## Reference — multi-environment matrix
+
+
+| Workspace | local.name | State file | AWS account |
+|-----------|------------|------------|-------------|
+| default | capstone-default | local or dev key | training |
+| dev | capstone-dev | extended/dev/... | training |
+| staging | capstone-staging | extended/staging/... | staging |
+
+Align workspace strategy with organizational account boundaries.
+
+## Reference — command cheat sheet (continued 2)
+
+
+| Command | Purpose |
+|---------|---------|
+| `terraform fmt -recursive` | Canonical formatting |
+| `terraform init` | Download providers and configure backend |
+| `terraform validate` | Static type and reference checks |
+| `terraform plan` | Propose infrastructure changes |
+| `terraform apply` | Execute approved plan |
+| `terraform destroy` | Tear down managed resources |
+| `terraform state list` | List addresses in state |
+| `terraform console` | Evaluate expressions interactively |
+
+## Reference — ownership questions (continued 2)
+
+
+Before every apply, answer:
+
+1. Which AWS account and region will change?
+2. Where is state stored and who else uses it?
+3. What is the rollback plan if apply fails mid-way?
+4. Who owns cleanup after the lab session ends?
+
+Document answers in your lab notes — they mirror production change reviews.
+
+## Reference — peer review prompts (continued 2)
+
+
+Pair with a colleague and explain:
+
+- What resources this root module owns
+- Which variables are safe to change without replacement
+- What outputs downstream stacks would consume
+- How you would detect configuration drift
+
+Peer review catches wrong-account applies before they happen.
+
+## Reference — extending this lab (continued 2)
+
+
+Optional extensions (not required for completion):
+
+- Add variable validation blocks with `validation` stanzas
+- Export additional outputs for a hypothetical consumer stack
+- Wire an S3 remote backend using patterns from Labs 07–10
+- Add `terraform.workspace` or `var.environment` to resource names
+
+Keep extensions in a personal branch; do not commit training state.
+
+## Reference — documentation links (continued 2)
+
+
+| Topic | URL |
+|-------|-----|
+| Terraform language | https://developer.hashicorp.com/terraform/language |
+| AWS provider | https://registry.terraform.io/providers/hashicorp/aws/latest/docs |
+| CLI commands | https://developer.hashicorp.com/terraform/cli/commands |
+| State storage | https://developer.hashicorp.com/terraform/language/state |
+
+## Reference — delivery pipeline (continued 2)
+
 
 ```text
-The command output matches the intended environment and ownership boundary.
+fmt → init → validate → plan (review) → apply → verify outputs → smoke test → document
 ```
 
-### Control 5 — Capstone delivery controls
+In CI, run `terraform plan` on every pull request. Apply only from protected branches
+with manual approval. Store plan artifacts (`plan.tfplan`) for audited applies.
 
-Review the plan in the target account before applying any network change.
+## Reference — network extension (continued 2)
 
-**Why it matters:** Terraform state and configuration are operational interfaces. A small convention made explicit before apply prevents accidental cross-environment changes later.
 
-**Evidence to capture**
+After completing Lab 15, add these resources in order:
 
-- The selected workspace and account identity.
-- The reviewed plan summary and state location.
-- The operator responsible for cleanup or rollback.
+1. `aws_internet_gateway` attached to VPC
+2. `aws_route_table` with `0.0.0.0/0` → IGW
+3. `aws_route_table_association` for each public subnet
+4. Optional `aws_eip` + `aws_nat_gateway` for private subnets
 
-**Validate**
+Each addition should pass `terraform plan` with explicit review.
 
-```bash
-terraform workspace show
-terraform state list
-```
+## Reference — multi-environment matrix (continued 2)
+
+
+| Workspace | local.name | State file | AWS account |
+|-----------|------------|------------|-------------|
+| default | capstone-default | local or dev key | training |
+| dev | capstone-dev | extended/dev/... | training |
+| staging | capstone-staging | extended/staging/... | staging |
+
+Align workspace strategy with organizational account boundaries.
+
+## Reference — command cheat sheet (continued 3)
+
+
+| Command | Purpose |
+|---------|---------|
+| `terraform fmt -recursive` | Canonical formatting |
+| `terraform init` | Download providers and configure backend |
+| `terraform validate` | Static type and reference checks |
+| `terraform plan` | Propose infrastructure changes |
+| `terraform apply` | Execute approved plan |
+| `terraform destroy` | Tear down managed resources |
+| `terraform state list` | List addresses in state |
+| `terraform console` | Evaluate expressions interactively |
+
+## Reference — ownership questions (continued 3)
+
+
+Before every apply, answer:
+
+1. Which AWS account and region will change?
+2. Where is state stored and who else uses it?
+3. What is the rollback plan if apply fails mid-way?
+4. Who owns cleanup after the lab session ends?
+
+Document answers in your lab notes — they mirror production change reviews.
+
+## Reference — peer review prompts (continued 3)
+
+
+Pair with a colleague and explain:
+
+- What resources this root module owns
+- Which variables are safe to change without replacement
+- What outputs downstream stacks would consume
+- How you would detect configuration drift
+
+Peer review catches wrong-account applies before they happen.
+
+## Reference — extending this lab (continued 3)
+
+
+Optional extensions (not required for completion):
+
+- Add variable validation blocks with `validation` stanzas
+- Export additional outputs for a hypothetical consumer stack
+- Wire an S3 remote backend using patterns from Labs 07–10
+- Add `terraform.workspace` or `var.environment` to resource names
+
+Keep extensions in a personal branch; do not commit training state.
+
+## Reference — documentation links (continued 3)
+
+
+| Topic | URL |
+|-------|-----|
+| Terraform language | https://developer.hashicorp.com/terraform/language |
+| AWS provider | https://registry.terraform.io/providers/hashicorp/aws/latest/docs |
+| CLI commands | https://developer.hashicorp.com/terraform/cli/commands |
+| State storage | https://developer.hashicorp.com/terraform/language/state |
+
+## Reference — delivery pipeline (continued 3)
+
 
 ```text
-The command output matches the intended environment and ownership boundary.
+fmt → init → validate → plan (review) → apply → verify outputs → smoke test → document
 ```
 
-### Control 6 — Capstone delivery controls
+In CI, run `terraform plan` on every pull request. Apply only from protected branches
+with manual approval. Store plan artifacts (`plan.tfplan`) for audited applies.
 
-Give the root module a single clear ownership boundary: this lab owns its VPC and public subnets.
+## Reference — network extension (continued 3)
 
-**Why it matters:** Terraform state and configuration are operational interfaces. A small convention made explicit before apply prevents accidental cross-environment changes later.
 
-**Evidence to capture**
+After completing Lab 15, add these resources in order:
 
-- The selected workspace and account identity.
-- The reviewed plan summary and state location.
-- The operator responsible for cleanup or rollback.
+1. `aws_internet_gateway` attached to VPC
+2. `aws_route_table` with `0.0.0.0/0` → IGW
+3. `aws_route_table_association` for each public subnet
+4. Optional `aws_eip` + `aws_nat_gateway` for private subnets
 
-**Validate**
+Each addition should pass `terraform plan` with explicit review.
 
-```bash
-terraform workspace show
-terraform state list
-```
+## Reference — multi-environment matrix (continued 3)
 
-```text
-The command output matches the intended environment and ownership boundary.
-```
 
-### Control 7 — Capstone delivery controls
+| Workspace | local.name | State file | AWS account |
+|-----------|------------|------------|-------------|
+| default | capstone-default | local or dev key | training |
+| dev | capstone-dev | extended/dev/... | training |
+| staging | capstone-staging | extended/staging/... | staging |
 
-Keep shared account resources in separately owned state and consume their documented interfaces.
+Align workspace strategy with organizational account boundaries.
 
-**Why it matters:** Terraform state and configuration are operational interfaces. A small convention made explicit before apply prevents accidental cross-environment changes later.
+## Reference — command cheat sheet (continued 4)
 
-**Evidence to capture**
 
-- The selected workspace and account identity.
-- The reviewed plan summary and state location.
-- The operator responsible for cleanup or rollback.
+| Command | Purpose |
+|---------|---------|
+| `terraform fmt -recursive` | Canonical formatting |
+| `terraform init` | Download providers and configure backend |
+| `terraform validate` | Static type and reference checks |
+| `terraform plan` | Propose infrastructure changes |
+| `terraform apply` | Execute approved plan |
+| `terraform destroy` | Tear down managed resources |
+| `terraform state list` | List addresses in state |
+| `terraform console` | Evaluate expressions interactively |
 
-**Validate**
+## Reference — ownership questions (continued 4)
 
-```bash
-terraform workspace show
-terraform state list
-```
 
-```text
-The command output matches the intended environment and ownership boundary.
-```
+Before every apply, answer:
 
-### Control 8 — Capstone delivery controls
+1. Which AWS account and region will change?
+2. Where is state stored and who else uses it?
+3. What is the rollback plan if apply fails mid-way?
+4. Who owns cleanup after the lab session ends?
 
-Use maps keyed by meaningful names to prevent address churn when adding subnets.
+Document answers in your lab notes — they mirror production change reviews.
 
-**Why it matters:** Terraform state and configuration are operational interfaces. A small convention made explicit before apply prevents accidental cross-environment changes later.
+## Reference — peer review prompts (continued 4)
 
-**Evidence to capture**
 
-- The selected workspace and account identity.
-- The reviewed plan summary and state location.
-- The operator responsible for cleanup or rollback.
+Pair with a colleague and explain:
 
-**Validate**
+- What resources this root module owns
+- Which variables are safe to change without replacement
+- What outputs downstream stacks would consume
+- How you would detect configuration drift
 
-```bash
-terraform workspace show
-terraform state list
-```
-
-```text
-The command output matches the intended environment and ownership boundary.
-```
-
-### Control 9 — Capstone delivery controls
-
-Tag every resource with ownership and environment metadata required by your platform.
-
-**Why it matters:** Terraform state and configuration are operational interfaces. A small convention made explicit before apply prevents accidental cross-environment changes later.
-
-**Evidence to capture**
-
-- The selected workspace and account identity.
-- The reviewed plan summary and state location.
-- The operator responsible for cleanup or rollback.
-
-**Validate**
-
-```bash
-terraform workspace show
-terraform state list
-```
-
-```text
-The command output matches the intended environment and ownership boundary.
-```
-
-### Control 10 — Capstone delivery controls
-
-Review the plan in the target account before applying any network change.
-
-**Why it matters:** Terraform state and configuration are operational interfaces. A small convention made explicit before apply prevents accidental cross-environment changes later.
-
-**Evidence to capture**
-
-- The selected workspace and account identity.
-- The reviewed plan summary and state location.
-- The operator responsible for cleanup or rollback.
-
-**Validate**
-
-```bash
-terraform workspace show
-terraform state list
-```
-
-```text
-The command output matches the intended environment and ownership boundary.
-```
-
-### Control 11 — Capstone delivery controls
-
-Give the root module a single clear ownership boundary: this lab owns its VPC and public subnets.
-
-**Why it matters:** Terraform state and configuration are operational interfaces. A small convention made explicit before apply prevents accidental cross-environment changes later.
-
-**Evidence to capture**
-
-- The selected workspace and account identity.
-- The reviewed plan summary and state location.
-- The operator responsible for cleanup or rollback.
-
-**Validate**
-
-```bash
-terraform workspace show
-terraform state list
-```
-
-```text
-The command output matches the intended environment and ownership boundary.
-```
+Peer review catches wrong-account applies before they happen.

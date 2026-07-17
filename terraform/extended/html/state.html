@@ -1,1 +1,416 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>State and shared ownership | Terraform Extended</title><style>:root{--purple:#6236a5;--ink:#21172d;--paper:#fcfaff;--line:#e8ddf2}*{box-sizing:border-box}body{margin:0;font:16px/1.6 system-ui,sans-serif;color:var(--ink);background:var(--paper)}header{background:var(--purple);color:#fff;padding:3rem max(1.25rem,calc((100% - 960px)/2))}main,nav{max-width:960px;margin:auto;padding:1rem 1.25rem}nav a{margin-right:1rem;color:var(--purple);font-weight:700}section{background:#fff;border:1px solid var(--line);border-radius:10px;padding:1.25rem;margin:1rem 0}code,pre{background:#f3edf8;padding:.2rem .4rem;border-radius:4px}pre{padding:1rem;overflow:auto}</style></head><body><header><h1>State and shared ownership</h1></header><nav><a href="index.html">Overview</a><a href="state.html">State</a><a href="provisioners.html">Provisioners</a><a href="functions.html">Functions</a><a href="projects.html">Projects</a></nav><main><section><p>Terraform state maps configuration to real infrastructure. Keep it in a protected remote backend for team work, enable encryption and locking, and use least-privilege IAM. A backend block cannot use normal input variables, so backend settings belong in a reviewed `backend.hcl` file or CI configuration.</p><p>Use `terraform init -backend-config=backend.hcl`, review migration prompts, and run `terraform state list` only for diagnosis. Never edit state by hand. S3 native lockfiles (`use_lockfile = true`) prevent concurrent writes; use a unique key per environment and component.</p><p>State can contain sensitive values even when CLI output is redacted. Restrict bucket access, enable versioning, and avoid publishing state files.</p></section><section><h2>Related labs</h2><p>Use the matching lab manual before applying any cloud example. Run <code>terraform fmt -recursive</code> and <code>terraform validate</code> before plan.</p></section></main></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remote State &amp; Shared Ownership | Terraform Extended</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --purple: #6236a5; --purple-deep: #4a2780; --purple-sky: #ede4f7;
+            --ink: #21172d; --muted: #6b5b7a; --line: #e8ddf2;
+            --amber: #fef3c7; --mint: #dcfce7;
+        }
+        body {
+            font-family: "Segoe UI", system-ui, sans-serif;
+            background: linear-gradient(180deg, #fcfaff 0%, #f3ebfa 100%);
+            padding: 20px; line-height: 1.6; color: var(--ink);
+        }
+        .container { max-width: 1380px; margin: 0 auto; }
+        .hero {
+            position: relative; text-align: center; background: white;
+            border-radius: 16px; padding: 34px 32px 28px;
+            box-shadow: 0 4px 18px rgba(98,54,165,0.1); margin-bottom: 20px;
+            border: 1px solid rgba(98,54,165,0.12);
+        }
+        .eyebrow {
+            display: inline-flex; padding: 6px 12px; border-radius: 999px;
+            background: var(--purple-sky); color: var(--purple-deep);
+            font-size: 0.82rem; font-weight: 700; margin-bottom: 12px;
+        }
+        .hero h1 { color: var(--purple); font-size: clamp(1.8rem, 4vw, 2.5rem); }
+        .hero p { color: var(--muted); max-width: 760px; margin: 8px auto 0; }
+        .home-link {
+            position: absolute; top: 16px; right: 20px; color: var(--purple);
+            text-decoration: none; font-weight: 600; padding: 6px 14px;
+            border-radius: 8px; border: 1px solid rgba(98,54,165,0.18);
+            background: rgba(98,54,165,0.06);
+        }
+        .topnav {
+            display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+            margin-bottom: 18px; padding: 12px; background: white;
+            border-radius: 12px; border: 1px solid var(--line);
+        }
+        .topnav a {
+            color: var(--purple); text-decoration: none; font-weight: 600;
+            padding: 6px 14px; border-radius: 8px; font-size: 0.9rem;
+        }
+        .topnav a:hover { background: var(--purple-sky); }
+        .flow-section {
+            background: white; border-radius: 12px; padding: 18px;
+            border: 1px solid var(--line); margin-bottom: 16px;
+        }
+        .section-title {
+            font-size: 17px; font-weight: bold; color: #3d2f4d;
+            margin-bottom: 12px; padding: 8px 12px; background: var(--purple-sky);
+            border-left: 4px solid var(--purple); border-radius: 0 8px 8px 0;
+        }
+        .flow-container {
+            display: flex; align-items: center; justify-content: center;
+            flex-wrap: wrap; gap: 10px; margin-bottom: 12px;
+        }
+        .flow-box {
+            background: linear-gradient(135deg, #7c4dbd, var(--purple));
+            color: white; padding: 12px 16px; border-radius: 8px; text-align: center;
+            font-weight: bold; font-size: 12px; cursor: pointer; min-width: 120px;
+            box-shadow: 0 4px 8px rgba(98,54,165,0.25); transition: transform 0.2s;
+        }
+        .flow-box:hover { transform: translateY(-2px); }
+        .flow-box.cli { background: linear-gradient(135deg, #a78bfa, #7c3aed); }
+        .flow-box.s3 { background: linear-gradient(135deg, #fbbf24, #d97706); }
+        .flow-box.lock { background: linear-gradient(135deg, #34d399, #059669); }
+        .flow-box.state { background: linear-gradient(135deg, #60a5fa, #2563eb); }
+        .arrow { font-size: 20px; color: var(--muted); }
+        .card-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px;
+        }
+        .card {
+            background: #faf7fd; border: 2px solid var(--line); border-radius: 10px;
+            padding: 14px; cursor: pointer; transition: all 0.2s;
+        }
+        .card:hover, .card.active {
+            border-color: var(--purple); box-shadow: 0 4px 12px rgba(98,54,165,0.15);
+        }
+        .card h3 { font-size: 14px; color: var(--purple); margin-bottom: 6px; }
+        .card p { font-size: 12px; color: #3d2f4d; }
+        .code-tabs { display: flex; gap: 5px; margin-bottom: 8px; flex-wrap: wrap; }
+        .code-tab {
+            padding: 6px 12px; background: #f3edf8; border: none; border-radius: 6px 6px 0 0;
+            cursor: pointer; font-size: 12px; font-weight: bold; color: #3d2f4d;
+        }
+        .code-tab.active { background: var(--purple); color: white; }
+        .code-content { display: none; }
+        .code-content.active { display: block; }
+        pre {
+            background: #2d2438; color: #ede4f7; padding: 14px; border-radius: 8px;
+            overflow-x: auto; font-size: 11px; line-height: 1.55;
+        }
+        .example-scenario {
+            background: var(--amber); border-left: 4px solid #f59e0b;
+            padding: 14px; border-radius: 8px; margin-bottom: 14px;
+        }
+        .example-scenario h3 { font-size: 14px; color: #92400e; margin-bottom: 6px; }
+        .example-scenario p { font-size: 12px; color: #78350f; margin-bottom: 4px; }
+        .repo-box {
+            background: var(--mint); border-left: 4px solid #22c55e;
+            padding: 14px 16px; border-radius: 8px; margin-bottom: 14px;
+        }
+        .repo-box ul { margin: 8px 0 0 18px; font-size: 13px; }
+        .detail-panel {
+            background: var(--purple-sky); border-radius: 8px; padding: 12px 16px;
+            margin-top: 12px; font-size: 13px; color: var(--purple-deep); min-height: 44px;
+        }
+        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        @media (max-width: 768px) { .two-col { grid-template-columns: 1fr; } }
+        .footer-note { text-align: center; color: var(--muted); font-size: 0.9rem; margin-top: 18px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header class="hero">
+        <a href="index.html" class="home-link">&#8962; Home</a>
+        <div class="eyebrow">Labs 07–11 · State Track</div>
+        <h1>Remote State &amp; Shared Ownership</h1>
+        <p>Terraform state maps configuration to real infrastructure. Store it remotely, lock concurrent writes, name keys deliberately, and consume outputs through narrow interfaces.</p>
+    </header>
+
+    <nav class="topnav">
+        <a href="index.html">Overview</a>
+        <a href="state.html">State</a>
+        <a href="provisioners.html">Provisioners</a>
+        <a href="functions.html">Functions</a>
+        <a href="projects.html">Projects</a>
+    </nav>
+
+    <div class="repo-box">
+        <strong>Repository lab paths:</strong>
+        <ul>
+            <li><code>terraform/extended/labs/lab07-s3-backend/</code> — S3 backend initialization</li>
+            <li><code>terraform/extended/labs/lab08-state-keys/</code> — State key naming conventions</li>
+            <li><code>terraform/extended/labs/lab09-state-locking/</code> — S3 native lockfiles</li>
+            <li><code>terraform/extended/labs/lab10-state-migration/</code> — Local-to-remote migration</li>
+            <li><code>terraform/extended/labs/lab11-remote-state-consumer/</code> — <code>terraform_remote_state</code> data source</li>
+        </ul>
+    </div>
+
+    <div class="flow-section">
+        <div class="section-title">1. Remote State Flow (S3 + Lockfile)</div>
+        <div class="flow-container">
+            <div class="flow-box cli" data-info="cli">Operator / CI</div>
+            <span class="arrow">→</span>
+            <div class="flow-box" data-info="init">terraform init</div>
+            <span class="arrow">→</span>
+            <div class="flow-box lock" data-info="lock">Acquire lock</div>
+            <span class="arrow">→</span>
+            <div class="flow-box state" data-info="plan">plan / apply</div>
+            <span class="arrow">→</span>
+            <div class="flow-box s3" data-info="s3">Write state to S3</div>
+            <span class="arrow">→</span>
+            <div class="flow-box lock" data-info="unlock">Release lock</div>
+        </div>
+        <div id="flow-detail" class="detail-panel">Click any box above to see what happens at that stage.</div>
+    </div>
+
+    <div class="example-scenario">
+        <h3>Example: Two engineers, one state file</h3>
+        <p><strong>Scenario:</strong> Alice runs <code>terraform apply</code> while Bob runs <code>terraform plan</code> on the same backend key.</p>
+        <p><strong>With locking:</strong> Bob's plan waits or fails fast with a lock error — state is not corrupted.</p>
+        <p><strong>Without locking:</strong> Last write wins; resources may be orphaned or re-created unpredictably.</p>
+    </div>
+
+    <div class="flow-section">
+        <div class="section-title">2. State Key Layout (Click a pattern)</div>
+        <div class="card-grid">
+            <div class="card" onclick="showKey('env')">
+                <h3>By environment</h3>
+                <p><code>extended/dev/network/terraform.tfstate</code></p>
+            </div>
+            <div class="card" onclick="showKey('component')">
+                <h3>By component</h3>
+                <p><code>extended/prod/eks/terraform.tfstate</code></p>
+            </div>
+            <div class="card" onclick="showKey('workspace')">
+                <h3>Workspace suffix</h3>
+                <p><code>env:/staging/network/terraform.tfstate</code></p>
+            </div>
+            <div class="card" onclick="showKey('account')">
+                <h3>By account</h3>
+                <p><code>acct-123456789012/network/terraform.tfstate</code></p>
+            </div>
+        </div>
+        <div id="key-detail" class="detail-panel">Each key is an ownership boundary. One root module, one state key.</div>
+    </div>
+
+    <div class="flow-section">
+        <div class="section-title">3. Backend Configuration (Code tabs)</div>
+        <div class="code-tabs">
+            <button class="code-tab active" onclick="showCode('backend')">main.tf backend block</button>
+            <button class="code-tab" onclick="showCode('hcl')">backend.hcl</button>
+            <button class="code-tab" onclick="showCode('init')">Init command</button>
+            <button class="code-tab" onclick="showCode('consumer')">Remote state consumer</button>
+        </div>
+        <div id="backend-code" class="code-content active">
+<pre>terraform {
+  required_version = ">= 1.5.0"
+  backend "s3" {}
+  # Backend settings cannot use input variables.
+  # Pass them via -backend-config or a reviewed backend.hcl file.
+}
+
+resource "terraform_data" "state_owner" {
+  input = "shared-state"
+}</pre>
+        </div>
+        <div id="hcl-code" class="code-content">
+<pre>bucket       = "your-unique-terraform-state-bucket"
+key          = "extended/dev/network/terraform.tfstate"
+region       = "us-east-1"
+encrypt      = true
+use_lockfile = true</pre>
+        </div>
+        <div id="init-code" class="code-content">
+<pre># Syntax check without touching remote state:
+terraform init -backend=false
+terraform validate
+
+# Connect to S3 backend:
+cp backend.hcl.example backend.hcl   # edit bucket/key first
+terraform init -backend-config=backend.hcl
+
+# Migrate existing local state:
+terraform init -backend-config=backend.hcl -migrate-state</pre>
+        </div>
+        <div id="consumer-code" class="code-content">
+<pre>data "terraform_remote_state" "network" {
+  backend = "local"  # or "s3" in production
+  config = {
+    path = var.network_state_path
+  }
+}
+
+output "upstream_outputs" {
+  value = data.terraform_remote_state.network.outputs
+}</pre>
+        </div>
+    </div>
+
+    <div class="flow-section">
+        <div class="section-title">4. Migration Workflow</div>
+        <div class="flow-container">
+            <div class="flow-box cli" data-info="backup">Backup local state</div>
+            <span class="arrow">→</span>
+            <div class="flow-box" data-info="review">Review destination key</div>
+            <span class="arrow">→</span>
+            <div class="flow-box state" data-info="migrate">init -migrate-state</div>
+            <span class="arrow">→</span>
+            <div class="flow-box s3" data-info="verify">state list / plan</div>
+        </div>
+        <p style="font-size:13px;color:var(--muted);margin-top:8px;">
+            Never delete locks or edit <code>terraform.tfstate</code> by hand to resolve conflicts.
+            Identify the active operation first, then coordinate with the lock holder.
+        </p>
+    </div>
+
+    <div class="two-col">
+        <div class="flow-section">
+            <div class="section-title">Security controls</div>
+            <ul style="font-size:13px;padding-left:20px;color:#3d2f4d;">
+                <li>Enable S3 versioning for rollback</li>
+                <li>Encrypt at rest (<code>encrypt = true</code>)</li>
+                <li>Least-privilege IAM for state bucket</li>
+                <li>Block public access on the bucket</li>
+                <li>State may contain secrets — treat as sensitive</li>
+                <li>Never commit <code>backend.hcl</code> with secrets</li>
+            </ul>
+        </div>
+        <div class="flow-section">
+            <div class="section-title">Anti-patterns</div>
+            <ul style="font-size:13px;padding-left:20px;color:#3d2f4d;">
+                <li>Sharing one state key across unrelated stacks</li>
+                <li>Using remote state as a general inventory API</li>
+                <li>Disabling locking in team environments</li>
+                <li>Storing state in application artifact buckets</li>
+                <li>Manual JSON edits to fix drift</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="flow-section">
+        <div class="section-title">5. DynamoDB vs S3 Native Lockfile</div>
+        <div class="card-grid">
+            <div class="card">
+                <h3>S3 use_lockfile (Terraform 1.11+)</h3>
+                <p>Lock stored alongside state in S3. Simpler setup — no DynamoDB table. Used in these labs via <code>use_lockfile = true</code>.</p>
+            </div>
+            <div class="card">
+                <h3>DynamoDB table (legacy pattern)</h3>
+                <p>Separate lock table with <code>dynamodb_table</code> attribute. Still common in existing platforms. Choose one locking strategy per bucket.</p>
+            </div>
+        </div>
+    </div>
+
+    
+    <div class="flow-section">
+        <div class="section-title">6. Lab walkthrough checklist</div>
+        <table style="width:100%;font-size:13px;border-collapse:collapse;">
+            <tr style="background:var(--purple-sky);"><th style="padding:8px;">Lab</th><th style="padding:8px;">Focus</th><th style="padding:8px;">Key command</th></tr>
+            <tr><td style="padding:8px;border-bottom:1px solid var(--line);">07</td><td style="padding:8px;border-bottom:1px solid var(--line);">S3 backend</td><td style="padding:8px;border-bottom:1px solid var(--line);"><code>init -backend-config=backend.hcl</code></td></tr>
+            <tr><td style="padding:8px;border-bottom:1px solid var(--line);">08</td><td style="padding:8px;border-bottom:1px solid var(--line);">State keys</td><td style="padding:8px;border-bottom:1px solid var(--line);"><code>terraform output recommended_state_key</code></td></tr>
+            <tr><td style="padding:8px;border-bottom:1px solid var(--line);">09</td><td style="padding:8px;border-bottom:1px solid var(--line);">Locking</td><td style="padding:8px;border-bottom:1px solid var(--line);">Concurrent apply test</td></tr>
+            <tr><td style="padding:8px;border-bottom:1px solid var(--line);">10</td><td style="padding:8px;border-bottom:1px solid var(--line);">Migration</td><td style="padding:8px;border-bottom:1px solid var(--line);"><code>init -migrate-state</code></td></tr>
+            <tr><td style="padding:8px;">11</td><td style="padding:8px;">Consumer</td><td style="padding:8px;"><code>data.terraform_remote_state</code></td></tr>
+        </table>
+    </div>
+    <div class="flow-section">
+        <div class="section-title">7. Glossary</div>
+        <div class="card-grid">
+            <div class="card"><h3>State</h3><p>JSON mapping of config to real resource IDs.</p></div>
+            <div class="card"><h3>Backend</h3><p>Where state is stored (local, S3, etc.).</p></div>
+            <div class="card"><h3>Lock</h3><p>Prevents concurrent writes to state.</p></div>
+            <div class="card"><h3>Key</h3><p>S3 object path for a state file.</p></div>
+            <div class="card"><h3>Lineage</h3><p>UUID identifying a state lineage.</p></div>
+            <div class="card"><h3>Serial</h3><p>Incremented on each state write.</p></div>
+        </div>
+    </div>
+    <div class="flow-section">
+        <div class="section-title">8. IAM policy sketch (training)</div>
+        <pre>{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Effect": "Allow",
+    "Action": ["s3:GetObject","s3:PutObject","s3:DeleteObject"],
+    "Resource": "arn:aws:s3:::YOUR-BUCKET/extended/*"
+  }]
+}</pre>
+    </div>
+
+    <div class="flow-section">
+        <div class="section-title">11. Backend prerequisites script</div>
+        <pre># Platform team typically pre-creates:
+# - S3 bucket with versioning + encryption
+# - Block public access
+# - IAM policy for operators
+
+aws s3api create-bucket --bucket YOUR-UNIQUE-STATE-BUCKET --region us-east-1
+aws s3api put-bucket-versioning --bucket YOUR-UNIQUE-STATE-BUCKET \
+  --versioning-configuration Status=Enabled
+aws s3api put-public-access-block --bucket YOUR-UNIQUE-STATE-BUCKET \
+  --public-access-block-configuration \
+  BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true</pre>
+        <p style="font-size:13px;color:var(--muted);margin-top:8px;">Training labs assume this bucket exists before <code>terraform init -backend-config</code>.</p>
+    </div>
+
+    <div class="flow-section">
+        <div class="section-title">12. State sensitivity examples</div>
+        <div class="card-grid">
+            <div class="card"><h3>May contain</h3><p>Private IPs, resource IDs, LB DNS names, database endpoints, TLS cert ARNs.</p></div>
+            <div class="card"><h3>Often redacted in CLI</h3><p>Passwords marked sensitive in provider schema — still may exist in state file.</p></div>
+            <div class="card"><h3>Never do</h3><p>Attach state bucket to public website hosting or log shipping without encryption.</p></div>
+        </div>
+    </div>
+
+    <div class="flow-section">
+        <div class="section-title">13. Practice scenarios</div>
+        <div class="example-scenario">
+            <h3>Scenario A: New team member clones the repo</h3>
+            <p>They run <code>terraform apply</code> without <code>init -backend-config</code> and use local state. Fix: follow Lab 07 two-phase init and migrate.</p>
+        </div>
+        <div class="example-scenario" style="background:#ede4f7;border-color:var(--purple);">
+            <h3 style="color:var(--purple-deep);">Scenario B: CI and laptop conflict</h3>
+            <p style="color:#3d2f4d;">Pipeline holds lock; developer sees lock error. Fix: wait for CI, or coordinate <code>force-unlock</code> after verifying job death.</p>
+        </div>
+    </div>
+
+    <p class="footer-note">Deep dive: <code>terraform/extended/docs/state/README.md</code> · Manuals: <code>lab07</code> through <code>lab11</code></p>
+</div>
+
+<script>
+const flowInfo = {
+    cli: 'An operator or CI job authenticates via AWS_PROFILE, OIDC, or an IAM role. Credentials never belong in .tf files.',
+    init: 'terraform init downloads providers and configures the backend. Backend settings are fixed at init time.',
+    lock: 'Before plan/apply, Terraform acquires a lock (S3 lockfile or DynamoDB). Prevents concurrent writes.',
+    plan: 'Terraform reads current state, compares to configuration, and proposes changes.',
+    s3: 'Updated state JSON is written to the S3 object at the configured key. Versioning allows recovery.',
+    unlock: 'Lock is released when the operation completes or fails cleanly. Stale locks need investigation.',
+    backup: 'Copy terraform.tfstate and terraform.tfstate.backup before any migration.',
+    review: 'Confirm bucket, region, and key match the intended environment and ownership boundary.',
+    migrate: 'terraform init -migrate-state copies local state to remote after explicit confirmation.',
+    verify: 'Run terraform state list and a no-change plan to confirm migration succeeded.'
+};
+document.querySelectorAll('[data-info]').forEach(el => {
+    el.addEventListener('click', () => {
+        document.getElementById('flow-detail').textContent = flowInfo[el.dataset.info] || '';
+    });
+});
+
+const keyInfo = {
+    env: 'Separate dev/staging/prod at the key prefix level. Each environment has isolated blast radius.',
+    component: 'Split network, compute, and data layers into distinct state files with narrow outputs.',
+    workspace: 'Terraform workspaces append env:/ prefix. Use only when configs are nearly identical.',
+    account: 'Multi-account landing zones often embed account ID in the key path for clarity and IAM scoping.'
+};
+function showKey(type) {
+    document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+    document.getElementById('key-detail').textContent = keyInfo[type];
+}
+
+function showCode(type) {
+    document.querySelectorAll('.code-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.code-tab').forEach(el => el.classList.remove('active'));
+    document.getElementById(type + '-code').classList.add('active');
+    event.target.classList.add('active');
+}
+</script>
+</body>
+</html>

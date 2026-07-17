@@ -1,3 +1,350 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Terraform Extended</title><style>:root{--purple:#6236a5;--ink:#21172d;--paper:#fcfaff;--line:#e8ddf2}*{box-sizing:border-box}body{margin:0;font:16px/1.6 system-ui,sans-serif;color:var(--ink);background:var(--paper)}header{background:var(--purple);color:#fff;padding:3rem max(1.25rem,calc((100% - 960px)/2))}main,nav{max-width:960px;margin:auto;padding:1rem 1.25rem}nav a{margin-right:1rem;color:var(--purple);font-weight:700}section{background:#fff;border:1px solid var(--line);border-radius:10px;padding:1.25rem;margin:1rem 0}code,pre{background:#f3edf8;padding:.2rem .4rem;border-radius:4px}pre{padding:1rem;overflow:auto}</style></head><body><header><h1>Terraform Extended</h1><p>Offline guides for operational Terraform practices and advanced language features.</p></header><nav><a href="index.html">Overview</a><a href="state.html">State</a><a href="provisioners.html">Provisioners</a><a href="functions.html">Functions</a><a href="projects.html">Projects</a></nav><main><section><h2>Track map</h2><p>Labs 01–06 introduce console context, validation, providers, provisioners, and workspaces. Labs 07–11 form the shared-state suite. Labs 12–14 cover expressions and dynamic blocks. Lab 15 combines these ideas in a VPC capstone.</p></section><section><h2>Safe start</h2><pre>export AWS_PROFILE=your-profile
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terraform Extended — Curriculum Catalog</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --purple: #6236a5; --purple-deep: #4a2780; --purple-sky: #ede4f7;
+            --ink: #21172d; --muted: #6b5b7a; --line: #e8ddf2; --mint: #dcfce7;
+        }
+        body {
+            font-family: "Segoe UI", system-ui, sans-serif;
+            background: linear-gradient(180deg, #fcfaff 0%, #f3ebfa 100%);
+            padding: 20px; line-height: 1.6; color: var(--ink);
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .hero {
+            text-align: center; background: white; border-radius: 16px;
+            padding: 40px 32px; box-shadow: 0 4px 18px rgba(98,54,165,0.1);
+            margin-bottom: 24px; border: 1px solid rgba(98,54,165,0.12);
+        }
+        .hero h1 { color: var(--purple); font-size: clamp(2rem, 5vw, 3rem); margin-bottom: 8px; }
+        .hero p { color: var(--muted); max-width: 680px; margin: 0 auto 20px; }
+        .stats-row { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; }
+        .stat-card {
+            background: var(--purple-sky); border-radius: 12px; padding: 18px 28px; text-align: center; min-width: 120px;
+        }
+        .stat-card .num { font-size: 2.2rem; font-weight: 800; color: var(--purple); line-height: 1; }
+        .stat-card .lbl { font-size: 0.78rem; color: var(--muted); margin-top: 4px; }
+        .topnav {
+            display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+            margin-bottom: 20px; padding: 12px; background: white;
+            border-radius: 12px; border: 1px solid var(--line);
+        }
+        .topnav a {
+            color: var(--purple); text-decoration: none; font-weight: 600;
+            padding: 8px 16px; border-radius: 8px; font-size: 0.9rem;
+        }
+        .topnav a:hover { background: var(--purple-sky); }
+        .guide-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 24px;
+        }
+        .guide-card {
+            background: white; border: 1px solid var(--line); border-radius: 12px;
+            padding: 20px; text-decoration: none; color: inherit; transition: all 0.2s;
+        }
+        .guide-card:hover { border-color: var(--purple); box-shadow: 0 6px 16px rgba(98,54,165,0.12); transform: translateY(-2px); }
+        .guide-card h3 { color: var(--purple); margin-bottom: 8px; }
+        .guide-card p { font-size: 13px; color: var(--muted); }
+        .guide-card .labs { font-size: 12px; color: var(--purple-deep); margin-top: 10px; font-weight: 600; }
+        .track-section { margin-bottom: 20px; }
+        .track-card {
+            background: white; border: 1px solid var(--line); border-radius: 12px;
+            padding: 20px; margin-bottom: 14px;
+        }
+        .track-card h3 { color: var(--purple); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+        .track-badge {
+            background: var(--purple); color: white; font-size: 10px;
+            padding: 3px 8px; border-radius: 999px; font-weight: 700;
+        }
+        .lab-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 10px; }
+        .lab-table th { text-align: left; padding: 8px; background: var(--purple-sky); color: var(--purple-deep); }
+        .lab-table td { padding: 8px; border-bottom: 1px solid var(--line); }
+        .lab-table a { color: var(--purple); font-weight: 600; text-decoration: none; }
+        .lab-table a:hover { text-decoration: underline; }
+        .safe-start {
+            background: var(--mint); border-left: 4px solid #22c55e;
+            border-radius: 8px; padding: 16px 20px; margin-bottom: 20px;
+        }
+        .safe-start pre {
+            background: #1a1028; color: #c4b5fd; padding: 12px; border-radius: 6px;
+            font-size: 12px; margin-top: 10px; overflow-x: auto;
+        }
+        .footer-note { text-align: center; color: var(--muted); font-size: 0.9rem; margin-top: 24px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header class="hero">
+        <h1>Terraform Extended</h1>
+        <p>Hands-on continuation of Terraform Essentials — providers, provisioners, workspaces, shared state, expressions, and capstone projects. Terraform 1.5+ required.</p>
+        <div class="stats-row">
+            <div class="stat-card"><div class="num">15</div><div class="lbl">Labs</div></div>
+            <div class="stat-card"><div class="num">4</div><div class="lbl">Deep-dive docs</div></div>
+            <div class="stat-card"><div class="num">5</div><div class="lbl">Interactive guides</div></div>
+            <div class="stat-card"><div class="num">5</div><div class="lbl">Learning tracks</div></div>
+        </div>
+    </header>
+
+    <nav class="topnav">
+        <a href="index.html">Overview</a>
+        <a href="state.html">State</a>
+        <a href="provisioners.html">Provisioners</a>
+        <a href="functions.html">Functions</a>
+        <a href="projects.html">Projects</a>
+    </nav>
+
+    <div class="safe-start">
+        <strong>Safe start</strong> — run from any lab directory after authenticating:
+        <pre>export AWS_PROFILE=your-training-profile
+aws sts get-caller-identity
 terraform version
-terraform init && terraform validate</pre><p>Credentials belong in the AWS credential chain or an IAM role—not in Terraform files.</p></section></main></body></html>
+terraform init &amp;&amp; terraform validate</pre>
+        Credentials belong in the AWS credential chain or IAM role — never in <code>.tf</code> files.
+    </div>
+
+    <div class="guide-grid">
+        <a class="guide-card" href="state.html">
+            <h3>🗄️ State &amp; Shared Ownership</h3>
+            <p>S3 backends, lockfiles, key naming, migration, and remote state consumers.</p>
+            <div class="labs">Labs 07–11 · docs/state/</div>
+        </a>
+        <a class="guide-card" href="provisioners.html">
+            <h3>⚙️ Provisioners</h3>
+            <p>local-exec vs remote-exec, lifecycle hooks, and when to avoid provisioners.</p>
+            <div class="labs">Labs 04–05 · docs/provisioners/</div>
+        </a>
+        <a class="guide-card" href="functions.html">
+            <h3>🔤 Functions &amp; Collections</h3>
+            <p>String, collection, numeric, encoding functions, dynamic blocks.</p>
+            <div class="labs">Labs 12–14 · docs/functions/</div>
+        </a>
+        <a class="guide-card" href="projects.html">
+            <h3>🏗️ Capstone Projects</h3>
+            <p>Multi-environment VPC architecture combining all extended topics.</p>
+            <div class="labs">Lab 15 · docs/projects/</div>
+        </a>
+    </div>
+
+    <div class="track-section">
+        <div class="track-card">
+            <h3><span class="track-badge">Track 1</span> Foundations</h3>
+            <p style="font-size:13px;color:var(--muted);margin-bottom:4px;">Console context, validation workflow, providers, workspaces.</p>
+            <table class="lab-table">
+                <tr><th>Lab</th><th>Topic</th><th>Path</th></tr>
+                <tr><td>01</td><td>Console VPC (reference)</td><td><code>labs/lab01-console-vpc/</code></td></tr>
+                <tr><td>02</td><td>Validate-only</td><td><code>labs/lab02-validate-only/</code></td></tr>
+                <tr><td>03</td><td>Multi-provider composition</td><td><code>labs/lab03-multi-cloud-providers/</code></td></tr>
+                <tr><td>06</td><td>Workspaces</td><td><code>labs/lab06-workspaces/</code></td></tr>
+            </table>
+        </div>
+
+        <div class="track-card">
+            <h3><span class="track-badge">Track 2</span> Provisioners</h3>
+            <p style="font-size:13px;color:var(--muted);">Escape hatches — use sparingly.</p>
+            <table class="lab-table">
+                <tr><th>Lab</th><th>Topic</th><th>Path</th></tr>
+                <tr><td>04</td><td>local-exec</td><td><code>labs/lab04-local-exec-provisioner/</code></td></tr>
+                <tr><td>05</td><td>remote-exec (SSH)</td><td><code>labs/lab05-remote-exec-provisioner/</code></td></tr>
+            </table>
+        </div>
+
+        <div class="track-card">
+            <h3><span class="track-badge">Track 3</span> Shared State</h3>
+            <p style="font-size:13px;color:var(--muted);">Production state operations — longest lab sequence.</p>
+            <table class="lab-table">
+                <tr><th>Lab</th><th>Topic</th><th>Path</th></tr>
+                <tr><td>07</td><td>S3 backend</td><td><code>labs/lab07-s3-backend/</code></td></tr>
+                <tr><td>08</td><td>State keys</td><td><code>labs/lab08-state-keys/</code></td></tr>
+                <tr><td>09</td><td>State locking</td><td><code>labs/lab09-state-locking/</code></td></tr>
+                <tr><td>10</td><td>State migration</td><td><code>labs/lab10-state-migration/</code></td></tr>
+                <tr><td>11</td><td>Remote state consumer</td><td><code>labs/lab11-remote-state-consumer/</code></td></tr>
+            </table>
+        </div>
+
+        <div class="track-card">
+            <h3><span class="track-badge">Track 4</span> Language &amp; Expressions</h3>
+            <table class="lab-table">
+                <tr><th>Lab</th><th>Topic</th><th>Path</th></tr>
+                <tr><td>12</td><td>Collections &amp; for_each</td><td><code>labs/lab12-collections/</code></td></tr>
+                <tr><td>13</td><td>Functions</td><td><code>labs/lab13-functions/</code></td></tr>
+                <tr><td>14</td><td>Dynamic blocks</td><td><code>labs/lab14-dynamic-blocks/</code></td></tr>
+            </table>
+        </div>
+
+        <div class="track-card">
+            <h3><span class="track-badge">Track 5</span> Capstone</h3>
+            <table class="lab-table">
+                <tr><th>Lab</th><th>Topic</th><th>Path</th></tr>
+                <tr><td>15</td><td>Multi-env VPC project</td><td><code>labs/lab15-capstone-projects/</code></td></tr>
+            </table>
+        </div>
+    </div>
+
+    <div class="track-card">
+        <h3>📚 Documentation &amp; manuals</h3>
+        <table class="lab-table">
+            <tr><th>Resource</th><th>Location</th></tr>
+            <tr><td>Lab manuals (step-by-step)</td><td><code>terraform/extended/labmanuals/</code></td></tr>
+            <tr><td>State deep dive</td><td><code>terraform/extended/docs/state/README.md</code></td></tr>
+            <tr><td>Provisioners deep dive</td><td><code>terraform/extended/docs/provisioners/README.md</code></td></tr>
+            <tr><td>Functions deep dive</td><td><code>terraform/extended/docs/functions/README.md</code></td></tr>
+            <tr><td>Projects deep dive</td><td><code>terraform/extended/docs/projects/README.md</code></td></tr>
+        </table>
+    </div>
+
+    
+    <div class="track-card">
+        <h3>🎯 Suggested learning path</h3>
+        <p style="font-size:13px;color:var(--muted);">Week 1: Labs 01–06 · Week 2: Labs 07–11 · Week 3: Labs 12–15</p>
+        <ol style="font-size:13px;padding-left:24px;margin-top:10px;">
+            <li>Complete console orientation (Lab 01)</li>
+            <li>Establish validate workflow (Lab 02)</li>
+            <li>Progress through providers and provisioners</li>
+            <li>Master shared state suite before expressions</li>
+            <li>Finish with capstone VPC project</li>
+        </ol>
+    </div>
+    <div class="track-card">
+        <h3>🛠️ Tooling requirements</h3>
+        <table class="lab-table">
+            <tr><th>Tool</th><th>Version</th></tr>
+            <tr><td>Terraform</td><td>1.5+</td></tr>
+            <tr><td>AWS CLI</td><td>v2 (optional, for verification)</td></tr>
+            <tr><td>Browser</td><td>For HTML guides (offline, no CDN)</td></tr>
+        </table>
+    </div>
+
+    
+    <div class="track-card">
+        <h3>❓ FAQ</h3>
+        <table class="lab-table">
+            <tr><th>Question</th><th>Answer</th></tr>
+            <tr><td>Do I need AWS for every lab?</td><td>No — Labs 02, 04, 06, 07–11 can validate without apply; 14–15 need AWS.</td></tr>
+            <tr><td>Where are credentials?</td><td>AWS_PROFILE or IAM role — never in repo.</td></tr>
+            <tr><td>Can I skip state labs?</td><td>Not recommended — Labs 07–11 are core for team operations.</td></tr>
+        </table>
+    </div>
+    <div class="track-card">
+        <h3>📋 Pre-flight checklist</h3>
+        <ul style="font-size:13px;padding-left:22px;">
+            <li>Terraform 1.5+ installed</li>
+            <li>Training AWS account access verified</li>
+            <li>S3 state bucket created (for Labs 07–10 apply)</li>
+            <li>HTML guides open offline in browser</li>
+            <li>Lab manual for current lab open beside terminal</li>
+        </ul>
+    </div>
+
+    <div class="track-card">
+        <h3>📖 Per-lab manual index</h3>
+        <table class="lab-table">
+            <tr><th>Lab</th><th>Manual</th><th>Est. time</th></tr>
+            <tr><td>01</td><td><code>labmanuals/lab01-console-vpc.md</code></td><td>25 min</td></tr>
+            <tr><td>02</td><td><code>labmanuals/lab02-validate-only.md</code></td><td>30 min</td></tr>
+            <tr><td>03</td><td><code>labmanuals/lab03-multi-cloud-providers.md</code></td><td>25 min</td></tr>
+            <tr><td>04</td><td><code>labmanuals/lab04-local-exec-provisioner.md</code></td><td>30 min</td></tr>
+            <tr><td>05</td><td><code>labmanuals/lab05-remote-exec-provisioner.md</code></td><td>35 min</td></tr>
+            <tr><td>06</td><td><code>labmanuals/lab06-workspaces.md</code></td><td>30 min</td></tr>
+            <tr><td>07</td><td><code>labmanuals/lab07-s3-backend.md</code></td><td>45 min</td></tr>
+            <tr><td>08</td><td><code>labmanuals/lab08-state-keys.md</code></td><td>40 min</td></tr>
+            <tr><td>09</td><td><code>labmanuals/lab09-state-locking.md</code></td><td>40 min</td></tr>
+            <tr><td>10</td><td><code>labmanuals/lab10-state-migration.md</code></td><td>45 min</td></tr>
+            <tr><td>11</td><td><code>labmanuals/lab11-remote-state-consumer.md</code></td><td>40 min</td></tr>
+            <tr><td>12</td><td><code>labmanuals/lab12-collections.md</code></td><td>35 min</td></tr>
+            <tr><td>13</td><td><code>labmanuals/lab13-functions.md</code></td><td>35 min</td></tr>
+            <tr><td>14</td><td><code>labmanuals/lab14-dynamic-blocks.md</code></td><td>40 min</td></tr>
+            <tr><td>15</td><td><code>labmanuals/lab15-capstone-projects.md</code></td><td>60 min</td></tr>
+        </table>
+    </div>
+
+    <div class="track-card">
+        <h3>🎯 Suggested learning path</h3>
+        <p style="font-size:13px;color:var(--muted);">Week 1: Labs 01–06 · Week 2: Labs 07–11 · Week 3: Labs 12–15</p>
+        <ol style="font-size:13px;padding-left:24px;margin-top:10px;line-height:1.8;">
+            <li>Complete console orientation (Lab 01) — no Terraform apply required</li>
+            <li>Establish validate workflow (Lab 02) — foundation for all later labs</li>
+            <li>Progress through providers, provisioners, and workspaces (03–06)</li>
+            <li>Master shared state suite (07–11) before expressions track</li>
+            <li>Study functions and dynamic blocks (12–14)</li>
+            <li>Finish with capstone VPC project (15) and destroy resources</li>
+        </ol>
+    </div>
+
+    <div class="track-card">
+        <h3>🛠️ Tooling requirements</h3>
+        <table class="lab-table">
+            <tr><th>Tool</th><th>Version</th><th>Notes</th></tr>
+            <tr><td>Terraform</td><td>1.5+</td><td><code>terraform version</code></td></tr>
+            <tr><td>AWS CLI</td><td>v2</td><td>Optional verification; <code>aws sts get-caller-identity</code></td></tr>
+            <tr><td>Browser</td><td>Any modern</td><td>HTML guides work offline — no CDN</td></tr>
+            <tr><td>SSH client</td><td>OpenSSH</td><td>Required for Lab 05 remote-exec</td></tr>
+        </table>
+    </div>
+
+    <div class="track-card">
+        <h3>❓ FAQ</h3>
+        <table class="lab-table">
+            <tr><th>Question</th><th>Answer</th></tr>
+            <tr><td>Do I need AWS for every lab?</td><td>No. Labs 02, 04, 06, and 07–11 support validate-only paths; 14–15 need AWS for apply.</td></tr>
+            <tr><td>Where do credentials go?</td><td><code>AWS_PROFILE</code>, environment variables, or IAM role — never in committed <code>.tf</code> files.</td></tr>
+            <tr><td>Can I skip state labs?</td><td>Not recommended. Labs 07–11 teach team-critical operations.</td></tr>
+            <tr><td>What about Terraform Cloud?</td><td>These labs use CLI + S3; concepts transfer to TFC remote backends.</td></tr>
+            <tr><td>How do I open HTML guides?</td><td>Open <code>terraform/extended/html/index.html</code> in a browser from the repo clone.</td></tr>
+        </table>
+    </div>
+
+    <div class="track-card">
+        <h3>📋 Pre-flight checklist</h3>
+        <ul style="font-size:13px;padding-left:22px;line-height:1.8;">
+            <li>Terraform 1.5+ installed and on PATH</li>
+            <li>Training AWS account access verified with STS</li>
+            <li>S3 state bucket created for Labs 07–10 (if performing remote apply)</li>
+            <li>HTML guide for current topic open beside terminal</li>
+            <li>Lab manual markdown open for step-by-step commands</li>
+            <li><code>.gitignore</code> excludes <code>.terraform/</code>, <code>*.tfstate*</code>, private <code>*.tfvars</code></li>
+        </ul>
+    </div>
+
+    <div class="track-card">
+        <h3>🔗 Interactive guides map</h3>
+        <table class="lab-table">
+            <tr><th>Guide</th><th>File</th><th>Topics</th></tr>
+            <tr><td>State</td><td><a href="state.html">state.html</a></td><td>S3 flow, locking, keys, migration, consumers</td></tr>
+            <tr><td>Provisioners</td><td><a href="provisioners.html">provisioners.html</a></td><td>Lifecycle, local-exec, remote-exec, alternatives</td></tr>
+            <tr><td>Functions</td><td><a href="functions.html">functions.html</a></td><td>Categories, for_each, dynamic blocks, console</td></tr>
+            <tr><td>Projects</td><td><a href="projects.html">projects.html</a></td><td>Capstone architecture, multi-env, rubric</td></tr>
+        </table>
+    </div>
+
+    <div class="track-card">
+        <h3>🏁 Completion criteria</h3>
+        <p style="font-size:13px;color:var(--muted);">You have finished Terraform Extended when you can:</p>
+        <ul style="font-size:13px;padding-left:22px;line-height:1.8;margin-top:8px;">
+            <li>Initialize and validate any lab without prompting</li>
+            <li>Explain when to use remote state vs local state</li>
+            <li>Describe why provisioners are an escape hatch</li>
+            <li>Choose <code>for_each</code> over <code>count</code> for named instances</li>
+            <li>Apply and destroy Lab 15 capstone in a training account</li>
+        </ul>
+    </div>
+
+    <div class="track-card">
+        <h3>📊 Curriculum statistics</h3>
+        <table class="lab-table">
+            <tr><th>Metric</th><th>Value</th></tr>
+            <tr><td>Total hands-on labs</td><td>15</td></tr>
+            <tr><td>State track labs</td><td>5 (07–11)</td></tr>
+            <tr><td>AWS apply labs</td><td>03, 05, 14, 15 (+ optional others)</td></tr>
+            <tr><td>Offline HTML guides</td><td>5 pages, embedded CSS/JS</td></tr>
+            <tr><td>Estimated total time</td><td>~9–12 hours</td></tr>
+        </table>
+    </div>
+
+    <p class="footer-note">Destroy training infrastructure when finished · Do not commit <code>.terraform/</code>, state files, or private <code>*.tfvars</code></p>
+</div>
+</body>
+</html>

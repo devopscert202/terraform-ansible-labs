@@ -1,62 +1,367 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Playbooks and Handlers</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    :root { --red: #EE0000; --ink: #1a1a1a; --muted: #64748b; --line: #e2e8f0; }
-    body { font-family: "Segoe UI", system-ui, sans-serif; background: #fafafa; color: var(--ink); line-height: 1.6; padding: 20px; }
-    .wrap { max-width: 960px; margin: 0 auto; }
-    header { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 24px; margin-bottom: 20px; text-align: center; }
-    h1 { color: var(--red); }
-    .timeline { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 24px; margin-bottom: 16px; }
-    .step { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 14px; }
-    .num { flex-shrink: 0; width: 32px; height: 32px; background: var(--red); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; }
-    .step.handler .num { background: #334155; }
-    .step.notify .num { background: #b91c1c; }
-    .note { font-size: 0.88rem; color: var(--muted); margin-top: 4px; }
-    pre { background: #1e1e1e; color: #f1f5f9; padding: 14px; border-radius: 8px; font-size: 0.8rem; overflow-x: auto; }
-    .back { display: inline-block; margin-top: 16px; color: var(--red); text-decoration: none; font-weight: 600; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Playbooks and Handlers — Execution Flow</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root { --red: #EE0000; --red-deep: #c40000; --red-light: #fff0f0; --ink: #1a1a2e; --muted: #64748b; --surface: #fff; --line: #e2e8f0; --handler: #334155; }
+        body { font-family: "Segoe UI", system-ui, sans-serif; background: linear-gradient(180deg, #fafafa 0%, #f1f5f9 100%); padding: 20px; line-height: 1.6; color: var(--ink); }
+        .container { max-width: 1380px; margin: 0 auto; }
+        .hero { position: relative; text-align: center; background: var(--surface); border-radius: 16px; padding: 34px 32px 28px; box-shadow: 0 4px 18px rgba(0,0,0,0.08); margin-bottom: 26px; border: 1px solid rgba(238,0,0,0.1); }
+        .eyebrow { display: inline-flex; padding: 6px 12px; border-radius: 999px; background: var(--red-light); color: var(--red-deep); font-size: 0.82rem; font-weight: 700; margin-bottom: 12px; }
+        .hero h1 { color: var(--red); font-size: clamp(1.8rem, 4vw, 2.6rem); margin-bottom: 8px; }
+        .home-link { position: absolute; top: 16px; right: 20px; color: var(--red); text-decoration: none; font-weight: 600; padding: 6px 14px; border-radius: 8px; border: 1px solid rgba(238,0,0,0.18); background: rgba(238,0,0,0.06); }
+        .section-title { font-size: 17px; font-weight: bold; color: #334155; margin-bottom: 12px; padding: 8px 12px; background: #f1f5f9; border-left: 4px solid var(--red); border-radius: 0 6px 6px 0; }
+        .flow-section { margin-bottom: 22px; }
+        .repo-note { background: #dcfce7; border-left: 4px solid #22c55e; padding: 12px 16px; border-radius: 6px; margin-bottom: 20px; font-size: 0.9rem; }
+        .handler-flow { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 24px; }
+        .flow-container { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
+        .flow-box { padding: 12px 18px; border-radius: 10px; text-align: center; font-weight: 600; font-size: 12px; cursor: pointer; transition: all 0.25s; min-width: 120px; color: white; }
+        .flow-box.task { background: linear-gradient(135deg, var(--red) 0%, var(--red-deep) 100%); }
+        .flow-box.notify { background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); }
+        .flow-box.queue { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+        .flow-box.end { background: linear-gradient(135deg, #64748b 0%, #475569 100%); }
+        .flow-box.handler { background: linear-gradient(135deg, var(--handler) 0%, #0f172a 100%); }
+        .flow-box:hover { transform: translateY(-2px); }
+        .flow-box.active { outline: 3px solid #fbbf24; outline-offset: 2px; }
+        .arrow { font-size: 20px; color: var(--muted); font-weight: 700; }
+        .info-panel { background: #f8fafc; border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin-top: 14px; font-size: 0.9rem; min-height: 50px; }
+        .timeline { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 24px; }
+        .step { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px dashed var(--line); }
+        .step:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .num { flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; color: white; }
+        .step .num { background: var(--red); }
+        .step.notify .num { background: #dc2626; }
+        .step.handler .num { background: var(--handler); }
+        .step.skip .num { background: #94a3b8; }
+        .note { font-size: 0.85rem; color: var(--muted); margin-top: 4px; }
+        .code-tabs { display: flex; gap: 5px; margin-bottom: 8px; flex-wrap: wrap; }
+        .code-tab { padding: 6px 14px; background: #e9ecef; border: none; border-radius: 6px 6px 0 0; cursor: pointer; font-size: 12px; font-weight: bold; }
+        .code-tab.active { background: var(--red); color: white; }
+        .code-content { display: none; }
+        .code-content.active { display: block; }
+        pre { background: #1e293b; color: #e2e8f0; padding: 14px; border-radius: 8px; font-size: 11px; line-height: 1.55; white-space: pre-wrap; }
+        .yaml-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-top: 12px; }
+        .yaml-card { background: #f8fafc; border: 1px solid var(--line); border-radius: 8px; padding: 12px; font-size: 0.85rem; }
+        .yaml-card strong { color: var(--red); display: block; margin-bottom: 4px; }
+        .idempotency { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        @media (max-width: 600px) { .idempotency { grid-template-columns: 1fr; } }
+        .run-box { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+        .run-box h3 { font-size: 0.95rem; margin-bottom: 8px; }
+        .run-box.first h3 { color: #16a34a; }
+        .run-box.second h3 { color: var(--muted); }
+        .footer-note { text-align: center; color: var(--muted); font-size: 0.88rem; margin-top: 24px; }
+        .footer-note a { color: var(--red); text-decoration: none; }
+    </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <h1>Playbook Execution &amp; Handlers</h1>
-      <p style="color: var(--muted);">Tasks run in order; handlers run once at the end if notified</p>
-    </header>
-    <section class="timeline">
-      <div class="step">
-        <span class="num">1</span>
-        <div><strong>Install apache2</strong> (apt module)<div class="note">Reports changed if package was missing</div></div>
-      </div>
-      <div class="step notify">
-        <span class="num">2</span>
-        <div><strong>Enable mod_rewrite</strong> + <code>notify: Restart apache2</code><div class="note">Queues handler; does not restart immediately</div></div>
-      </div>
-      <div class="step">
-        <span class="num">3</span>
-        <div><strong>End of play</strong><div class="note">All tasks finished on all hosts</div></div>
-      </div>
-      <div class="step handler">
-        <span class="num">H</span>
-        <div><strong>Handler: Restart apache2</strong><div class="note">Runs only if step 2 changed something</div></div>
-      </div>
-    </section>
-    <pre>- name: Enable mod_rewrite
-  ansible.builtin.apache2_module:
-    name: rewrite
-    state: present
-  notify: Restart apache2
+    <div class="container">
+        <header class="hero">
+            <a href="index.html" class="home-link">&#8962; Home</a>
+            <div class="eyebrow">Lesson 04 · Playbooks</div>
+            <h1>Playbook Execution &amp; Handlers</h1>
+            <p>Tasks run in order; handlers run once at the end of the play — only if notified</p>
+        </header>
+
+        <div class="repo-note">
+            <strong>Repository file:</strong> <code>labs/playbooks/apache.yml</code> — installs apache2, enables mod_rewrite, notifies handler to restart Apache.
+        </div>
+
+        <div class="flow-section">
+            <div class="section-title">1. Handler Notification Flow (click each stage)</div>
+            <div class="handler-flow">
+                <div class="flow-container">
+                    <div class="flow-box task" onclick="showHandlerInfo('task1')">Task 1<br><small>Install apache2</small></div>
+                    <span class="arrow">→</span>
+                    <div class="flow-box task" onclick="showHandlerInfo('task2')">Task 2<br><small>Enable mod_rewrite</small></div>
+                    <span class="arrow">→</span>
+                    <div class="flow-box notify" onclick="showHandlerInfo('notify')">notify:<br><small>Restart apache2</small></div>
+                    <span class="arrow">→</span>
+                    <div class="flow-box queue" onclick="showHandlerInfo('queue')">Handler<br><small>queued</small></div>
+                </div>
+                <div class="flow-container">
+                    <div class="flow-box end" onclick="showHandlerInfo('end')">End of play<br><small>all tasks done</small></div>
+                    <span class="arrow">→</span>
+                    <div class="flow-box handler" onclick="showHandlerInfo('handler')">Handler runs<br><small>Restart apache2</small></div>
+                </div>
+                <div id="handler-info" class="info-panel">
+                    <strong>Task 1 — Install apache2:</strong> ansible.builtin.apt ensures package present. Reports <code>changed</code> only if package was missing. Does not notify any handler.
+                </div>
+            </div>
+        </div>
+
+        <div class="flow-section">
+            <div class="section-title">2. Execution Timeline (apache.yml)</div>
+            <div class="timeline">
+                <div class="step">
+                    <span class="num">1</span>
+                    <div>
+                        <strong>Play starts</strong> — hosts: webservers, become: true
+                        <div class="note">Ansible connects to web1 and web2 in parallel (forks)</div>
+                    </div>
+                </div>
+                <div class="step">
+                    <span class="num">2</span>
+                    <div>
+                        <strong>Task: Install apache2</strong> (ansible.builtin.apt)
+                        <div class="note">First run: changed=1. Second run: changed=0 (idempotent)</div>
+                    </div>
+                </div>
+                <div class="step notify">
+                    <span class="num">3</span>
+                    <div>
+                        <strong>Task: Enable mod_rewrite</strong> + notify: Restart apache2
+                        <div class="note">If module reports changed, handler is queued — NOT executed immediately</div>
+                    </div>
+                </div>
+                <div class="step">
+                    <span class="num">4</span>
+                    <div>
+                        <strong>End of play</strong> — all tasks complete on all hosts
+                        <div class="note">Handler block runs now, in order listed in handlers:</div>
+                    </div>
+                </div>
+                <div class="step handler">
+                    <span class="num">H</span>
+                    <div>
+                        <strong>Handler: Restart apache2</strong> (ansible.builtin.service)
+                        <div class="note">Runs only if notified AND task reported changed. Runs once per host even if notified multiple times.</div>
+                    </div>
+                </div>
+                <div class="step skip">
+                    <span class="num">—</span>
+                    <div>
+                        <strong>Second playbook run</strong> (nothing changed)
+                        <div class="note">mod_rewrite already enabled → task ok, not changed → handler NOT notified → no restart</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flow-section">
+            <div class="section-title">3. Playbook Structure</div>
+            <div class="yaml-grid">
+                <div class="yaml-card"><strong>---</strong>YAML document start (required at top)</div>
+                <div class="yaml-card"><strong>name:</strong>Human-readable play description</div>
+                <div class="yaml-card"><strong>hosts:</strong>Inventory pattern (webservers, all, etc.)</div>
+                <div class="yaml-card"><strong>become:</strong>true escalates via sudo</div>
+                <div class="yaml-card"><strong>tasks:</strong>List of modules to execute in order</div>
+                <div class="yaml-card"><strong>handlers:</strong>Tasks that run on notify at play end</div>
+            </div>
+        </div>
+
+        <div class="flow-section">
+            <div class="section-title">4. Code Examples</div>
+            <div class="code-tabs">
+                <button class="code-tab active" onclick="showCode('apache')">apache.yml</button>
+                <button class="code-tab" onclick="showCode('handler')">Handler rules</button>
+                <button class="code-tab" onclick="showCode('listen')">listen vs name</button>
+                <button class="code-tab" onclick="showCode('flush')">meta: flush_handlers</button>
+            </div>
+            <div id="apache-code" class="code-content active">
+                <pre># labs/playbooks/apache.yml
+---
+- name: Install and configure Apache
+  hosts: webservers
+  become: true
+  tasks:
+    - name: Install apache2
+      ansible.builtin.apt:
+        name: apache2
+        state: present
+        update_cache: true
+
+    - name: Enable mod_rewrite
+      ansible.builtin.apache2_module:
+        name: rewrite
+        state: present
+      notify: Restart apache2
+
+  handlers:
+    - name: Restart apache2
+      ansible.builtin.service:
+        name: apache2
+        state: restarted</pre>
+            </div>
+            <div id="handler-code" class="code-content">
+                <pre># Handler rules (memorize these)
+# 1. Handlers run at END of play (not immediately)
+# 2. Handlers run only if notifying task reports CHANGED
+# 3. Same handler notified N times → runs ONCE per host
+# 4. Handler order in handlers: block is preserved
+# 5. Handlers can notify other handlers (avoid loops)
+
+# Run playbook
+ansible-playbook -i inventory/hosts.ini.local playbooks/apache.yml</pre>
+            </div>
+            <div id="listen-code" class="code-content">
+                <pre># notify must match handler name exactly
+notify: Restart apache2
 
 handlers:
-  - name: Restart apache2
+  - name: Restart apache2    # ← this string must match
+
+# Alternative: listen (multiple notifiers)
+handlers:
+  - name: restart web service
+    listen: "restart apache"
     ansible.builtin.service:
       name: apache2
-      state: restarted</pre>
-    <a class="back" href="index.html">← Back to catalog</a>
-  </div>
+      state: restarted
+
+# Task can use: notify: "restart apache"</pre>
+            </div>
+            <div id="flush-code" class="code-content">
+                <pre># Force handlers to run mid-play (rare)
+- name: Apply config
+  ansible.builtin.template:
+    src: apache.conf.j2
+    dest: /etc/apache2/apache2.conf
+  notify: Restart apache2
+
+- name: Flush handlers before next task
+  ansible.builtin.meta: flush_handlers
+
+- name: Verify site responds
+  ansible.builtin.uri:
+    url: http://localhost/
+    status_code: 200</pre>
+            </div>
+        </div>
+
+        <div class="flow-section">
+            <div class="section-title">5. Idempotency — First vs Second Run</div>
+            <div class="idempotency">
+                <div class="run-box first">
+                    <h3>First run (fresh Ubuntu)</h3>
+                    <pre>web1  : ok=3  changed=2  failed=0
+web2  : ok=3  changed=2  failed=0
+
+# apt installed apache2 (changed)
+# mod_rewrite enabled (changed) → handler runs</pre>
+                </div>
+                <div class="run-box second">
+                    <h3>Second run (no drift)</h3>
+                    <pre>web1  : ok=2  changed=0  failed=0
+web2  : ok=2  changed=0  failed=0
+
+# apt: already present (ok)
+# mod_rewrite: already on (ok)
+# handler: NOT notified</pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="flow-section">
+            <div class="section-title">6. YAML Pitfalls</div>
+            <table style="width:100%;border-collapse:collapse;font-size:0.88rem;">
+                <thead><tr style="background:var(--red-light);"><th style="padding:10px;border:1px solid var(--line);">Mistake</th><th style="padding:10px;border:1px solid var(--line);">Fix</th></tr></thead>
+                <tbody>
+                    <tr><td style="padding:8px;border:1px solid var(--line);">Tabs in YAML</td><td style="padding:8px;border:1px solid var(--line);">Use spaces only (2 spaces typical)</td></tr>
+                    <tr><td style="padding:8px;border:1px solid var(--line);">Handler name typo</td><td style="padding:8px;border:1px solid var(--line);">notify string must match handler name exactly</td></tr>
+                    <tr><td style="padding:8px;border:1px solid var(--line);">Missing become</td><td style="padding:8px;border:1px solid var(--line);">Add become: true for apt/service tasks</td></tr>
+                    <tr><td style="padding:8px;border:1px solid var(--line);">Wrong hosts pattern</td><td style="padding:8px;border:1px solid var(--line);">Verify with ansible-inventory --graph</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="flow-section">
+            <div class="section-title">7. ansible-playbook Flags</div>
+            <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
+                <thead><tr style="background:var(--red-light);"><th style="padding:10px;border:1px solid var(--line);">Flag</th><th style="padding:10px;border:1px solid var(--line);">Purpose</th></tr></thead>
+                <tbody>
+                    <tr><td style="padding:8px;border:1px solid var(--line);"><code>--syntax-check</code></td><td style="padding:8px;border:1px solid var(--line);">Validate YAML without running</td></tr>
+                    <tr><td style="padding:8px;border:1px solid var(--line);"><code>--check</code></td><td style="padding:8px;border:1px solid var(--line);">Dry run (module-dependent)</td></tr>
+                    <tr><td style="padding:8px;border:1px solid var(--line);"><code>--diff</code></td><td style="padding:8px;border:1px solid var(--line);">Show file changes</td></tr>
+                    <tr><td style="padding:8px;border:1px solid var(--line);"><code>--limit web1</code></td><td style="padding:8px;border:1px solid var(--line);">Subset of hosts</td></tr>
+                    <tr><td style="padding:8px;border:1px solid var(--line);"><code>-v</code> to <code>-vvvv</code></td><td style="padding:8px;border:1px solid var(--line);">Verbose debugging</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="flow-section">
+            <div class="section-title">8. Extended Handler Patterns</div>
+            <div class="panel" style="background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:16px;font-size:0.88rem;">
+                <p><strong>listen:</strong> Multiple notifies can trigger one handler via shared listen name.</p>
+                <p style="margin-top:8px;"><strong>flush_handlers:</strong> Meta task runs handlers immediately mid-play (rare).</p>
+                <p style="margin-top:8px;"><strong>Role handlers:</strong> <code>roles/webserver/handlers/main.yml</code> — same notify rules as play handlers.</p>
+            </div>
+        </div>
+
+        <div class="flow-section">
+            <div class="section-title">9. Lab Verification</div>
+            <pre style="background:#1e293b;color:#e2e8f0;padding:14px;border-radius:8px;font-size:11px;">ansible-playbook -i inventory/hosts.ini.local playbooks/apache.yml
+ansible webservers -i inventory/hosts.ini.local -b \
+  -m ansible.builtin.command -a "systemctl is-active apache2"</pre>
+        </div>
+
+        <div class="flow-section">
+            <div class="section-title">10. Handler Failure Modes</div>
+            <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
+                <thead><tr style="background:#fef3c7;"><th style="padding:10px;border:1px solid var(--line);">Mistake</th><th style="padding:10px;border:1px solid var(--line);">Result</th></tr></thead>
+                <tbody>
+                    <tr><td style="padding:8px;border:1px solid var(--line);">notify name typo</td><td style="padding:8px;border:1px solid var(--line);">Handler never runs — service stale</td></tr>
+                    <tr><td style="padding:8px;border:1px solid var(--line);">Handler before tasks</td><td style="padding:8px;border:1px solid var(--line);">YAML valid but handlers still run at end</td></tr>
+                    <tr><td style="padding:8px;border:1px solid var(--line);">notify on ok task</td><td style="padding:8px;border:1px solid var(--line);">Handler skipped (no change)</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="flow-section">
+            <div class="section-title">7. Playbook CLI Options</div>
+            <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
+                <thead><tr style="background:var(--red-light);"><th style="padding:8px;border:1px solid var(--line);">Flag</th><th style="padding:8px;border:1px solid var(--line);">Purpose</th></tr></thead>
+                <tbody>
+                    <tr><td style="padding:8px;border:1px solid var(--line);"><code>--check</code></td><td style="padding:8px;border:1px solid var(--line);">Dry run — predict changes without applying</td></tr>
+                    <tr><td style="padding:8px;border:1px solid var(--line);"><code>--diff</code></td><td style="padding:8px;border:1px solid var(--line);">Show file diffs for template/copy tasks</td></tr>
+                    <tr><td style="padding:8px;border:1px solid var(--line);"><code>--limit web1</code></td><td style="padding:8px;border:1px solid var(--line);">Run play on subset of hosts</td></tr>
+                    <tr><td style="padding:8px;border:1px solid var(--line);"><code>-v / -vvv</code></td><td style="padding:8px;border:1px solid var(--line);">Verbose output for debugging</td></tr>
+                    <tr><td style="padding:8px;border:1px solid var(--line);"><code>--start-at-task</code></td><td style="padding:8px;border:1px solid var(--line);">Resume from named task</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="flow-section">
+            <div class="section-title">8. Troubleshooting Playbooks</div>
+            <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
+                <thead><tr style="background:#fef3c7;"><th style="padding:8px;border:1px solid var(--line);">Symptom</th><th style="padding:8px;border:1px solid var(--line);">Fix</th></tr></thead>
+                <tbody>
+                    <tr><td style="padding:8px;border:1px solid var(--line);">Handler never runs</td><td style="padding:8px;border:1px solid var(--line);">Notifying task must report changed; check notify name match</td></tr>
+                    <tr><td style="padding:8px;border:1px solid var(--line);">Permission denied on apt</td><td style="padding:8px;border:1px solid var(--line);">Add become: true to play</td></tr>
+                    <tr><td style="padding:8px;border:1px solid var(--line);">ERROR! Syntax Error</td><td style="padding:8px;border:1px solid var(--line);">Validate YAML indentation; start file with ---</td></tr>
+                    <tr><td style="padding:8px;border:1px solid var(--line);">changed=1 every run</td><td style="padding:8px;border:1px solid var(--line);">Module not idempotent — use proper module params</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <p class="footer-note">
+            Deep dive: <a href="../docs/04-playbooks/playbook-and-yaml-basics.md">playbook-and-yaml-basics.md</a> ·
+            Lab: <a href="../labmanuals/lab04-playbook-apache-webserver.md">lab04</a>
+        </p>
+    </div>
+
+    <script>
+        const handlerInfo = {
+            task1: '<strong>Task 1 — Install apache2:</strong> ansible.builtin.apt with state=present. Idempotent: only changes if package missing.',
+            task2: '<strong>Task 2 — Enable mod_rewrite:</strong> ansible.builtin.apache2_module. If already enabled, returns ok without change.',
+            notify: '<strong>notify: Restart apache2</strong> — Queues the handler. Does NOT restart Apache immediately. Only if this task reports changed.',
+            queue: '<strong>Handler queued:</strong> Ansible remembers which handlers were notified. Multiple notifies of same handler = one execution.',
+            end: '<strong>End of play:</strong> All tasks on all hosts complete first. Then handler block executes.',
+            handler: '<strong>Handler runs:</strong> ansible.builtin.service state=restarted. Restarts apache2 once per host that notified it.'
+        };
+        function showHandlerInfo(key) {
+            document.querySelectorAll('.flow-box').forEach(el => el.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            document.getElementById('handler-info').innerHTML = handlerInfo[key] || '';
+        }
+        function showCode(type) {
+            document.querySelectorAll('.code-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.code-tab').forEach(el => el.classList.remove('active'));
+            document.getElementById(type + '-code').classList.add('active');
+            event.target.classList.add('active');
+        }
+    </script>
 </body>
 </html>

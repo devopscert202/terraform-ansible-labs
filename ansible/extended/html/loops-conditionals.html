@@ -1,125 +1,400 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Loops &amp; Conditionals — Ansible Extended</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    :root {
-      --red: #EE0000;
-      --dark: #1a1a1a;
-      --muted: #64748b;
-      --line: #e2e8f0;
-      --bg: #f8fafc;
-      --code-bg: #1e293b;
-    }
-    body {
-      font-family: "Segoe UI", system-ui, sans-serif;
-      background: var(--bg);
-      color: var(--dark);
-      line-height: 1.65;
-      padding: 24px;
-    }
-    .wrap { max-width: 900px; margin: 0 auto; }
-    nav { margin-bottom: 20px; font-size: 0.9rem; }
-    nav a { color: var(--red); text-decoration: none; }
-    h1 { color: var(--red); font-size: 1.6rem; margin-bottom: 8px; }
-    .lead { color: var(--muted); margin-bottom: 24px; }
-    section {
-      background: #fff;
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 20px 24px;
-      margin-bottom: 20px;
-    }
-    h2 { font-size: 1.15rem; margin-bottom: 12px; border-bottom: 2px solid var(--red); padding-bottom: 6px; }
-    pre {
-      background: var(--code-bg);
-      color: #e2e8f0;
-      padding: 14px 16px;
-      border-radius: 8px;
-      overflow-x: auto;
-      font-size: 0.82rem;
-      margin: 12px 0;
-    }
-    .flow { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 16px 0; }
-    .box {
-      background: #fff0f0;
-      border: 2px solid var(--red);
-      border-radius: 8px;
-      padding: 10px 14px;
-      font-size: 0.9rem;
-      font-weight: 600;
-    }
-    .arrow { color: var(--muted); font-size: 1.2rem; }
-    .tabs { display: flex; gap: 8px; margin-bottom: 12px; }
-    .tab {
-      padding: 8px 16px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: #fff;
-      cursor: pointer;
-      font-size: 0.9rem;
-    }
-    .tab.active { background: var(--red); color: #fff; border-color: var(--red); }
-    .panel { display: none; }
-    .panel.active { display: block; }
-    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; margin-top: 10px; }
-    th, td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; }
-    th { background: #f1f5f9; }
-    footer { margin-top: 24px; color: var(--muted); font-size: 0.85rem; text-align: center; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loops &amp; Conditionals — Ansible Extended</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --red: #CC0000; --red-deep: #990000; --red-sky: #ffe4e4;
+            --ink: #1a1a2e; --muted: #64748b; --line: #e2e8f0;
+            --amber: #fef3c7; --mint: #dcfce7; --slate-700: #334155;
+        }
+        body {
+            font-family: "Segoe UI", system-ui, sans-serif;
+            background: linear-gradient(180deg, #fffafa 0%, #f4f6f8 100%);
+            color: var(--ink); line-height: 1.6; padding: 20px;
+        }
+        .container { max-width: 1100px; margin: 0 auto; }
+        .hero {
+            position: relative; background: white; border-radius: 16px;
+            padding: 28px 32px; margin-bottom: 20px;
+            border: 1px solid rgba(204,0,0,0.1); box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+        }
+        .home-link {
+            position: absolute; top: 16px; right: 20px; color: var(--red);
+            text-decoration: none; font-size: 0.88rem; font-weight: 600;
+            padding: 6px 14px; border-radius: 8px;
+            border: 1px solid rgba(204,0,0,0.2); background: rgba(204,0,0,0.05);
+        }
+        .hero h1 { color: var(--red); font-size: 1.9rem; margin-top: 8px; }
+        .lead { color: var(--muted); margin-top: 8px; }
+        .repo-box {
+            background: var(--mint); border-left: 4px solid #22c55e;
+            padding: 12px 16px; border-radius: 6px; margin: 16px 0; font-size: 0.88rem;
+        }
+        .repo-box ul { margin: 8px 0 0 18px; }
+        .section-title {
+            font-size: 1rem; font-weight: 700; color: var(--slate-700);
+            margin: 20px 0 12px; padding: 8px 12px;
+            background: #f1f5f9; border-left: 4px solid var(--red);
+        }
+        .flow-container {
+            display: flex; align-items: center; justify-content: center;
+            flex-wrap: wrap; gap: 8px; margin: 14px 0;
+        }
+        .flow-box {
+            background: linear-gradient(135deg, #CC0000 0%, #990000 100%);
+            color: white; padding: 10px 14px; border-radius: 8px;
+            font-weight: 600; font-size: 0.8rem; text-align: center; min-width: 100px;
+        }
+        .flow-box.item { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); }
+        .flow-box.task { background: linear-gradient(135deg, #059669 0%, #047857 100%); }
+        .arrow { font-size: 1.2rem; color: var(--muted); }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin: 12px 0; }
+        th, td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; }
+        th { background: #f8fafc; }
+        tr:hover td { background: #fff8f8; }
+        .decision-tree {
+            background: white; border: 1px solid var(--line); border-radius: 12px;
+            padding: 20px; margin: 14px 0;
+        }
+        .tree-node {
+            border: 2px solid var(--line); border-radius: 8px; padding: 10px 14px;
+            margin: 8px auto; max-width: 420px; text-align: center; font-size: 0.88rem;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .tree-node:hover, .tree-node.active { border-color: var(--red); background: #fff8f8; }
+        .tree-node.question { background: #fef3c7; border-color: #f59e0b; font-weight: 600; }
+        .tree-node.action { background: #dcfce7; border-color: #22c55e; }
+        .tree-node.skip { background: #f1f5f9; border-color: #94a3b8; }
+        .tree-connector { text-align: center; color: var(--muted); font-size: 1.1rem; }
+        #treeResult {
+            margin-top: 12px; padding: 12px; background: #1e293b; color: #e2e8f0;
+            border-radius: 8px; font-family: monospace; font-size: 0.8rem; min-height: 48px;
+        }
+        .example-scenario {
+            background: var(--amber); border-left: 4px solid #f59e0b;
+            padding: 14px; border-radius: 6px; margin: 16px 0; font-size: 0.88rem;
+        }
+        .example-scenario h3 { font-size: 0.92rem; color: #92400e; margin-bottom: 6px; }
+        .code-tabs { display: flex; gap: 5px; margin-bottom: 8px; flex-wrap: wrap; }
+        .code-tab {
+            padding: 6px 12px; background: #e9ecef; border: none;
+            border-radius: 6px 6px 0 0; cursor: pointer; font-size: 0.8rem; font-weight: 600;
+        }
+        .code-tab.active { background: var(--red); color: white; }
+        .code-content { display: none; }
+        .code-content.active { display: block; }
+        pre {
+            background: #1e293b; color: #e2e8f0; padding: 14px; border-radius: 8px;
+            font-size: 0.78rem; line-height: 1.5; white-space: pre-wrap; word-wrap: break-word;
+        }
+        .compare-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .compare-card {
+            background: white; border: 1px solid var(--line); border-radius: 8px; padding: 14px;
+        }
+        .compare-card h4 { color: var(--red); margin-bottom: 8px; font-size: 0.9rem; }
+        .compare-card ul { margin-left: 18px; font-size: 0.85rem; }
+        footer { text-align: center; color: var(--muted); font-size: 0.85rem; margin-top: 24px; }
+        @media (max-width: 700px) { .compare-row { grid-template-columns: 1fr; } }
+    </style>
 </head>
 <body>
-  <div class="wrap">
-    <nav><a href="index.html">← Catalog</a> · Lab 04–05</nav>
-    <h1>Loops &amp; Conditionals</h1>
-    <p class="lead">Repeat tasks with <code>loop</code> and branch with <code>when</code>.</p>
+    <div class="container">
+        <header class="hero">
+            <a href="index.html" class="home-link">&#8962; Home</a>
+            <span style="font-size:0.8rem;color:var(--muted);">Labs 04–05</span>
+            <h1>Loops &amp; Conditionals</h1>
+            <p class="lead">Repeat tasks with <code>loop</code> and branch with <code>when</code>. Together they eliminate copy-paste YAML and enable fact-driven automation.</p>
+        </header>
 
-    <section>
-      <h2>Loop execution flow</h2>
-      <div class="flow">
-        <span class="box">baseline_packages[]</span>
-        <span class="arrow">→</span>
-        <span class="box">item = htop</span>
-        <span class="arrow">→</span>
-        <span class="box">ansible.builtin.apt</span>
-      </div>
-      <pre><code>- ansible.builtin.apt:
+        <div class="repo-box">
+            <strong>Repository files:</strong>
+            <ul>
+                <li><code>labs/playbooks/loops-packages.yml</code> — package and user loops (Lab 04)</li>
+                <li><code>labs/playbooks/conditionals-os.yml</code> — OS and group conditionals (Lab 05)</li>
+                <li><code>docs/playbooks/loops-and-conditionals.md</code> — reference guide</li>
+            </ul>
+        </div>
+
+        <!-- Loop execution flow -->
+        <div class="section-title">1. Loop Execution Flow</div>
+        <div class="flow-container">
+            <span class="flow-box">baseline_packages[]</span>
+            <span class="arrow">→</span>
+            <span class="flow-box item">item = htop</span>
+            <span class="arrow">→</span>
+            <span class="flow-box task">ansible.builtin.apt</span>
+            <span class="arrow">→</span>
+            <span class="flow-box item">item = vim</span>
+            <span class="arrow">→</span>
+            <span class="flow-box task">ansible.builtin.apt</span>
+            <span class="arrow">→</span>
+            <span class="flow-box">… repeat</span>
+        </div>
+        <p style="font-size:0.88rem;color:var(--muted);margin-bottom:12px;">Each iteration runs the same task module with a different <code>item</code> value. Use <code>loop_control.label</code> for readable output.</p>
+
+        <!-- Loop types comparison -->
+        <div class="section-title">2. Loop Types Comparison</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Syntax</th>
+                    <th>Status</th>
+                    <th>Item variable</th>
+                    <th>Best for</th>
+                    <th>Example</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr onclick="showLoopInfo('loop')" style="cursor:pointer">
+                    <td><code>loop:</code></td>
+                    <td>✅ Current standard</td>
+                    <td><code>item</code></td>
+                    <td>Lists, dicts, registered results</td>
+                    <td><code>loop: "{{ packages }}"</code></td>
+                </tr>
+                <tr onclick="showLoopInfo('loop_control')" style="cursor:pointer">
+                    <td><code>loop_control:</code></td>
+                    <td>✅ Recommended</td>
+                    <td>Custom label, index, pause</td>
+                    <td>Large lists, nested loops</td>
+                    <td><code>label: "{{ item.name }}"</code></td>
+                </tr>
+                <tr onclick="showLoopInfo('with_items')" style="cursor:pointer">
+                    <td><code>with_items:</code></td>
+                    <td>⚠️ Legacy</td>
+                    <td><code>item</code></td>
+                    <td>Old playbooks only</td>
+                    <td>Migrate to <code>loop</code></td>
+                </tr>
+                <tr onclick="showLoopInfo('with_dict')" style="cursor:pointer">
+                    <td><code>with_dict:</code></td>
+                    <td>⚠️ Legacy</td>
+                    <td><code>item.key</code>, <code>item.value</code></td>
+                    <td>Dict iteration</td>
+                    <td>Use <code>loop: "{{ mydict | dict2items }}"</code></td>
+                </tr>
+                <tr onclick="showLoopInfo('until')" style="cursor:pointer">
+                    <td><code>until:</code> + <code>retries</code></td>
+                    <td>✅ Retry pattern</td>
+                    <td>Same task retried</td>
+                    <td>Wait for service, API readiness</td>
+                    <td><code>until: result.status == 200</code></td>
+                </tr>
+            </tbody>
+        </table>
+        <div id="loopInfo" style="background:#f8fafc;border:1px solid var(--line);border-radius:8px;padding:12px;font-size:0.88rem;margin-top:8px;">
+            Click a row in the table for details about each loop pattern.
+        </div>
+
+        <!-- When decision tree -->
+        <div class="section-title">3. When / Conditional Decision Tree (interactive)</div>
+        <div class="decision-tree">
+            <div class="tree-node question" onclick="resetTree()">Start: Should this task run?</div>
+            <div class="tree-connector">↓</div>
+            <div class="tree-node" onclick="treeStep('os')">Is OS family Debian?</div>
+            <div class="tree-connector">↓ yes &nbsp;&nbsp; ↓ no</div>
+            <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+                <div class="tree-node action" onclick="treeStep('apt')">Run apt task</div>
+                <div class="tree-node skip" onclick="treeStep('skip_apt')">Skip apt task</div>
+            </div>
+            <div class="tree-connector">↓</div>
+            <div class="tree-node" onclick="treeStep('group')">Is host in webservers group?</div>
+            <div class="tree-connector">↓ yes &nbsp;&nbsp; ↓ no</div>
+            <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+                <div class="tree-node action" onclick="treeStep('nginx')">Install/configure nginx</div>
+                <div class="tree-node skip" onclick="treeStep('skip_nginx')">Skip web tasks</div>
+            </div>
+            <div class="tree-connector">↓</div>
+            <div class="tree-node" onclick="treeStep('firewall')">Is enable_firewall true?</div>
+            <div class="tree-connector">↓ yes &nbsp;&nbsp; ↓ no</div>
+            <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+                <div class="tree-node action" onclick="treeStep('ufw')">Configure UFW rules</div>
+                <div class="tree-node skip" onclick="treeStep('skip_ufw')">Skip firewall</div>
+            </div>
+            <div id="treeResult">Click nodes above to trace conditional logic from conditionals-os.yml.</div>
+        </div>
+
+        <div class="example-scenario">
+            <h3>Example scenario: Multi-user provisioning</h3>
+            <p><strong>Requirement:</strong> Create deploy and monitor users with different groups on all webservers.</p>
+            <p><strong>Loop:</strong> <code>lab_users</code> list of dicts — each iteration passes <code>item.name</code>, <code>item.groups</code> to ansible.builtin.user.</p>
+            <p><strong>Conditional:</strong> SSH key task runs only when <code>~/.ssh/id_ed25519.pub</code> exists on control node.</p>
+        </div>
+
+        <!-- Loop vs When -->
+        <div class="section-title">4. Loop vs When — When to use which</div>
+        <div class="compare-row">
+            <div class="compare-card">
+                <h4>Use loop when…</h4>
+                <ul>
+                    <li>Same module, many similar items</li>
+                    <li>Installing a list of packages</li>
+                    <li>Creating multiple users or directories</li>
+                    <li>Processing registered results</li>
+                    <li>Iterating over inventory groups</li>
+                </ul>
+            </div>
+            <div class="compare-card">
+                <h4>Use when when…</h4>
+                <ul>
+                    <li>Entire task should be skipped</li>
+                    <li>OS-specific package managers</li>
+                    <li>Feature flags (enable_firewall)</li>
+                    <li>Host tier differences (web vs app)</li>
+                    <li>Combining multiple conditions with AND</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Code tabs -->
+        <div class="section-title">5. Code Examples</div>
+        <div class="code-tabs">
+            <button class="code-tab active" onclick="showCode('packages')">Package Loop</button>
+            <button class="code-tab" onclick="showCode('users')">User Dict Loop</button>
+            <button class="code-tab" onclick="showCode('when_os')">When OS</button>
+            <button class="code-tab" onclick="showCode('when_multi')">Multi When</button>
+            <button class="code-tab" onclick="showCode('when_group')">Group Check</button>
+            <button class="code-tab" onclick="showCode('combined')">Loop + When</button>
+        </div>
+        <div id="packages-code" class="code-content active">
+<pre>- name: Install baseline packages
+  ansible.builtin.apt:
     name: "{{ item }}"
     state: present
+    update_cache: true
   loop: "{{ baseline_packages }}"
   loop_control:
-    label: "{{ item }}"</code></pre>
-    </section>
+    label: "{{ item }}"</pre>
+        </div>
+        <div id="users-code" class="code-content">
+<pre>lab_users:
+  - name: deploy
+    groups: sudo
+    shell: /bin/bash
+  - name: monitor
+    groups: adm
+    shell: /bin/bash
 
-    <section>
-      <h2>Interactive: loop vs when</h2>
-      <div class="tabs">
-        <button class="tab active" data-tab="loop">Loop</button>
-        <button class="tab" data-tab="when">When</button>
-      </div>
-      <div id="loop" class="panel active">
-        <p><strong>Loop</strong> — same module, many items (packages, users).</p>
-      </div>
-      <div id="when" class="panel">
-        <p><strong>When</strong> — skip tasks based on facts or groups.</p>
-        <pre><code>when: ansible_facts.os_family == "Debian"</code></pre>
-      </div>
-    </section>
+- name: Create lab users
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    groups: "{{ item.groups }}"
+    shell: "{{ item.shell }}"
+  loop: "{{ lab_users }}"
+  loop_control:
+    label: "{{ item.name }}"</pre>
+        </div>
+        <div id="when_os-code" class="code-content">
+<pre>- name: Install nginx on Debian family
+  ansible.builtin.apt:
+    name: nginx
+    state: present
+  when: ansible_facts.os_family == "Debian"</pre>
+        </div>
+        <div id="when_multi-code" class="code-content">
+<pre># Multiple conditions = AND (all must be true)
+- name: Enable UFW allow SSH
+  community.general.ufw:
+    rule: allow
+    port: "22"
+    proto: tcp
+  when:
+    - enable_firewall | bool
+    - ansible_facts.os_family == "Debian"</pre>
+        </div>
+        <div id="when_group-code" class="code-content">
+<pre>- name: Configure web tier only
+  ansible.builtin.template:
+    src: index.html.j2
+    dest: /var/www/html/index.html
+  when: inventory_hostname in groups['webservers']</pre>
+        </div>
+        <div id="combined-code" class="code-content">
+<pre>- name: Authorize deploy SSH key
+  ansible.builtin.authorized_key:
+    user: deploy
+    key: "{{ lookup('file', '~/.ssh/id_ed25519.pub') }}"
+  when: lookup('file', '~/.ssh/id_ed25519.pub', errors='ignore') | length > 0
+  # Loop not needed — single conditional task</pre>
+        </div>
 
-    <footer>Ansible Extended · Offline · No CDN</footer>
-  </div>
-  <script>
-    document.querySelectorAll('.tab').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
-        document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('active'); });
-        btn.classList.add('active');
-        document.getElementById(btn.dataset.tab).classList.add('active');
-      });
-    });
-  </script>
+        <div class="section-title">6. Jinja2 Tests &amp; Filters in Conditionals</div>
+        <table>
+            <thead><tr><th>Expression</th><th>Meaning</th></tr></thead>
+            <tbody>
+                <tr><td><code>var is defined</code></td><td>Variable exists and is not undefined</td></tr>
+                <tr><td><code>var | default(false) | bool</code></td><td>Safe boolean from string "true"/"false"</td></tr>
+                <tr><td><code>inventory_hostname in groups['web']</code></td><td>Host membership test</td></tr>
+                <tr><td><code>ansible_facts['os_family'] == "RedHat"</code></td><td>Bracket notation for keys with dots</td></tr>
+                <tr><td><code>item.changed</code></td><td>Inside loop — per-item registered state</td></tr>
+            </tbody>
+        </table>
+
+        <div class="example-scenario">
+            <h3>Lab validation checklist</h3>
+            <p>✓ Run loops-packages.yml — four packages and two users created</p>
+            <p>✓ Second run is idempotent (ok, not changed)</p>
+            <p>✓ conditionals-os.yml installs nginx on webservers only</p>
+            <p>✓ UFW task skips when <code>-e enable_firewall=false</code></p>
+        </div>
+
+        <div class="example-scenario">
+            <h3>Lab command reference</h3>
+            <pre style="background:#1e293b;color:#e2e8f0;padding:12px;border-radius:6px;font-size:11px;margin-top:8px;">cd ansible/extended/labs
+ansible-playbook playbooks/loops-packages.yml --syntax-check
+ansible-playbook playbooks/loops-packages.yml
+ansible-playbook playbooks/conditionals-os.yml --limit web1
+ansible-playbook playbooks/conditionals-os.yml -e enable_firewall=false</pre>
+        </div>
+
+        <footer>Ansible Extended · Labs 04–05 · <a href="index.html" style="color:#CC0000">Catalog</a></footer>
+    </div>
+
+    <script>
+        const loopDetails = {
+            loop: 'loop: is the modern replacement for all with_* plugins. Accepts lists, dictionaries (use dict2items filter), and nested structures. Item variable defaults to "item".',
+            loop_control: 'loop_control.label shows friendly names in output instead of full JSON. Also supports index_var, pause, extended_allitems for nested loops.',
+            with_items: 'Legacy syntax — still works but ansible-lint recommends migration. with_items: "{{ list }}" → loop: "{{ list }}"',
+            with_dict: 'Legacy dict iteration. Modern equivalent: loop: "{{ mydict | dict2items }}" then use item.key and item.value.',
+            until: 'Combine with register: and retries:/delay: for retry loops. Different from list iteration — same task runs until condition met or retries exhausted.'
+        };
+
+        const treeMessages = {
+            os: 'when: ansible_facts.os_family == "Debian" — gates apt/yum package tasks. Ubuntu reports Debian family.',
+            apt: '✅ Task runs: ansible.builtin.apt installs packages. Equivalent modules: yum/dnf for RedHat family.',
+            skip_apt: '⏭ Task skipped: condition evaluated false. Ansible reports "skipping: [host]" in output.',
+            group: 'when: inventory_hostname in groups["webservers"] — limits web-tier configuration to web group members.',
+            nginx: '✅ nginx installed and configured on web1, web2. app1 in appservers group skips this task.',
+            skip_nginx: '⏭ App tier hosts skip nginx tasks — different role in site.yml applies nodejs_app.',
+            firewall: 'when: enable_firewall | bool — extra var or group_var controls optional security hardening.',
+            ufw: '✅ UFW rule applied when firewall enabled AND OS is Debian-based.',
+            skip_ufw: '⏭ Firewall task skipped — common in dev/lab environments for simplicity.'
+        };
+
+        function showLoopInfo(type) {
+            document.getElementById('loopInfo').textContent = loopDetails[type] || 'Select a loop type.';
+        }
+
+        function treeStep(step) {
+            document.getElementById('treeResult').textContent = treeMessages[step] || 'Unknown step';
+        }
+
+        function resetTree() {
+            document.getElementById('treeResult').textContent = 'Decision tree reset. Click nodes to trace conditional logic from conditionals-os.yml.';
+        }
+
+        function showCode(type) {
+            document.querySelectorAll('.code-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.code-tab').forEach(el => el.classList.remove('active'));
+            document.getElementById(type + '-code').classList.add('active');
+            document.querySelectorAll('.code-tab').forEach(tab => {
+                if (tab.getAttribute('onclick').includes("'" + type + "'")) tab.classList.add('active');
+            });
+        }
+    </script>
 </body>
 </html>

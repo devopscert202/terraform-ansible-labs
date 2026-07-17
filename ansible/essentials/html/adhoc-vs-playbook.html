@@ -1,63 +1,351 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ad Hoc vs Playbook</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    :root { --red: #EE0000; --ink: #1a1a1a; --muted: #64748b; --line: #e2e8f0; }
-    body { font-family: "Segoe UI", system-ui, sans-serif; background: #fafafa; color: var(--ink); line-height: 1.6; padding: 20px; }
-    .wrap { max-width: 960px; margin: 0 auto; }
-    header { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 24px; margin-bottom: 20px; text-align: center; }
-    h1 { color: var(--red); }
-    .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    @media (max-width: 700px) { .compare { grid-template-columns: 1fr; } }
-    .col { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 20px; }
-    .col h2 { color: var(--red); font-size: 1.05rem; margin-bottom: 10px; }
-    .col.playbook h2 { color: #334155; }
-    ul { margin: 10px 0 10px 18px; font-size: 0.92rem; }
-    pre { background: #1e1e1e; color: #f1f5f9; padding: 12px; border-radius: 8px; font-size: 0.78rem; overflow-x: auto; margin-top: 8px; }
-    .when { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 20px; margin-top: 16px; }
-    .when h2 { color: var(--red); font-size: 1.05rem; margin-bottom: 8px; }
-    .back { display: inline-block; margin-top: 16px; color: var(--red); text-decoration: none; font-weight: 600; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ad Hoc vs Playbook — Decision Guide</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root { --red: #EE0000; --red-deep: #c40000; --red-light: #fff0f0; --ink: #1a1a2e; --muted: #64748b; --surface: #fff; --line: #e2e8f0; --playbook: #334155; }
+        body { font-family: "Segoe UI", system-ui, sans-serif; background: linear-gradient(180deg, #fafafa 0%, #f1f5f9 100%); padding: 20px; line-height: 1.6; color: var(--ink); }
+        .container { max-width: 1380px; margin: 0 auto; }
+        .hero { position: relative; text-align: center; background: var(--surface); border-radius: 16px; padding: 34px 32px 28px; box-shadow: 0 4px 18px rgba(0,0,0,0.08); margin-bottom: 26px; border: 1px solid rgba(238,0,0,0.1); }
+        .eyebrow { display: inline-flex; padding: 6px 12px; border-radius: 999px; background: var(--red-light); color: var(--red-deep); font-size: 0.82rem; font-weight: 700; margin-bottom: 12px; }
+        .hero h1 { color: var(--red); font-size: clamp(1.8rem, 4vw, 2.6rem); margin-bottom: 8px; }
+        .home-link { position: absolute; top: 16px; right: 20px; color: var(--red); text-decoration: none; font-weight: 600; padding: 6px 14px; border-radius: 8px; border: 1px solid rgba(238,0,0,0.18); background: rgba(238,0,0,0.06); }
+        .section-title { font-size: 17px; font-weight: bold; color: #334155; margin-bottom: 12px; padding: 8px 12px; background: #f1f5f9; border-left: 4px solid var(--red); border-radius: 0 6px 6px 0; }
+        .flow-section { margin-bottom: 22px; }
+        .decision-tree { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 24px; }
+        .tree-node { text-align: center; margin-bottom: 12px; }
+        .tree-question { display: inline-block; background: #fef3c7; border: 2px solid #f59e0b; padding: 12px 20px; border-radius: 10px; font-weight: 600; font-size: 0.92rem; cursor: pointer; }
+        .tree-branches { display: flex; justify-content: center; gap: 40px; flex-wrap: wrap; margin: 16px 0; }
+        .branch { flex: 1; min-width: 200px; max-width: 320px; text-align: center; }
+        .branch-label { font-size: 0.8rem; color: var(--muted); font-weight: 700; margin-bottom: 8px; }
+        .flow-box { padding: 14px 18px; border-radius: 10px; font-weight: 600; font-size: 0.88rem; cursor: pointer; transition: transform 0.2s; margin: 0 auto; max-width: 280px; }
+        .flow-box.adhoc { background: linear-gradient(135deg, var(--red) 0%, var(--red-deep) 100%); color: white; }
+        .flow-box.playbook { background: linear-gradient(135deg, var(--playbook) 0%, #0f172a 100%); color: white; }
+        .flow-box:hover { transform: translateY(-2px); }
+        .flow-box.active { outline: 3px solid #fbbf24; outline-offset: 2px; }
+        .tree-arrow { font-size: 1.4rem; color: var(--muted); margin: 8px 0; }
+        .result-panel { background: #f8fafc; border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin-top: 16px; font-size: 0.9rem; min-height: 60px; }
+        .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        @media (max-width: 700px) { .compare { grid-template-columns: 1fr; } }
+        .col { background: var(--surface); border: 2px solid var(--line); border-radius: 12px; padding: 20px; }
+        .col.adhoc { border-color: var(--red); }
+        .col.playbook-col { border-color: var(--playbook); }
+        .col h2 { font-size: 1.05rem; margin-bottom: 10px; }
+        .col.adhoc h2 { color: var(--red); }
+        .col.playbook-col h2 { color: var(--playbook); }
+        .col ul { margin: 10px 0 10px 18px; font-size: 0.9rem; }
+        .col li { margin-bottom: 6px; }
+        .code-tabs { display: flex; gap: 5px; margin: 16px 0 8px; flex-wrap: wrap; }
+        .code-tab { padding: 6px 14px; background: #e9ecef; border: none; border-radius: 6px 6px 0 0; cursor: pointer; font-size: 12px; font-weight: bold; }
+        .code-tab.active { background: var(--red); color: white; }
+        .code-content { display: none; }
+        .code-content.active { display: block; }
+        pre { background: #1e293b; color: #e2e8f0; padding: 14px; border-radius: 8px; font-size: 11px; line-height: 1.55; white-space: pre-wrap; }
+        .use-case-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+        .use-card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px; font-size: 0.88rem; }
+        .use-card .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 700; color: white; margin-bottom: 6px; }
+        .use-card .badge.adhoc { background: var(--red); }
+        .use-card .badge.pb { background: var(--playbook); }
+        .flags-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 12px; }
+        .flags-table th, .flags-table td { padding: 8px 12px; border: 1px solid var(--line); text-align: left; }
+        .flags-table th { background: var(--red-light); }
+        .footer-note { text-align: center; color: var(--muted); font-size: 0.88rem; margin-top: 24px; }
+        .footer-note a { color: var(--red); text-decoration: none; }
+    </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <h1>Ad Hoc vs Playbook</h1>
-      <p style="color: var(--muted);">Same modules — different packaging</p>
-    </header>
-    <div class="compare">
-      <article class="col">
-        <h2>Ad hoc command</h2>
-        <ul>
-          <li>One module, one shot</li>
-          <li>Great for probes and quick fixes</li>
-          <li>Not stored in Git by default</li>
-        </ul>
-        <pre>ansible web1 -i inventory/hosts.ini \
-  -b -m ansible.builtin.apt \
-  -a "name=tree state=present"</pre>
-      </article>
-      <article class="col playbook">
-        <h2>Playbook</h2>
-        <ul>
-          <li>Many tasks, version controlled</li>
-          <li>Handlers, roles, variables</li>
-          <li>Production automation</li>
-        </ul>
-        <pre>ansible-playbook -i inventory/hosts.ini \
-  playbooks/apache.yml</pre>
-      </article>
+    <div class="container">
+        <header class="hero">
+            <a href="index.html" class="home-link">&#8962; Home</a>
+            <div class="eyebrow">Lesson 03 · Ad Hoc</div>
+            <h1>Ad Hoc vs Playbook</h1>
+            <p>Same modules — different packaging. Know when to probe vs when to commit automation.</p>
+        </header>
+
+        <div class="flow-section">
+            <div class="section-title">1. Decision Tree — Click a path</div>
+            <div class="decision-tree">
+                <div class="tree-node">
+                    <div class="tree-question" onclick="showDecision('start')">Will you run this exact change more than once?</div>
+                </div>
+                <div class="tree-branches">
+                    <div class="branch">
+                        <div class="branch-label">NO — one-time / exploratory</div>
+                        <div class="tree-arrow">↓</div>
+                        <div class="flow-box adhoc" onclick="showDecision('adhoc1')">Ad hoc command</div>
+                    </div>
+                    <div class="branch">
+                        <div class="branch-label">YES — repeatable / production</div>
+                        <div class="tree-arrow">↓</div>
+                        <div class="flow-box playbook" onclick="showDecision('pb1')">Playbook in Git</div>
+                    </div>
+                </div>
+                <div class="tree-branches" style="margin-top:20px;">
+                    <div class="branch">
+                        <div class="branch-label">Need handlers, roles, or vault?</div>
+                        <div class="tree-arrow">↓</div>
+                        <div class="flow-box playbook" onclick="showDecision('pb2')">Always playbook</div>
+                    </div>
+                    <div class="branch">
+                        <div class="branch-label">Just checking connectivity or facts?</div>
+                        <div class="tree-arrow">↓</div>
+                        <div class="flow-box adhoc" onclick="showDecision('adhoc2')">Ad hoc is fine</div>
+                    </div>
+                </div>
+                <div id="decision-result" class="result-panel">
+                    <strong>Start here:</strong> Ad hoc is for probes and quick fixes. Playbooks are for anything you want reviewed, versioned, and repeated safely.
+                </div>
+            </div>
+        </div>
+
+        <div class="flow-section">
+            <div class="section-title">2. Side-by-Side Comparison</div>
+            <div class="compare">
+                <article class="col adhoc">
+                    <h2>Ad hoc command</h2>
+                    <ul>
+                        <li>Single module, single invocation</li>
+                        <li>Great for ping, uptime, fact gathering</li>
+                        <li>Quick package install to test sudo</li>
+                        <li>Not stored in Git by default</li>
+                        <li>No handlers or role support</li>
+                        <li>Syntax: <code>ansible &lt;pattern&gt; -m &lt;module&gt; -a "args"</code></li>
+                    </ul>
+                </article>
+                <article class="col playbook-col">
+                    <h2>Playbook</h2>
+                    <ul>
+                        <li>Multiple tasks, ordered execution</li>
+                        <li>Handlers, variables, templates, roles</li>
+                        <li>Idempotent, reviewable in pull requests</li>
+                        <li>CI/CD pipeline integration</li>
+                        <li>Vault for secrets</li>
+                        <li>Syntax: <code>ansible-playbook site.yml</code></li>
+                    </ul>
+                </article>
+            </div>
+        </div>
+
+        <div class="flow-section">
+            <div class="section-title">3. Equivalent Examples (same module, different packaging)</div>
+            <div class="code-tabs">
+                <button class="code-tab active" onclick="showCode('ping')">ping</button>
+                <button class="code-tab" onclick="showCode('apt')">apt install</button>
+                <button class="code-tab" onclick="showCode('service')">service</button>
+                <button class="code-tab" onclick="showCode('command')">command</button>
+                <button class="code-tab" onclick="showCode('setup')">setup facts</button>
+            </div>
+            <div id="ping-code" class="code-content active">
+                <pre># Ad hoc
+ansible webservers -i inventory/hosts.ini.local -m ansible.builtin.ping
+
+# Playbook equivalent (playbooks/ping.yml)
+---
+- name: Connectivity check
+  hosts: webservers
+  tasks:
+    - name: Ping all web servers
+      ansible.builtin.ping:</pre>
+            </div>
+            <div id="apt-code" class="code-content">
+                <pre># Ad hoc — install tree on one host (-b for become/sudo)
+ansible web1 -i inventory/hosts.ini.local -b \
+  -m ansible.builtin.apt -a "name=tree state=present update_cache=yes"
+
+# Playbook equivalent
+---
+- name: Install tree
+  hosts: web1
+  become: true
+  tasks:
+    - name: Ensure tree package
+      ansible.builtin.apt:
+        name: tree
+        state: present
+        update_cache: true</pre>
+            </div>
+            <div id="service-code" class="code-content">
+                <pre># Ad hoc — check apache status
+ansible webservers -i inventory/hosts.ini.local -b \
+  -m ansible.builtin.service -a "name=apache2 state=started"
+
+# Playbook (labs/playbooks/apache.yml) — full install + handler
+ansible-playbook -i inventory/hosts.ini.local playbooks/apache.yml</pre>
+            </div>
+            <div id="command-code" class="code-content">
+                <pre># Ad hoc — run uptime
+ansible webservers -i inventory/hosts.ini.local \
+  -m ansible.builtin.command -a "uptime"
+
+# Note: prefer ansible.builtin.command over raw shell
+# Use ansible.builtin.shell only when pipes or redirects needed</pre>
+            </div>
+            <div id="setup-code" class="code-content">
+                <pre># Ad hoc — gather distribution facts
+ansible web1 -i inventory/hosts.ini.local \
+  -m ansible.builtin.setup -a "filter=ansible_distribution*"
+
+# Facts auto-gathered in playbooks (gather_facts: true by default)
+# Disable with gather_facts: false for speed on large fleets</pre>
+            </div>
+        </div>
+
+        <div class="flow-section">
+            <div class="section-title">4. Common Use Cases</div>
+            <div class="use-case-grid">
+                <div class="use-card"><span class="badge adhoc">AD HOC</span><strong>Connectivity test</strong><p>ansible.builtin.ping before first playbook</p></div>
+                <div class="use-card"><span class="badge adhoc">AD HOC</span><strong>Debug variable</strong><p>ansible.builtin.debug -a "var=hostvars"</p></div>
+                <div class="use-card"><span class="badge adhoc">AD HOC</span><strong>Quick reboot</strong><p>ansible.builtin.reboot (emergency only)</p></div>
+                <div class="use-card"><span class="badge pb">PLAYBOOK</span><strong>Web server install</strong><p>playbooks/apache.yml with handlers</p></div>
+                <div class="use-card"><span class="badge pb">PLAYBOOK</span><strong>Template deploy</strong><p>playbooks/vars-demo.yml + motd.j2</p></div>
+                <div class="use-card"><span class="badge pb">PLAYBOOK</span><strong>Role-based site</strong><p>playbooks/role-site.yml + webserver role</p></div>
+            </div>
+        </div>
+
+        <div class="flow-section">
+            <div class="section-title">5. Important CLI Flags (ad hoc)</div>
+            <table class="flags-table">
+                <thead><tr><th>Flag</th><th>Long form</th><th>Purpose</th></tr></thead>
+                <tbody>
+                    <tr><td><code>-i</code></td><td>--inventory</td><td>Inventory file or script</td></tr>
+                    <tr><td><code>-m</code></td><td>--module-name</td><td>Module to run (default: command)</td></tr>
+                    <tr><td><code>-a</code></td><td>--args</td><td>Module arguments as string</td></tr>
+                    <tr><td><code>-b</code></td><td>--become</td><td>Escalate privileges (sudo)</td></tr>
+                    <tr><td><code>-K</code></td><td>--ask-become-pass</td><td>Prompt for sudo password</td></tr>
+                    <tr><td><code>-u</code></td><td>--user</td><td>SSH user override</td></tr>
+                    <tr><td><code>-f</code></td><td>--forks</td><td>Parallelism (default 5)</td></tr>
+                    <tr><td><code>-C</code></td><td>--check</td><td>Dry run (if module supports)</td></tr>
+                    <tr><td><code>-v</code></td><td>--verbose</td><td>More output (-vvv for connection debug)</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="flow-section">
+            <div class="section-title">6. Migration Path: Ad Hoc → Playbook</div>
+            <div class="decision-tree" style="padding:16px;">
+                <p style="font-size:0.9rem;margin-bottom:12px;">When an ad hoc command works, promote it to a playbook:</p>
+                <ol style="margin-left:24px;font-size:0.88rem;line-height:2;">
+                    <li>Run ad hoc successfully on one host</li>
+                    <li>Create YAML play with same module and arguments</li>
+                    <li>Add <code>name:</code> to each task for readable output</li>
+                    <li>Add handlers if service restart needed</li>
+                    <li>Extract to role when reused across projects</li>
+                    <li>Commit to Git and run from CI</li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="flow-section">
+            <div class="section-title">7. Module Cheat Sheet (Ubuntu Lab)</div>
+            <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
+                <thead><tr style="background:var(--red-light);"><th style="padding:10px;border:1px solid var(--line);">Module</th><th style="padding:10px;border:1px solid var(--line);">Ad hoc example</th></tr></thead>
+                <tbody>
+                    <tr><td style="padding:8px;border:1px solid var(--line);">ping</td><td style="padding:8px;border:1px solid var(--line);"><code>ansible all -m ansible.builtin.ping</code></td></tr>
+                    <tr><td style="padding:8px;border:1px solid var(--line);">command</td><td style="padding:8px;border:1px solid var(--line);"><code>-a "uptime"</code></td></tr>
+                    <tr><td style="padding:8px;border:1px solid var(--line);">apt</td><td style="padding:8px;border:1px solid var(--line);"><code>-b -a "name=tree state=present"</code></td></tr>
+                    <tr><td style="padding:8px;border:1px solid var(--line);">setup</td><td style="padding:8px;border:1px solid var(--line);"><code>-a "filter=ansible_distribution*"</code></td></tr>
+                    <tr><td style="padding:8px;border:1px solid var(--line);">debug</td><td style="padding:8px;border:1px solid var(--line);"><code>-a "var=app_env"</code></td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="flow-section">
+            <div class="section-title">8. Troubleshooting Ad Hoc</div>
+            <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
+                <thead><tr style="background:#fef3c7;"><th style="padding:10px;border:1px solid var(--line);">Symptom</th><th style="padding:10px;border:1px solid var(--line);">Fix</th></tr></thead>
+                <tbody>
+                    <tr><td style="padding:8px;border:1px solid var(--line);">UNREACHABLE</td><td style="padding:8px;border:1px solid var(--line);">Fix SSH / inventory IP (lab 01)</td></tr>
+                    <tr><td style="padding:8px;border:1px solid var(--line);">sudo password</td><td style="padding:8px;border:1px solid var(--line);">Add <code>-b</code></td></tr>
+                    <tr><td style="padding:8px;border:1px solid var(--line);">Module not found</td><td style="padding:8px;border:1px solid var(--line);">Use FQCN <code>ansible.builtin.*</code></td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="flow-section">
+            <div class="section-title">9. Output Colors and Status</div>
+            <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
+                <thead><tr style="background:var(--red-light);"><th style="padding:10px;border:1px solid var(--line);">Status</th><th style="padding:10px;border:1px solid var(--line);">Meaning</th></tr></thead>
+                <tbody>
+                    <tr><td style="padding:8px;border:1px solid var(--line);color:#16a34a;font-weight:600;">ok</td><td style="padding:8px;border:1px solid var(--line);">Already in desired state — no change</td></tr>
+                    <tr><td style="padding:8px;border:1px solid var(--line);color:#ca8a04;font-weight:600;">changed</td><td style="padding:8px;border:1px solid var(--line);">Module modified the system</td></tr>
+                    <tr><td style="padding:8px;border:1px solid var(--line);color:#dc2626;font-weight:600;">failed</td><td style="padding:8px;border:1px solid var(--line);">Error — check task output and SSH</td></tr>
+                    <tr><td style="padding:8px;border:1px solid var(--line);color:#9333ea;font-weight:600;">unreachable</td><td style="padding:8px;border:1px solid var(--line);">SSH or network failure</td></tr>
+                    <tr><td style="padding:8px;border:1px solid var(--line);color:#64748b;font-weight:600;">skipped</td><td style="padding:8px;border:1px solid var(--line);">when: condition not met</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="flow-section">
+            <div class="section-title">10. Production vs Lab</div>
+            <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
+                <thead><tr style="background:var(--red-light);"><th style="padding:10px;border:1px solid var(--line);">Lab</th><th style="padding:10px;border:1px solid var(--line);">Production</th></tr></thead>
+                <tbody>
+                    <tr><td style="padding:8px;border:1px solid var(--line);">Ad hoc package test</td><td style="padding:8px;border:1px solid var(--line);">Playbook in CI pipeline</td></tr>
+                    <tr><td style="padding:8px;border:1px solid var(--line);">Shell history only</td><td style="padding:8px;border:1px solid var(--line);">Git PR + ansible-lint</td></tr>
+                    <tr><td style="padding:8px;border:1px solid var(--line);">Manual -b flag</td><td style="padding:8px;border:1px solid var(--line);">become: true in playbook</td></tr>
+                    <tr><td style="padding:8px;border:1px solid var(--line);">Single control node</td><td style="padding:8px;border:1px solid var(--line);">AWX / Automation Platform</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="flow-section">
+            <div class="section-title">11. Parallel Execution</div>
+            <pre style="background:#1e293b;color:#e2e8f0;padding:14px;border-radius:8px;font-size:11px;"># Default forks=5 — run against 5 hosts in parallel
+ansible webservers -i inventory/hosts.ini.local -m ansible.builtin.ping
+
+# Serial (one host at a time) — useful during rolling fixes
+ansible webservers -i inventory/hosts.ini.local -m ansible.builtin.ping -f 1</pre>
+            <p style="font-size:0.88rem;margin-top:10px;color:var(--muted);">Playbooks use the same <code>-f</code> flag. Canary deploys combine <code>--limit web1</code> then full fleet.</p>
+        </div>
+
+        <div class="flow-section">
+            <div class="section-title">12. Ansible Configuration Precedence</div>
+            <p style="font-size:0.88rem;margin-bottom:10px;">ansible.cfg in <code>labs/</code> sets defaults when you run commands from that directory:</p>
+            <pre style="background:#1e293b;color:#e2e8f0;padding:14px;border-radius:8px;font-size:11px;">[defaults]
+inventory = inventory/hosts.ini
+roles_path = roles
+host_key_checking = False
+
+# Override per-run with -i inventory/hosts.ini.local</pre>
+        </div>
+
+        <div class="flow-section">
+            <div class="section-title">12. Inventory Paths in Lab</div>
+            <pre style="background:#1e293b;color:#e2e8f0;padding:14px;border-radius:8px;font-size:11px;">ansible webservers -i inventory/hosts.ini.local -m ansible.builtin.ping
+ansible webservers -i inventory/hosts.yaml -m ansible.builtin.ping
+ansible-inventory -i inventory/hosts.ini.local --graph</pre>
+        </div>
+
+        <p class="footer-note">
+            Deep dive: <a href="../docs/03-adhoc/adhoc-commands.md">adhoc-commands.md</a> ·
+            Lab: <a href="../labmanuals/lab03-adhoc-commands.md">lab03</a>
+        </p>
     </div>
-    <section class="when">
-      <h2>When to use which</h2>
-      <p><strong>Ad hoc:</strong> ping, uptime, install one package to test sudo, gather a fact.</p>
-      <p style="margin-top: 8px;"><strong>Playbook:</strong> Apache install, MOTD template, Node.js capstone—anything you will run again.</p>
-    </section>
-    <a class="back" href="index.html">← Back to catalog</a>
-  </div>
+
+    <script>
+        const decisions = {
+            start: 'Both paths use the same modules. The question is whether the work belongs in version control.',
+            adhoc1: '✅ Use ad hoc: one-off package test, emergency fix, or exploring facts before writing YAML.',
+            pb1: '✅ Use playbook: Apache install, MOTD template, Node.js capstone — anything repeated or reviewed.',
+            pb2: '✅ Playbook required: handlers (service restart), roles (webserver), vars_files (vault secrets).',
+            adhoc2: '✅ Ad hoc ideal: ansible.builtin.ping, ansible.builtin.setup, ansible.builtin.command for uptime.'
+        };
+        function showDecision(key) {
+            document.querySelectorAll('.flow-box').forEach(el => el.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            document.getElementById('decision-result').innerHTML = decisions[key] || '';
+        }
+        function showCode(type) {
+            document.querySelectorAll('.code-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.code-tab').forEach(el => el.classList.remove('active'));
+            document.getElementById(type + '-code').classList.add('active');
+            document.querySelectorAll('.code-tab').forEach(tab => {
+                if (tab.textContent.toLowerCase().includes(type)) tab.classList.add('active');
+            });
+        }
+    </script>
 </body>
 </html>

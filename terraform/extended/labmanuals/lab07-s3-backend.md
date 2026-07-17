@@ -1,48 +1,165 @@
 # Lab 07 — S3 backend
 
-> **Goal:** Initialize encrypted shared state in a pre-existing S3 bucket.
-> **Time:** ~40 min · **Files:** `labs/lab07-s3-backend/`
+> **Goal:** Initialize encrypted shared state in a pre-existing S3 bucket with lockfile support.
+> **Time:** ~40 min · **Directory:** `terraform/extended/labs/lab07-s3-backend/`
+
+## Learning objectives
+
+After completing this lab you will be able to:
+
+- Configure S3 backend via external `backend.hcl`
+- Use `terraform init -backend=false` for safe syntax validation
+- Enable `use_lockfile` for concurrent write protection
+- Identify `terraform_data.state_owner` as state ownership marker
+- Explain why backend settings cannot use input variables
+
+## Architecture
+
+```hcl
+# main.tf
+terraform {
+  required_version = ">= 1.5.0"
+  backend "s3" {}
+}
+
+resource "terraform_data" "state_owner" { input = "shared-state" }
+output "state_owner" { value = terraform_data.state_owner.output }
+```
+
+**Backend config example** (`backend.hcl.example`):
+
+```hcl
+bucket       = "replace-with-unique-state-bucket"
+key          = "extended/lab07/terraform.tfstate"
+region       = "us-east-1"
+encrypt      = true
+use_lockfile = true
+```
+
+## Exercise index
+
+| # | Exercise | Outcome |
+|---|----------|----------|
+| 1 | -backend=false | Safe validate |
+| 2 | backend.hcl | Remote config |
+| 3 | init | S3 connected |
+| 4 | apply | Remote state write |
+| 5 | S3 ls | Object exists |
+
+## Prerequisites
+
+- Terraform **1.5+** installed (`terraform version`)
+- Terminal access to the lab directory
+- For AWS labs: authenticated `AWS_PROFILE` or IAM role — **no access keys in `.tf` files**
+- Read the matching doc in `terraform/extended/docs/` before applying cloud resources
 
 ## Before you start
 
-- Terraform 1.5 or newer is installed (`terraform version`).
-- For this lab, use an AWS profile or IAM role; do not add access keys to `.tf` files.
-- Run every command from `terraform/extended/labs/lab07-s3-backend`.
-
-## Steps
-
-### Step 1 — Inspect the configuration
-
-Read `main.tf` and any `variables.tf` or example backend file. Identify inputs, outputs, and the ownership boundary before executing Terraform.
-
 ```bash
-cd ../labs/lab07-s3-backend
-ls
+cd terraform/extended/labs/lab07-s3-backend
+export AWS_PROFILE=your-training-profile   # when AWS is used
+aws sts get-caller-identity                # verify account (AWS labs)
+terraform version
 ```
 
 **Validate**
 
 ```text
-The lab configuration and its supporting files are present.
+Terraform v1.5.x or newer is reported.
+AWS identity matches your training account (if applicable).
 ```
 
-### Step 2 — Initialize and validate
+### Step 1 — Navigate to lab directory
 
-Initialization installs only the providers declared by this root module. Backend suite labs intentionally use `-backend=false` for local syntax validation; initialize their actual backend only after completing the backend prerequisites.
+State labs use S3 backend block — prepare bucket first.
 
 ```bash
-terraform init -backend=false && terraform validate
+cd terraform/extended/labs/lab07-s3-backend
+ls -la
 ```
 
 **Validate**
 
 ```text
-Success! The configuration is valid.
+main.tf and backend.hcl.example present.
 ```
 
-### Step 3 — Review the execution boundary
+### Step 2 — Read backend block
 
-A plan is a proposal, not approval to create resources. Read additions, changes, destroys, provider region, and every input value. Stop if the target account, state location, or resource scope is unexpected.
+Empty `backend "s3" {}` — values come from backend config file.
+
+```bash
+grep -A2 'backend' main.tf
+```
+
+**Validate**
+
+```text
+`backend "s3" {}` with no inline attributes.
+```
+
+### Step 3 — Local validation pass
+
+Syntax check without touching remote state.
+
+```bash
+terraform init -backend=false
+terraform validate
+```
+
+**Validate**
+
+```text
+Valid configuration without backend connection.
+```
+
+### Step 4 — Review backend.hcl.example
+
+Copy and edit before real init.
+
+```bash
+cat backend.hcl.example
+cp backend.hcl.example backend.hcl
+# Edit bucket, key, region
+```
+
+**Validate**
+
+```text
+backend.hcl customized with your training bucket.
+```
+
+### Step 5 — Verify S3 bucket exists
+
+Bucket must pre-exist; Terraform does not create it here.
+
+```bash
+aws s3 ls s3://YOUR-STATE-BUCKET --profile $AWS_PROFILE
+```
+
+**Validate**
+
+```text
+Bucket listing succeeds or empty bucket confirmed.
+```
+
+### Step 6 — Initialize remote backend
+
+Connects to S3; use_lockfile enables native locking.
+
+```bash
+terraform init -backend-config=backend.hcl
+```
+
+**Validate**
+
+```text
+Backend configured; state migrated or created.
+```
+
+### Step 7 — Plan
+
+Review terraform_data resource for this lab's teaching point.
 
 ```bash
 terraform plan
@@ -51,306 +168,334 @@ terraform plan
 **Validate**
 
 ```text
-The plan matches the intended lab outcome and contains no unexpected destroy operations.
+Plan matches lab intent — typically one terraform_data.
 ```
 
-### Step 4 — Apply only when appropriate
+### Step 8 — Apply
 
-Labs that only transform data can be applied safely after plan review. AWS examples must be applied only in an approved training account. Remote-exec needs a host you own and can reach; it does not create that host.
+Writes state remotely.
 
 ```bash
-terraform apply
+terraform apply -auto-approve
 ```
 
 **Validate**
 
 ```text
-Terraform reports Apply complete and the documented outputs are shown.
+Apply complete with lab-specific output.
+```
+
+### Step 9 — Confirm remote state
+
+Object appears at configured key.
+
+```bash
+aws s3 ls s3://YOUR-STATE-BUCKET/extended/ --recursive | head
+```
+
+**Validate**
+
+```text
+terraform.tfstate object visible in bucket.
+```
+
+### Step 10 — State list locally
+
+CLI still works against remote backend.
+
+```bash
+terraform state list
+```
+
+**Validate**
+
+```text
+terraform_data address listed.
+```
+
+### Step 11 — Inspect state_owner output
+
+Marker for shared-state exercises.
+
+```bash
+terraform output state_owner
+```
+
+**Validate**
+
+```text
+Value is `shared-state`.
+```
+
+### Step 12 — Second init
+
+Re-init should be idempotent.
+
+```bash
+terraform init -backend-config=backend.hcl
+```
+
+**Validate**
+
+```text
+Terraform has been successfully initialized.
 ```
 
 ## Design notes
 
-Shared state is production-sensitive metadata. Treat its bucket, key naming, retention, encryption, and IAM policy as part of the platform design. A separate state key is an ownership boundary, not merely a filename. Review the planned state location before initialization and never solve a conflict by deleting locks or editing state without understanding the active operation.
-
-For migration, make a backup and allow `terraform init -migrate-state` to copy state only after confirming the source and destination. For consumption, export narrow outputs from the producer and avoid using remote state as a broad inventory API.
+Remote state is operational data — encrypt at rest, restrict IAM to state prefixes, enable versioning for recovery. The empty `backend "s3" {}` block forces backend config into reviewed files rather than variables. `use_lockfile = true` (Terraform 1.5+) replaces DynamoDB for many teams. Always run `init -backend=false` first in CI to validate HCL without credentials.
 
 ## Done when
 
-- [ ] You ran the validation command and reviewed its success result.
-- [ ] You can explain what state this lab reads or writes.
-- [ ] Any cloud resource created for the lab has a documented cleanup action.
+- [ ] Remote backend initialized with encryption and lockfile
+- [ ] Applied with state stored in S3
+- [ ] Explained why backend cannot use variables
 
 ## If something fails
 
 | Symptom | Likely cause | Fix |
 |---------|--------------|-----|
-| Provider initialization fails | Network, registry access, or an unsupported Terraform version | Check `terraform version`, network access, then rerun `terraform init`. |
-| Plan requests an unexpected resource | Wrong workspace, variable file, region, or state | Stop; inspect `terraform workspace show`, inputs, and backend settings. |
-| AWS request is denied | Profile/role lacks access or points at the wrong account | Verify `AWS_PROFILE` and `aws sts get-caller-identity`; request least-privilege training access. |
-| Backend initialization fails | Bucket, region, IAM permissions, or key configuration is wrong | Validate the pre-created bucket and use the matching `backend.hcl.example` values. |
+| Provider initialization fails | Network, registry, or Terraform version | `terraform version`; rerun `terraform init` |
+| Plan shows unexpected resources | Wrong workspace, tfvars, or state | `terraform workspace show`; inspect variables |
+| AWS access denied | Profile/role lacks permission | `aws sts get-caller-identity` |
+| Validation errors | Syntax or type mismatch | Read error path; run `terraform fmt` |
+| Backend init AccessDenied | IAM/bucket policy | Fix prefix permissions |
+| Region mismatch | backend.hcl wrong region | Match bucket region |
+| Lock file errors | Concurrent apply | Wait or investigate holder |
 
 ## Cleanup
 
 ```bash
-Remove any local test artifacts and do not commit state or private tfvars.
+terraform destroy -auto-approve
+rm -f backend.hcl
+rm -rf .terraform terraform.tfstate*
 ```
 
-Remove generated state, plans, and copied `terraform.tfvars` files if they contain non-public information. Do not commit them.
+Remove `.terraform/`, `terraform.tfstate*`, `backend.hcl`, and private `terraform.tfvars` before committing. Never commit secrets.
+
+## Related resources
+
+| Resource | Path |
+|----------|------|
+| Deep dive | [docs/state/README.md](../docs/state/README.md) |
+| Interactive guide | `terraform/extended/html/` |
+| Course README | `terraform/extended/README.md` |
 
 ---
-*Deep dive: [docs/state/README.md](docs/state/README.md). Next: [Lab 08](lab08-state-keys.md)*
+*Deep dive: [docs/state/README.md](../docs/state/README.md) · Next: [Lab 08 — State keys](lab08-state-keys.md)*
 
-## Operational checklist
+## Reference — command cheat sheet
 
-### Control 1 — Remote backend readiness
 
-Choose a bucket name that is globally unique and owned by the training account.
+| Command | Purpose |
+|---------|---------|
+| `terraform fmt -recursive` | Canonical formatting |
+| `terraform init` | Download providers and configure backend |
+| `terraform validate` | Static type and reference checks |
+| `terraform plan` | Propose infrastructure changes |
+| `terraform apply` | Execute approved plan |
+| `terraform destroy` | Tear down managed resources |
+| `terraform state list` | List addresses in state |
+| `terraform console` | Evaluate expressions interactively |
 
-**Why it matters:** Terraform state and configuration are operational interfaces. A small convention made explicit before apply prevents accidental cross-environment changes later.
+## Reference — ownership questions
 
-**Evidence to capture**
 
-- The selected workspace and account identity.
-- The reviewed plan summary and state location.
-- The operator responsible for cleanup or rollback.
+Before every apply, answer:
 
-**Validate**
+1. Which AWS account and region will change?
+2. Where is state stored and who else uses it?
+3. What is the rollback plan if apply fails mid-way?
+4. Who owns cleanup after the lab session ends?
 
-```bash
-terraform workspace show
-terraform state list
+Document answers in your lab notes — they mirror production change reviews.
+
+## Reference — peer review prompts
+
+
+Pair with a colleague and explain:
+
+- What resources this root module owns
+- Which variables are safe to change without replacement
+- What outputs downstream stacks would consume
+- How you would detect configuration drift
+
+Peer review catches wrong-account applies before they happen.
+
+## Reference — extending this lab
+
+
+Optional extensions (not required for completion):
+
+- Add variable validation blocks with `validation` stanzas
+- Export additional outputs for a hypothetical consumer stack
+- Wire an S3 remote backend using patterns from Labs 07–10
+- Add `terraform.workspace` or `var.environment` to resource names
+
+Keep extensions in a personal branch; do not commit training state.
+
+## Reference — documentation links
+
+
+| Topic | URL |
+|-------|-----|
+| Terraform language | https://developer.hashicorp.com/terraform/language |
+| AWS provider | https://registry.terraform.io/providers/hashicorp/aws/latest/docs |
+| CLI commands | https://developer.hashicorp.com/terraform/cli/commands |
+| State storage | https://developer.hashicorp.com/terraform/language/state |
+
+## Reference — S3 backend checklist
+
+
+| Item | Action |
+|------|--------|
+| Bucket exists | Created by platform team, not this lab |
+| Versioning | Enabled for rollback |
+| Encryption | `encrypt = true` in backend.hcl |
+| Locking | `use_lockfile = true` for Terraform 1.5+ |
+| IAM | Role can `s3:GetObject`, `PutObject`, `DeleteObject` on prefix |
+| Key | Matches `extended/<env>/<component>/terraform.tfstate` pattern |
+
+## Reference — migration safety
+
+
+Never migrate state during an active incident or concurrent apply.
+
+1. Announce maintenance window to team
+2. Copy `terraform.tfstate` to dated backup
+3. Run `terraform state list` and archive output
+4. Execute `terraform init -migrate-state`
+5. Run `terraform plan` — expect **no changes**
+6. If plan shows recreation, **stop** and restore backup
+
+## Reference — remote state consumer
+
+
+Producer stack exports:
+
+```hcl
+output "vpc_id" { value = aws_vpc.this.id }
 ```
 
-```text
-The command output matches the intended environment and ownership boundary.
+Consumer stack reads:
+
+```hcl
+data "terraform_remote_state" "network" {
+  backend = "s3"
+  config = {
+    bucket = "state-bucket"
+    key    = "extended/dev/network/terraform.tfstate"
+    region = "us-east-1"
+  }
+}
 ```
 
-### Control 2 — Remote backend readiness
+Treat output names as API contracts.
 
-Enable bucket versioning before migration so prior state objects can be recovered.
+## Reference — command cheat sheet (continued 2)
 
-**Why it matters:** Terraform state and configuration are operational interfaces. A small convention made explicit before apply prevents accidental cross-environment changes later.
 
-**Evidence to capture**
+| Command | Purpose |
+|---------|---------|
+| `terraform fmt -recursive` | Canonical formatting |
+| `terraform init` | Download providers and configure backend |
+| `terraform validate` | Static type and reference checks |
+| `terraform plan` | Propose infrastructure changes |
+| `terraform apply` | Execute approved plan |
+| `terraform destroy` | Tear down managed resources |
+| `terraform state list` | List addresses in state |
+| `terraform console` | Evaluate expressions interactively |
 
-- The selected workspace and account identity.
-- The reviewed plan summary and state location.
-- The operator responsible for cleanup or rollback.
+## Reference — ownership questions (continued 2)
 
-**Validate**
 
-```bash
-terraform workspace show
-terraform state list
+Before every apply, answer:
+
+1. Which AWS account and region will change?
+2. Where is state stored and who else uses it?
+3. What is the rollback plan if apply fails mid-way?
+4. Who owns cleanup after the lab session ends?
+
+Document answers in your lab notes — they mirror production change reviews.
+
+## Reference — peer review prompts (continued 2)
+
+
+Pair with a colleague and explain:
+
+- What resources this root module owns
+- Which variables are safe to change without replacement
+- What outputs downstream stacks would consume
+- How you would detect configuration drift
+
+Peer review catches wrong-account applies before they happen.
+
+## Reference — extending this lab (continued 2)
+
+
+Optional extensions (not required for completion):
+
+- Add variable validation blocks with `validation` stanzas
+- Export additional outputs for a hypothetical consumer stack
+- Wire an S3 remote backend using patterns from Labs 07–10
+- Add `terraform.workspace` or `var.environment` to resource names
+
+Keep extensions in a personal branch; do not commit training state.
+
+## Reference — documentation links (continued 2)
+
+
+| Topic | URL |
+|-------|-----|
+| Terraform language | https://developer.hashicorp.com/terraform/language |
+| AWS provider | https://registry.terraform.io/providers/hashicorp/aws/latest/docs |
+| CLI commands | https://developer.hashicorp.com/terraform/cli/commands |
+| State storage | https://developer.hashicorp.com/terraform/language/state |
+
+## Reference — S3 backend checklist (continued 2)
+
+
+| Item | Action |
+|------|--------|
+| Bucket exists | Created by platform team, not this lab |
+| Versioning | Enabled for rollback |
+| Encryption | `encrypt = true` in backend.hcl |
+| Locking | `use_lockfile = true` for Terraform 1.5+ |
+| IAM | Role can `s3:GetObject`, `PutObject`, `DeleteObject` on prefix |
+| Key | Matches `extended/<env>/<component>/terraform.tfstate` pattern |
+
+## Reference — migration safety (continued 2)
+
+
+Never migrate state during an active incident or concurrent apply.
+
+1. Announce maintenance window to team
+2. Copy `terraform.tfstate` to dated backup
+3. Run `terraform state list` and archive output
+4. Execute `terraform init -migrate-state`
+5. Run `terraform plan` — expect **no changes**
+6. If plan shows recreation, **stop** and restore backup
+
+## Reference — remote state consumer (continued 2)
+
+
+Producer stack exports:
+
+```hcl
+output "vpc_id" { value = aws_vpc.this.id }
 ```
 
-```text
-The command output matches the intended environment and ownership boundary.
+Consumer stack reads:
+
+```hcl
+data "terraform_remote_state" "network" {
+  backend = "s3"
+  config = {
+    bucket = "state-bucket"
+    key    = "extended/dev/network/terraform.tfstate"
+    region = "us-east-1"
+  }
+}
 ```
 
-### Control 3 — Remote backend readiness
-
-Use server-side encryption and restrict decrypt permissions to Terraform operators.
-
-**Why it matters:** Terraform state and configuration are operational interfaces. A small convention made explicit before apply prevents accidental cross-environment changes later.
-
-**Evidence to capture**
-
-- The selected workspace and account identity.
-- The reviewed plan summary and state location.
-- The operator responsible for cleanup or rollback.
-
-**Validate**
-
-```bash
-terraform workspace show
-terraform state list
-```
-
-```text
-The command output matches the intended environment and ownership boundary.
-```
-
-### Control 4 — Remote backend readiness
-
-Keep the state key distinct from application artifacts and CI logs.
-
-**Why it matters:** Terraform state and configuration are operational interfaces. A small convention made explicit before apply prevents accidental cross-environment changes later.
-
-**Evidence to capture**
-
-- The selected workspace and account identity.
-- The reviewed plan summary and state location.
-- The operator responsible for cleanup or rollback.
-
-**Validate**
-
-```bash
-terraform workspace show
-terraform state list
-```
-
-```text
-The command output matches the intended environment and ownership boundary.
-```
-
-### Control 5 — Remote backend readiness
-
-Record the region because backend region mismatch is a common initialization failure.
-
-**Why it matters:** Terraform state and configuration are operational interfaces. A small convention made explicit before apply prevents accidental cross-environment changes later.
-
-**Evidence to capture**
-
-- The selected workspace and account identity.
-- The reviewed plan summary and state location.
-- The operator responsible for cleanup or rollback.
-
-**Validate**
-
-```bash
-terraform workspace show
-terraform state list
-```
-
-```text
-The command output matches the intended environment and ownership boundary.
-```
-
-### Control 6 — Remote backend readiness
-
-Choose a bucket name that is globally unique and owned by the training account.
-
-**Why it matters:** Terraform state and configuration are operational interfaces. A small convention made explicit before apply prevents accidental cross-environment changes later.
-
-**Evidence to capture**
-
-- The selected workspace and account identity.
-- The reviewed plan summary and state location.
-- The operator responsible for cleanup or rollback.
-
-**Validate**
-
-```bash
-terraform workspace show
-terraform state list
-```
-
-```text
-The command output matches the intended environment and ownership boundary.
-```
-
-### Control 7 — Remote backend readiness
-
-Enable bucket versioning before migration so prior state objects can be recovered.
-
-**Why it matters:** Terraform state and configuration are operational interfaces. A small convention made explicit before apply prevents accidental cross-environment changes later.
-
-**Evidence to capture**
-
-- The selected workspace and account identity.
-- The reviewed plan summary and state location.
-- The operator responsible for cleanup or rollback.
-
-**Validate**
-
-```bash
-terraform workspace show
-terraform state list
-```
-
-```text
-The command output matches the intended environment and ownership boundary.
-```
-
-### Control 8 — Remote backend readiness
-
-Use server-side encryption and restrict decrypt permissions to Terraform operators.
-
-**Why it matters:** Terraform state and configuration are operational interfaces. A small convention made explicit before apply prevents accidental cross-environment changes later.
-
-**Evidence to capture**
-
-- The selected workspace and account identity.
-- The reviewed plan summary and state location.
-- The operator responsible for cleanup or rollback.
-
-**Validate**
-
-```bash
-terraform workspace show
-terraform state list
-```
-
-```text
-The command output matches the intended environment and ownership boundary.
-```
-
-### Control 9 — Remote backend readiness
-
-Keep the state key distinct from application artifacts and CI logs.
-
-**Why it matters:** Terraform state and configuration are operational interfaces. A small convention made explicit before apply prevents accidental cross-environment changes later.
-
-**Evidence to capture**
-
-- The selected workspace and account identity.
-- The reviewed plan summary and state location.
-- The operator responsible for cleanup or rollback.
-
-**Validate**
-
-```bash
-terraform workspace show
-terraform state list
-```
-
-```text
-The command output matches the intended environment and ownership boundary.
-```
-
-### Control 10 — Remote backend readiness
-
-Record the region because backend region mismatch is a common initialization failure.
-
-**Why it matters:** Terraform state and configuration are operational interfaces. A small convention made explicit before apply prevents accidental cross-environment changes later.
-
-**Evidence to capture**
-
-- The selected workspace and account identity.
-- The reviewed plan summary and state location.
-- The operator responsible for cleanup or rollback.
-
-**Validate**
-
-```bash
-terraform workspace show
-terraform state list
-```
-
-```text
-The command output matches the intended environment and ownership boundary.
-```
-
-### Control 11 — Remote backend readiness
-
-Choose a bucket name that is globally unique and owned by the training account.
-
-**Why it matters:** Terraform state and configuration are operational interfaces. A small convention made explicit before apply prevents accidental cross-environment changes later.
-
-**Evidence to capture**
-
-- The selected workspace and account identity.
-- The reviewed plan summary and state location.
-- The operator responsible for cleanup or rollback.
-
-**Validate**
-
-```bash
-terraform workspace show
-terraform state list
-```
-
-```text
-The command output matches the intended environment and ownership boundary.
-```
+Treat output names as API contracts.

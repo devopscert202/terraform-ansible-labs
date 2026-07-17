@@ -3,7 +3,7 @@
 `secrets.yml` ships as **plaintext** so you can practice `ansible-vault encrypt`.
 
 ```bash
-ansible-vault encrypt secrets.yml --encrypt-password-file ~/.vault_pass
+ansible-vault encrypt secrets.yml --vault-password-file ~/.vault_pass
 ```
 
 Do not commit `~/.vault_pass` or production secrets to Git.

@@ -15,3 +15,8 @@ variable "instance_name" {
   type        = string
   default     = "terraform-essentials-web"
 }
+
+variable "ssh_cidr" {
+  description = "CIDR allowed to SSH to the instance (use your public IP/32)."
+  type        = string
+}

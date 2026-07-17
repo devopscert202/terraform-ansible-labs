@@ -1,8 +1,376 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Variables and secrets | Terraform Essentials</title><style>
-:root{--purple:#7B42BC;--ink:#261a33;--muted:#665b70;--paper:#fcfaff;--line:#e8ddf2}*{box-sizing:border-box}body{margin:0;font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink);background:var(--paper)}header{background:var(--purple);color:#fff;padding:3rem max(1.25rem,calc((100% - 960px)/2)) 2.5rem}header h1{margin:0;font-size:2.4rem}header p{max-width:48rem;margin:.5rem 0 0;opacity:.94}nav{background:#fff;border-bottom:1px solid var(--line);padding:.75rem max(1.25rem,calc((100% - 960px)/2));display:flex;gap:1rem;flex-wrap:wrap}nav a{color:var(--purple);font-weight:700;text-decoration:none}main{max-width:960px;margin:auto;padding:2rem 1.25rem 4rem}h2{color:var(--purple);margin-top:2rem}.card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:1.25rem;margin:1rem 0}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem}code,pre{background:#f3edf8;border-radius:5px}code{padding:.15rem .35rem}pre{padding:1rem;overflow:auto}footer{border-top:1px solid var(--line);padding:1rem;text-align:center;color:var(--muted)}.note{border-left:4px solid var(--purple);padding:.8rem 1rem;background:#f6f0fb}</style></head><body><header><h1>Variables and secrets</h1><p>Inputs make configurations reusable; validation prevents unsafe or malformed values.</p></header><nav><a href="index.html">Overview</a><a href="foundations.html">Foundations</a><a href="workflow.html">Workflow</a><a href="variables.html">Variables</a><a href="state.html">State</a><a href="modules.html">Modules</a></nav><main><h2>Use typed inputs</h2><pre>variable "environment" {
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terraform Variables — Inputs, Locals & tfvars</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --purple: #7B42BC; --purple-deep: #5c2d94; --purple-sky: #ede4f7;
+            --ink: #261a33; --muted: #665b70; --line: #e8ddf2;
+            --amber: #fef3c7; --mint: #dcfce7; --slate-700: #334155;
+        }
+        body {
+            font-family: "Segoe UI", system-ui, sans-serif;
+            background: linear-gradient(180deg, #fcfaff 0%, #f3ebfa 100%);
+            color: var(--ink); line-height: 1.6; padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .hero {
+            position: relative; text-align: center; background: white;
+            border-radius: 16px; padding: 34px 32px 28px;
+            box-shadow: 0 4px 18px rgba(123, 66, 188, 0.12);
+            margin-bottom: 26px; border: 1px solid rgba(123, 66, 188, 0.15);
+        }
+        .eyebrow {
+            display: inline-flex; padding: 6px 14px; border-radius: 999px;
+            background: var(--purple-sky); color: var(--purple-deep);
+            font-size: 0.82rem; font-weight: 700; margin-bottom: 12px;
+        }
+        .hero h1 { color: var(--purple); font-size: clamp(1.8rem, 4vw, 2.6rem); }
+        .hero .subtitle { color: var(--muted); max-width: 720px; margin: 8px auto 0; }
+        .home-link {
+            position: absolute; top: 16px; right: 20px; color: var(--purple);
+            text-decoration: none; font-weight: 600; padding: 6px 14px;
+            border-radius: 8px; border: 1px solid rgba(123,66,188,0.2);
+            background: rgba(123,66,188,0.06);
+        }
+        .nav-bar {
+            display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
+            margin-bottom: 20px; padding: 10px; background: white;
+            border-radius: 10px; border: 1px solid var(--line);
+        }
+        .nav-bar a { color: var(--purple); font-weight: 600; text-decoration: none; padding: 6px 12px; border-radius: 6px; font-size: 0.88rem; }
+        .nav-bar a:hover, .nav-bar a.active { background: var(--purple-sky); }
+        .section-title {
+            font-size: 18px; font-weight: bold; color: var(--slate-700);
+            margin: 22px 0 10px; padding: 8px 12px;
+            background: #f4eef9; border-left: 4px solid var(--purple);
+        }
+        .flow-container {
+            display: flex; align-items: center; justify-content: center;
+            flex-wrap: wrap; gap: 10px; margin-bottom: 14px;
+        }
+        .flow-box {
+            background: linear-gradient(135deg, #7B42BC 0%, #9b59d0 100%);
+            color: white; padding: 12px 18px; border-radius: 8px;
+            font-weight: bold; font-size: 13px; cursor: pointer;
+            transition: all 0.3s; min-width: 120px; text-align: center;
+        }
+        .flow-box:hover { transform: translateY(-3px); }
+        .flow-box.var { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .flow-box.local { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: #1a3a2e; }
+        .flow-box.tfvars { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: #4a3728; }
+        .flow-box.env { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        .flow-box.sensitive { background: linear-gradient(135deg, #ff0844 0%, #ffb199 100%); }
+        .arrow { font-size: 22px; color: var(--muted); }
+        .concept-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px; margin: 16px 0;
+        }
+        .concept-card {
+            background: white; border: 2px solid var(--line); border-radius: 10px;
+            padding: 14px; cursor: pointer; transition: all 0.3s;
+        }
+        .concept-card:hover { border-color: var(--purple); }
+        .concept-card.active { border-color: var(--purple); background: #faf5ff; }
+        .concept-card h4 { color: var(--purple); margin-bottom: 4px; font-size: 0.95rem; }
+        .concept-card p { font-size: 0.82rem; color: var(--muted); }
+        .example-scenario {
+            background: var(--amber); border-left: 4px solid #f59e0b;
+            padding: 14px; border-radius: 8px; margin: 16px 0;
+        }
+        .example-scenario h3 { font-size: 14px; color: #92400e; margin-bottom: 6px; }
+        .example-scenario p { font-size: 13px; color: #78350f; }
+        .repo-callout {
+            background: var(--mint); border-left: 4px solid #22c55e;
+            padding: 14px 18px; border-radius: 8px; margin: 16px 0;
+        }
+        .repo-callout ul { margin: 8px 0 0 18px; font-size: 0.9rem; }
+        .detail-panel {
+            background: white; border: 1px solid var(--line); border-radius: 10px;
+            padding: 16px; margin: 12px 0; min-height: 70px;
+        }
+        .detail-panel h4 { color: var(--purple); margin-bottom: 6px; }
+        .code-tabs { display: flex; gap: 5px; flex-wrap: wrap; }
+        .code-tab {
+            padding: 7px 14px; background: #e9ecef; border: none;
+            border-radius: 6px 6px 0 0; cursor: pointer; font-size: 12px; font-weight: bold;
+        }
+        .code-tab.active { background: var(--purple); color: white; }
+        .code-content { display: none; }
+        .code-content.active { display: block; }
+        pre {
+            background: #1e293b; color: #e2e8f0; padding: 14px;
+            border-radius: 0 8px 8px 8px; font-size: 12px; line-height: 1.55; overflow-x: auto;
+        }
+        table {
+            width: 100%; border-collapse: collapse; margin: 14px 0;
+            background: white; border-radius: 8px; overflow: hidden;
+        }
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--line); font-size: 0.88rem; }
+        th { background: var(--purple-sky); color: var(--purple-deep); }
+        .priority-flow {
+            display: flex; flex-direction: column; gap: 8px; margin: 16px 0;
+        }
+        .priority-row {
+            display: flex; align-items: center; gap: 12px;
+            background: white; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line);
+        }
+        .priority-num {
+            background: var(--purple); color: white; width: 28px; height: 28px;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 0.85rem; flex-shrink: 0;
+        }
+        .footer-note { text-align: center; color: var(--muted); font-size: 0.9rem; margin-top: 24px; padding-top: 14px; border-top: 1px solid var(--line); }
+        .footer-note a { color: var(--purple); text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="hero">
+            <a href="index.html" class="home-link">&#8962; Home</a>
+            <div class="eyebrow">Chapter 03 · Variables & Inputs</div>
+            <h1>Variables, Locals &amp; tfvars</h1>
+            <p class="subtitle">Parameterize infrastructure so one configuration deploys dev, staging, and production — without duplicating .tf files or embedding secrets.</p>
+        </header>
+
+        <nav class="nav-bar">
+            <a href="index.html">Overview</a>
+            <a href="foundations.html">Foundations</a>
+            <a href="workflow.html">Workflow</a>
+            <a href="variables.html" class="active">Variables</a>
+            <a href="state.html">State</a>
+            <a href="modules.html">Modules</a>
+        </nav>
+
+        <div class="repo-callout">
+            <strong>Lab files in this repo:</strong>
+            <ul>
+                <li><code>terraform/essentials/labs/lab05-variables/variables.tf</code> — typed variables with defaults and map tags</li>
+                <li><code>terraform/essentials/labs/lab05-variables/main.tf</code> — locals block merging tags onto EC2</li>
+                <li><code>terraform/essentials/labs/lab08-tfvars-secrets/variables.tf</code> — validation rules and sensitive variable</li>
+                <li><code>terraform/essentials/labs/lab08-tfvars-secrets/terraform.tfvars.example</code> — safe example values (no real secrets)</li>
+            </ul>
+        </div>
+
+        <div class="section-title">1. Input Flow — Click Each Source</div>
+        <div class="flow-container">
+            <div class="flow-box env" onclick="showSource('cli')">-var / -var-file</div>
+            <span class="arrow">→</span>
+            <div class="flow-box tfvars" onclick="showSource('tfvars')">terraform.tfvars</div>
+            <span class="arrow">→</span>
+            <div class="flow-box env" onclick="showSource('tfvar')">TF_VAR_*</div>
+            <span class="arrow">→</span>
+            <div class="flow-box var" onclick="showSource('default')">default =</div>
+        </div>
+        <div class="detail-panel" id="source-detail">
+            <h4>Variable precedence (highest wins)</h4>
+            <p>Command-line <code>-var</code> overrides <code>*.auto.tfvars</code>, which overrides <code>terraform.tfvars</code>, which overrides <code>TF_VAR_</code> environment variables, which overrides the <code>default</code> in the variable block.</p>
+        </div>
+
+        <div class="section-title">2. Variable vs Local vs Output</div>
+        <div class="flow-container">
+            <div class="flow-box var" onclick="showConcept('variable')">variable</div>
+            <span class="arrow">|</span>
+            <div class="flow-box local" onclick="showConcept('local')">locals</div>
+            <span class="arrow">|</span>
+            <div class="flow-box tfvars" onclick="showConcept('output')">output</div>
+        </div>
+        <div class="concept-grid">
+            <div class="concept-card" onclick="showConcept('variable')">
+                <h4>Input Variables</h4>
+                <p>External inputs — set via tfvars, CLI, or TF_VAR_</p>
+            </div>
+            <div class="concept-card" onclick="showConcept('local')">
+                <h4>Local Values</h4>
+                <p>Internal computed values — not settable from outside</p>
+            </div>
+            <div class="concept-card" onclick="showConcept('type')">
+                <h4>Type Constraints</h4>
+                <p>string, number, bool, list, map, object</p>
+            </div>
+            <div class="concept-card" onclick="showConcept('validation')">
+                <h4>Validation Rules</h4>
+                <p>Reject invalid input before plan (Lab 08)</p>
+            </div>
+            <div class="concept-card" onclick="showConcept('sensitive')">
+                <h4>Sensitive Flag</h4>
+                <p>Redacts CLI output; still stored in state</p>
+            </div>
+            <div class="concept-card" onclick="showConcept('merge')">
+                <h4>merge() Function</h4>
+                <p>Combine tag maps in Lab 05 locals</p>
+            </div>
+        </div>
+
+        <div class="example-scenario">
+            <h3>Lab 05 Scenario: Tag Merge</h3>
+            <p><strong>Input:</strong> <code>var.tags</code> = { Environment = "training", Owner = "platform-team" }</p>
+            <p><strong>Local:</strong> <code>common_tags</code> merges var.tags with Name, Service, ManagedBy</p>
+            <p><strong>Result:</strong> EC2 instance gets all five tags from a single <code>tags = local.common_tags</code> line</p>
+        </div>
+
+        <div class="section-title">3. HCL Examples (Code Tabs)</div>
+        <div class="code-tabs">
+            <button class="code-tab active" onclick="switchTab('declare')">Declare Variable</button>
+            <button class="code-tab" onclick="switchTab('locals')">Locals (Lab 05)</button>
+            <button class="code-tab" onclick="switchTab('tfvars')">terraform.tfvars</button>
+            <button class="code-tab" onclick="switchTab('validation')">Validation (Lab 08)</button>
+            <button class="code-tab" onclick="switchTab('secret')">Secret via TF_VAR</button>
+        </div>
+        <div class="code-content active" id="tab-declare">
+<pre>variable "instance_type" {
+  description = "EC2 instance type."
+  type        = string
+  default     = "t3.micro"
+}
+
+variable "tags" {
+  type = map(string)
+  default = {
+    Environment = "training"
+    Owner       = "platform-team"
+  }
+}</pre>
+        </div>
+        <div class="code-content" id="tab-locals">
+<pre>locals {
+  common_tags = merge(var.tags, {
+    Name      = var.server_name
+    Service   = "terraform-essentials"
+    ManagedBy = "Terraform"
+  })
+}
+
+resource "aws_instance" "web" {
+  ami           = data.aws_ami.ubuntu.id
+  instance_type = var.instance_type
+  tags          = local.common_tags
+}</pre>
+        </div>
+        <div class="code-content" id="tab-tfvars">
+<pre># lab05 — override defaults without editing .tf files
+aws_region    = "us-east-1"
+server_name   = "variables-lab-web"
+instance_type = "t3.micro"
+
+tags = {
+  Environment = "training"
+  Owner       = "platform-team"
+}</pre>
+        </div>
+        <div class="code-content" id="tab-validation">
+<pre>variable "cloud" {
   type = string
   validation {
-    condition     = contains(["dev", "test", "prod"], var.environment)
-    error_message = "Use dev, test, or prod."
+    condition     = contains(["aws", "azure", "gcp", "vmware"], var.cloud)
+    error_message = "cloud must be aws, azure, gcp, or vmware."
   }
-}</pre><p>Use <code>terraform.tfvars</code> for non-secret local values. Pass secrets at runtime via a protected system such as CI secret variables or <code>TF_VAR_name</code>. Mark sensitive inputs and outputs, but protect state too: it can still store the underlying value.</p></main><footer>Terraform Essentials · Terraform 1.5+ · AWS provider ~&gt; 5.0</footer></body></html>
+}
+
+variable "cost_code" {
+  type = string
+  validation {
+    condition     = length(var.cost_code) == 3
+    error_message = "cost_code must contain exactly three characters."
+  }
+}</pre>
+        </div>
+        <div class="code-content" id="tab-secret">
+<pre># Never commit real secrets to terraform.tfvars
+export TF_VAR_phone_number="example-only-not-real"
+
+# Or use a gitignored file:
+# terraform.tfvars  (add to .gitignore)
+# phone_number is marked sensitive = true in variables.tf</pre>
+        </div>
+
+        <div class="section-title">4. Variable Precedence (Highest First)</div>
+        <div class="priority-flow">
+            <div class="priority-row"><div class="priority-num">1</div><div><strong>-var and -var-file on CLI</strong> — explicit overrides for one-off runs</div></div>
+            <div class="priority-row"><div class="priority-num">2</div><div><strong>*.auto.tfvars</strong> — loaded automatically (alphabetical order)</div></div>
+            <div class="priority-row"><div class="priority-num">3</div><div><strong>terraform.tfvars</strong> — conventional environment-specific values</div></div>
+            <div class="priority-row"><div class="priority-num">4</div><div><strong>TF_VAR_name environment variables</strong> — ideal for secrets in CI</div></div>
+            <div class="priority-row"><div class="priority-num">5</div><div><strong>default in variable block</strong> — fallback when nothing else is set</div></div>
+        </div>
+
+        <div class="section-title">5. Type Reference</div>
+        <table>
+            <tr><th>Type</th><th>Example Value</th><th>Use Case</th></tr>
+            <tr><td>string</td><td>"us-east-1"</td><td>Regions, names, CIDR strings</td></tr>
+            <tr><td>number</td><td>3</td><td>Counts, port numbers</td></tr>
+            <tr><td>bool</td><td>true</td><td>Feature flags</td></tr>
+            <tr><td>list(string)</td><td>["a", "b"]</td><td>AZ lists, subnet IDs</td></tr>
+            <tr><td>map(string)</td><td>{ Env = "dev" }</td><td>Tags, labels</td></tr>
+            <tr><td>object({...})</td><td>structured</td><td>Grouped settings with schema</td></tr>
+        </table>
+
+        <div class="section-title">6. Lab 08 — Safe Secret Handling</div>
+        <div class="flow-container">
+            <div class="flow-box sensitive" onclick="showSource('nosource')">Never in .tf</div>
+            <span class="arrow">→</span>
+            <div class="flow-box env" onclick="showSource('tfvar')">TF_VAR_phone_number</div>
+            <span class="arrow">→</span>
+            <div class="flow-box var" onclick="showSource('sensitive')">sensitive = true</div>
+            <span class="arrow">→</span>
+            <div class="flow-box local" onclick="showSource('output')">Redacted output</div>
+        </div>
+
+        <div class="example-scenario">
+            <h3>Common Mistakes</h3>
+            <p>❌ Committing <code>terraform.tfvars</code> with real API keys or passwords</p>
+            <p>❌ Using untyped variables when type constraints would catch errors early</p>
+            <p>❌ Thinking <code>sensitive = true</code> keeps values out of state (it does not)</p>
+            <p>✅ Use <code>terraform.tfvars.example</code> with placeholder values in git; real values via TF_VAR or secret manager</p>
+        </div>
+
+        <p class="footer-note">
+            Terraform Essentials · Terraform 1.5+ · AWS provider ~&gt; 5.0<br>
+            <a href="state.html">Next: State →</a> · <a href="../labmanuals/lab05-variables.md">Lab 05 Manual</a>
+        </p>
+    </div>
+
+    <script>
+        const sourceInfo = {
+            cli: 'Command-line -var "name=value" or -var-file=prod.tfvars overrides all other sources. Useful for CI pipelines passing build-specific values.',
+            tfvars: 'terraform.tfvars is auto-loaded if present. Use terraform.tfvars.example in git with safe placeholders; add real tfvars to .gitignore.',
+            tfvar: 'Environment variables TF_VAR_<name> map to variables. Example: export TF_VAR_phone_number=secret — used in Lab 08 for sensitive values.',
+            default: 'The default attribute in a variable block is the lowest precedence. Good for sensible fallbacks like instance_type = "t3.micro".',
+            nosource: 'Never put secrets in .tf source files. They are committed to version control and visible in plan output.',
+            sensitive: 'sensitive = true on a variable or output redacts values in normal terraform plan/apply CLI output. Values still exist in state — protect state accordingly.',
+            output: 'Sensitive outputs show (sensitive value) unless you run terraform output -raw name explicitly.'
+        };
+
+        function showSource(key) {
+            document.getElementById('source-detail').innerHTML = '<h4>' + key + '</h4><p>' + (sourceInfo[key] || '') + '</p>';
+        }
+
+        const conceptInfo = {
+            variable: 'Input variables are the public API of a module or root module. Callers set them via tfvars, CLI flags, or environment variables.',
+            local: 'Locals are computed inside the configuration. Lab 05 uses locals.common_tags = merge(var.tags, {...}) to avoid repeating tag logic.',
+            output: 'Outputs export values after apply. They can also be sensitive. Downstream modules or scripts consume outputs.',
+            type: 'Type constraints catch errors at validate time. map(string) for tags, string for regions. Without types, Terraform infers but gives weaker errors.',
+            validation: 'validation blocks run custom conditions. Lab 08 validates cloud is in an allowed list and cost_code is exactly 3 characters.',
+            sensitive: 'Mark variables and outputs sensitive to reduce accidental exposure in logs. Combine with TF_VAR_ for injection.',
+            merge: 'merge(a, b, ...) combines maps. Later keys override earlier keys. Perfect for base tags + resource-specific tags.'
+        };
+
+        function showConcept(key) {
+            document.querySelectorAll('.concept-card').forEach(c => c.classList.remove('active'));
+            if (event && event.currentTarget && event.currentTarget.classList.contains('concept-card')) {
+                event.currentTarget.classList.add('active');
+            }
+            document.getElementById('source-detail').innerHTML = '<h4>' + key + '</h4><p>' + conceptInfo[key] + '</p>';
+        }
+
+        function switchTab(name) {
+            document.querySelectorAll('.code-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.code-content').forEach(c => c.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('tab-' + name).classList.add('active');
+        }
+    </script>
+</body>
+</html>

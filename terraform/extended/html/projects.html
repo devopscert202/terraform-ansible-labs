@@ -1,1 +1,400 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Project design and capstones | Terraform Extended</title><style>:root{--purple:#6236a5;--ink:#21172d;--paper:#fcfaff;--line:#e8ddf2}*{box-sizing:border-box}body{margin:0;font:16px/1.6 system-ui,sans-serif;color:var(--ink);background:var(--paper)}header{background:var(--purple);color:#fff;padding:3rem max(1.25rem,calc((100% - 960px)/2))}main,nav{max-width:960px;margin:auto;padding:1rem 1.25rem}nav a{margin-right:1rem;color:var(--purple);font-weight:700}section{background:#fff;border:1px solid var(--line);border-radius:10px;padding:1.25rem;margin:1rem 0}code,pre{background:#f3edf8;padding:.2rem .4rem;border-radius:4px}pre{padding:1rem;overflow:auto}</style></head><body><header><h1>Project design and capstones</h1></header><nav><a href="index.html">Overview</a><a href="state.html">State</a><a href="provisioners.html">Provisioners</a><a href="functions.html">Functions</a><a href="projects.html">Projects</a></nav><main><section><p>A Terraform project should have a narrow ownership boundary, a dedicated state key, explicit provider constraints, and repeatable inputs. Start with a small network or service boundary, then add outputs that consumers need rather than exposing every resource detail.</p><p>Use workspaces only when configurations remain substantially the same; use separate root modules and state for materially different environments. Tag cloud resources consistently and plan destructive changes in a reviewed workflow.</p><p>Before calling a project complete, run formatting, initialization, validation, a reviewed plan, apply only with correct authorization, and destroy temporary training infrastructure.</p></section><section><h2>Related labs</h2><p>Use the matching lab manual before applying any cloud example. Run <code>terraform fmt -recursive</code> and <code>terraform validate</code> before plan.</p></section></main></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Capstone Project Architecture | Terraform Extended</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --purple: #6236a5; --purple-deep: #4a2780; --purple-sky: #ede4f7;
+            --ink: #21172d; --muted: #6b5b7a; --line: #e8ddf2;
+            --amber: #fef3c7; --mint: #dcfce7;
+        }
+        body {
+            font-family: "Segoe UI", system-ui, sans-serif;
+            background: linear-gradient(180deg, #fcfaff 0%, #f3ebfa 100%);
+            padding: 20px; line-height: 1.6; color: var(--ink);
+        }
+        .container { max-width: 1380px; margin: 0 auto; }
+        .hero {
+            position: relative; text-align: center; background: white;
+            border-radius: 16px; padding: 34px 32px 28px;
+            box-shadow: 0 4px 18px rgba(98,54,165,0.1); margin-bottom: 20px;
+            border: 1px solid rgba(98,54,165,0.12);
+        }
+        .eyebrow {
+            display: inline-flex; padding: 6px 12px; border-radius: 999px;
+            background: var(--purple-sky); color: var(--purple-deep);
+            font-size: 0.82rem; font-weight: 700; margin-bottom: 12px;
+        }
+        .hero h1 { color: var(--purple); font-size: clamp(1.8rem, 4vw, 2.5rem); }
+        .hero p { color: var(--muted); max-width: 760px; margin: 8px auto 0; }
+        .home-link {
+            position: absolute; top: 16px; right: 20px; color: var(--purple);
+            text-decoration: none; font-weight: 600; padding: 6px 14px;
+            border-radius: 8px; border: 1px solid rgba(98,54,165,0.18);
+            background: rgba(98,54,165,0.06);
+        }
+        .topnav {
+            display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+            margin-bottom: 18px; padding: 12px; background: white;
+            border-radius: 12px; border: 1px solid var(--line);
+        }
+        .topnav a { color: var(--purple); text-decoration: none; font-weight: 600; padding: 6px 14px; border-radius: 8px; font-size: 0.9rem; }
+        .topnav a:hover { background: var(--purple-sky); }
+        .flow-section {
+            background: white; border-radius: 12px; padding: 18px;
+            border: 1px solid var(--line); margin-bottom: 16px;
+        }
+        .section-title {
+            font-size: 17px; font-weight: bold; color: #3d2f4d;
+            margin-bottom: 12px; padding: 8px 12px; background: var(--purple-sky);
+            border-left: 4px solid var(--purple); border-radius: 0 8px 8px 0;
+        }
+        .arch-diagram {
+            display: grid; grid-template-columns: 1fr; gap: 12px; max-width: 900px; margin: 0 auto;
+        }
+        .arch-layer {
+            border: 2px solid var(--line); border-radius: 12px; padding: 16px;
+            text-align: center; cursor: pointer; transition: all 0.2s;
+        }
+        .arch-layer:hover, .arch-layer.active {
+            border-color: var(--purple); background: var(--purple-sky);
+        }
+        .arch-layer .title { font-weight: 800; color: var(--purple); font-size: 14px; }
+        .arch-layer .items { font-size: 12px; color: #3d2f4d; margin-top: 6px; }
+        .arch-arrow { text-align: center; font-size: 24px; color: var(--muted); }
+        .env-row { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+        .env-box {
+            flex: 1; min-width: 200px; max-width: 280px;
+            background: linear-gradient(135deg, #faf7fd, white);
+            border: 2px solid var(--line); border-radius: 10px; padding: 14px;
+            cursor: pointer;
+        }
+        .env-box:hover, .env-box.active { border-color: var(--purple); }
+        .env-box h4 { color: var(--purple); font-size: 13px; margin-bottom: 6px; }
+        .env-box p { font-size: 11px; color: var(--muted); }
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+        .card { background: #faf7fd; border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+        .card h3 { font-size: 13px; color: var(--purple); margin-bottom: 6px; }
+        .card p { font-size: 12px; color: #3d2f4d; }
+        .code-tabs { display: flex; gap: 5px; margin-bottom: 8px; flex-wrap: wrap; }
+        .code-tab {
+            padding: 6px 12px; background: #f3edf8; border: none; border-radius: 6px 6px 0 0;
+            cursor: pointer; font-size: 12px; font-weight: bold;
+        }
+        .code-tab.active { background: var(--purple); color: white; }
+        .code-content { display: none; }
+        .code-content.active { display: block; }
+        pre {
+            background: #2d2438; color: #ede4f7; padding: 14px; border-radius: 8px;
+            overflow-x: auto; font-size: 11px; line-height: 1.55;
+        }
+        .repo-box {
+            background: var(--mint); border-left: 4px solid #22c55e;
+            padding: 14px 16px; border-radius: 8px; margin-bottom: 14px;
+        }
+        .repo-box ul { margin: 8px 0 0 18px; font-size: 13px; }
+        .detail-panel {
+            background: var(--purple-sky); border-radius: 8px; padding: 12px 16px;
+            margin-top: 12px; font-size: 13px; color: var(--purple-deep);
+        }
+        .footer-note { text-align: center; color: var(--muted); font-size: 0.9rem; margin-top: 18px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header class="hero">
+        <a href="index.html" class="home-link">&#8962; Home</a>
+        <div class="eyebrow">Lab 15 · Capstone</div>
+        <h1>Multi-Environment Capstone Architecture</h1>
+        <p>Combine remote state patterns, map-driven subnets, workspace naming, tagging, and narrow outputs into a production-shaped VPC root module.</p>
+    </header>
+
+    <nav class="topnav">
+        <a href="index.html">Overview</a>
+        <a href="state.html">State</a>
+        <a href="provisioners.html">Provisioners</a>
+        <a href="functions.html">Functions</a>
+        <a href="projects.html">Projects</a>
+    </nav>
+
+    <div class="repo-box">
+        <strong>Repository lab path:</strong>
+        <ul>
+            <li><code>terraform/extended/labs/lab15-capstone-projects/main.tf</code> — VPC + public subnets</li>
+            <li><code>terraform/extended/labs/lab15-capstone-projects/variables.tf</code> — typed inputs</li>
+            <li><code>terraform/extended/labs/lab15-capstone-projects/terraform.tfvars.example</code> — sample values</li>
+        </ul>
+    </div>
+
+    <div class="flow-section">
+        <div class="section-title">1. Capstone architecture (click a layer)</div>
+        <div class="arch-diagram">
+            <div class="arch-layer" onclick="showLayer('inputs')">
+                <div class="title">📥 Inputs</div>
+                <div class="items">aws_region · project · vpc_cidr · public_subnets map · tags</div>
+            </div>
+            <div class="arch-arrow">▼</div>
+            <div class="arch-layer" onclick="showLayer('locals')">
+                <div class="title">⚙️ Locals &amp; Workspace</div>
+                <div class="items">name = "${project}-${workspace}" · merged tags</div>
+            </div>
+            <div class="arch-arrow">▼</div>
+            <div class="arch-layer" onclick="showLayer('network')">
+                <div class="title">🌐 Network resources</div>
+                <div class="items">aws_vpc · aws_subnet (for_each public_subnets)</div>
+            </div>
+            <div class="arch-arrow">▼</div>
+            <div class="arch-layer" onclick="showLayer('outputs')">
+                <div class="title">📤 Outputs</div>
+                <div class="items">vpc_id · public_subnet_ids map</div>
+            </div>
+            <div class="arch-arrow">▼</div>
+            <div class="arch-layer" onclick="showLayer('state')">
+                <div class="title">🗄️ Remote state (production)</div>
+                <div class="items">S3 key per env · lockfile · consumer via terraform_remote_state</div>
+            </div>
+        </div>
+        <div id="layer-detail" class="detail-panel">Click a layer to see design rationale and lab connections.</div>
+    </div>
+
+    <div class="flow-section">
+        <div class="section-title">2. Multi-environment layout</div>
+        <div class="env-row">
+            <div class="env-box active" onclick="showEnv('dev')">
+                <h4>dev workspace</h4>
+                <p>State key: extended/dev/network/terraform.tfstate<br>Name prefix: capstone-dev</p>
+            </div>
+            <div class="env-box" onclick="showEnv('staging')">
+                <h4>staging workspace</h4>
+                <p>Isolated CIDR range · separate state key · same module code</p>
+            </div>
+            <div class="env-box" onclick="showEnv('prod')">
+                <h4>prod workspace</h4>
+                <p>prevent_destroy on critical resources · reviewed plans · change windows</p>
+            </div>
+        </div>
+        <div id="env-detail" class="detail-panel">Dev uses default workspace or terraform workspace select dev. Each environment should have its own state key when configs diverge materially.</div>
+    </div>
+
+    <div class="flow-section">
+        <div class="section-title">3. Code tabs — capstone module</div>
+        <div class="code-tabs">
+            <button class="code-tab active" onclick="showCode('main')">main.tf</button>
+            <button class="code-tab" onclick="showCode('vars')">variables.tf</button>
+            <button class="code-tab" onclick="showCode('tfvars')">terraform.tfvars</button>
+            <button class="code-tab" onclick="showCode('consumer')">Downstream consumer</button>
+        </div>
+        <div id="main-code" class="code-content active">
+<pre>locals { name = "${var.project}-${terraform.workspace}" }
+
+resource "aws_vpc" "this" {
+  cidr_block           = var.vpc_cidr
+  enable_dns_hostnames = true
+  tags                 = merge(var.tags, { Name = local.name })
+}
+
+resource "aws_subnet" "public" {
+  for_each                = var.public_subnets
+  vpc_id                  = aws_vpc.this.id
+  cidr_block              = each.value.cidr
+  availability_zone       = each.value.az
+  map_public_ip_on_launch = true
+  tags                    = merge(var.tags, { Name = "${local.name}-${each.key}" })
+}</pre>
+        </div>
+        <div id="vars-code" class="code-content">
+<pre>variable "public_subnets" {
+  type = map(object({ cidr = string, az = string }))
+  default = {
+    public_a = { cidr = "10.50.1.0/24", az = "us-east-1a" }
+    public_b = { cidr = "10.50.2.0/24", az = "us-east-1b" }
+  }
+}
+
+variable "tags" {
+  type    = map(string)
+  default = { managed_by = "terraform", course = "extended" }
+}</pre>
+        </div>
+        <div id="tfvars-code" class="code-content">
+<pre>aws_region = "us-east-1"
+project    = "capstone"
+# Use AWS_PROFILE or IAM role — never access keys here
+
+public_subnets = {
+  public_a = { cidr = "10.50.1.0/24", az = "us-east-1a" }
+  public_b = { cidr = "10.50.2.0/24", az = "us-east-1b" }
+}</pre>
+        </div>
+        <div id="consumer-code" class="code-content">
+<pre># Separate root module reads narrow outputs:
+data "terraform_remote_state" "network" {
+  backend = "s3"
+  config = {
+    bucket = "your-state-bucket"
+    key    = "extended/dev/network/terraform.tfstate"
+    region = "us-east-1"
+  }
+}
+
+resource "aws_instance" "app" {
+  subnet_id = values(data.terraform_remote_state.network.outputs.public_subnet_ids)[0]
+}</pre>
+        </div>
+    </div>
+
+    <div class="flow-section">
+        <div class="section-title">4. Project design principles</div>
+        <div class="card-grid">
+            <div class="card">
+                <h3>Ownership boundary</h3>
+                <p>This root module owns VPC and public subnets only. Shared services live in other state files.</p>
+            </div>
+            <div class="card">
+                <h3>Stable map keys</h3>
+                <p>public_a and public_b keys survive reordering. Adding public_c does not recreate existing subnets.</p>
+            </div>
+            <div class="card">
+                <h3>Tagging standard</h3>
+                <p>merge(var.tags, ...) applies platform tags consistently. Environment comes from workspace or tfvars.</p>
+            </div>
+            <div class="card">
+                <h3>Narrow outputs</h3>
+                <p>Export vpc_id and subnet map — not every attribute. Consumers depend on contracts, not internals.</p>
+            </div>
+            <div class="card">
+                <h3>Provider pinning</h3>
+                <p>required_providers block locks major versions. Run terraform init -upgrade deliberately.</p>
+            </div>
+            <div class="card">
+                <h3>Definition of done</h3>
+                <p>fmt · init · validate · reviewed plan · apply · verify outputs · destroy training resources.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="flow-section">
+        <div class="section-title">5. Delivery workflow</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;font-size:12px;font-weight:bold;">
+            <span style="background:var(--purple-sky);padding:10px 14px;border-radius:8px;">PR + review</span> →
+            <span style="background:var(--purple-sky);padding:10px 14px;border-radius:8px;">terraform plan</span> →
+            <span style="background:var(--purple-sky);padding:10px 14px;border-radius:8px;">approval gate</span> →
+            <span style="background:var(--purple-sky);padding:10px 14px;border-radius:8px;">terraform apply</span> →
+            <span style="background:var(--purple-sky);padding:10px 14px;border-radius:8px;">smoke test</span> →
+            <span style="background:var(--purple-sky);padding:10px 14px;border-radius:8px;">document outputs</span>
+        </div>
+    </div>
+
+    
+    <div class="flow-section">
+        <div class="section-title">6. Full apply workflow (Lab 15)</div>
+        <pre>cd terraform/extended/labs/lab15-capstone-projects
+cp terraform.tfvars.example terraform.tfvars
+export AWS_PROFILE=training
+terraform init
+terraform validate
+terraform plan
+terraform apply
+terraform output
+terraform destroy</pre>
+    </div>
+    <div class="flow-section">
+        <div class="section-title">7. Module growth path</div>
+        <div class="card-grid">
+            <div class="card"><h3>Phase 1</h3><p>VPC + public subnets (current lab)</p></div>
+            <div class="card"><h3>Phase 2</h3><p>Internet gateway + routes</p></div>
+            <div class="card"><h3>Phase 3</h3><p>NAT gateway + private subnets</p></div>
+            <div class="card"><h3>Phase 4</h3><p>Extract reusable module</p></div>
+        </div>
+    </div>
+    <div class="flow-section">
+        <div class="section-title">8. Workspace operations</div>
+        <pre>terraform workspace list
+terraform workspace new dev
+terraform workspace select dev
+terraform workspace show</pre>
+    </div>
+
+    <div class="flow-section">
+        <div class="section-title">9. Cost and cleanup</div>
+        <p style="font-size:13px;margin-bottom:8px;">Lab 15 creates a VPC and subnets — generally no hourly charge. Avoid leaving unused NAT gateways or Elastic IPs from extended exercises.</p>
+        <pre>terraform destroy
+# Confirm in AWS Console: VPC deleted, subnets removed</pre>
+    </div>
+
+    <div class="flow-section">
+        <div class="section-title">10. Capstone rubric</div>
+        <table style="width:100%;font-size:13px;border-collapse:collapse;">
+            <tr style="background:var(--purple-sky);"><th style="padding:8px;text-align:left;">Criterion</th><th style="padding:8px;">Done</th></tr>
+            <tr><td style="padding:8px;border-bottom:1px solid var(--line);">terraform fmt -check passes</td><td style="padding:8px;border-bottom:1px solid var(--line);">☐</td></tr>
+            <tr><td style="padding:8px;border-bottom:1px solid var(--line);">validate succeeds before plan</td><td style="padding:8px;border-bottom:1px solid var(--line);">☐</td></tr>
+            <tr><td style="padding:8px;border-bottom:1px solid var(--line);">Plan reviewed in correct AWS account</td><td style="padding:8px;border-bottom:1px solid var(--line);">☐</td></tr>
+            <tr><td style="padding:8px;border-bottom:1px solid var(--line);">Tags visible on VPC and subnets</td><td style="padding:8px;border-bottom:1px solid var(--line);">☐</td></tr>
+            <tr><td style="padding:8px;">Outputs match console resource IDs</td><td style="padding:8px;">☐</td></tr>
+        </table>
+    </div>
+
+    <div class="flow-section">
+        <div class="section-title">11. Integrating remote state (next steps)</div>
+        <p style="font-size:13px;">After capstone apply, point Lab 11 consumer at this stack's state (local path or S3 key) and verify <code>upstream_outputs</code> includes <code>vpc_id</code> and <code>public_subnet_ids</code> once you add those outputs to a producer apply.</p>
+    </div>
+
+    <div class="flow-section">
+        <div class="section-title">12. Extension exercises</div>
+        <ul style="font-size:13px;padding-left:20px;line-height:1.8;">
+            <li>Add an internet gateway and public route table to Lab 15</li>
+            <li>Introduce <code>variable validation</code> on <code>vpc_cidr</code></li>
+            <li>Configure S3 backend using Labs 07–08 key naming</li>
+            <li>Consume this stack from Lab 11 with updated outputs</li>
+        </ul>
+    </div>
+
+    <div class="flow-section">
+        <div class="section-title">13. Skills matrix</div>
+        <table style="width:100%;font-size:12px;border-collapse:collapse;">
+            <tr style="background:var(--purple-sky);"><th style="padding:6px;">Skill</th><th style="padding:6px;">Lab</th></tr>
+            <tr><td style="padding:6px;border-bottom:1px solid var(--line);">Map-driven subnets</td><td style="padding:6px;border-bottom:1px solid var(--line);">12, 15</td></tr>
+            <tr><td style="padding:6px;border-bottom:1px solid var(--line);">Workspace naming</td><td style="padding:6px;border-bottom:1px solid var(--line);">06, 15</td></tr>
+            <tr><td style="padding:6px;border-bottom:1px solid var(--line);">Tagging</td><td style="padding:6px;border-bottom:1px solid var(--line);">15</td></tr>
+            <tr><td style="padding:6px;">Output contracts</td><td style="padding:6px;">11, 15</td></tr>
+        </table>
+    </div>
+
+    <p class="footer-note">Deep dive: <code>terraform/extended/docs/projects/README.md</code> · Manual: <code>lab15-capstone-projects.md</code></p>
+</div>
+
+<script>
+const layerInfo = {
+    inputs: 'Typed variables with object shapes catch mistakes at plan time. The public_subnets map is the same pattern as Lab 12 collections.',
+    locals: 'Workspace-aware naming (capstone-dev) avoids hardcoding environment strings. Derived in one place, used in all tags.',
+    network: 'VPC is singular; subnets use for_each. This matches Lab 15 main.tf exactly. DNS hostnames enabled for future workloads.',
+    outputs: 'vpc_id and public_subnet_ids are the contract for Lab 11-style consumers. Do not export route tables unless required.',
+    state: 'In production, add backend "s3" {} and backend.hcl per Lab 07-10. Capstone can run locally for training; remote state is the target operating model.'
+};
+function showLayer(layer) {
+    document.querySelectorAll('.arch-layer').forEach(l => l.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+    document.getElementById('layer-detail').textContent = layerInfo[layer];
+}
+const envInfo = {
+    dev: 'Developers iterate quickly. Small CIDR, relaxed destroy policy, local or shared dev state bucket.',
+    staging: 'Production-like config with non-prod data. Separate state key and IAM role. Plans required before apply.',
+    prod: 'Change windows, peer review, optional prevent_destroy on VPC. State bucket with versioning and strict IAM.'
+};
+function showEnv(env) {
+    document.querySelectorAll('.env-box').forEach(e => e.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+    document.getElementById('env-detail').textContent = envInfo[env];
+}
+function showCode(type) {
+    document.querySelectorAll('.code-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.code-tab').forEach(el => el.classList.remove('active'));
+    document.getElementById(type + '-code').classList.add('active');
+    event.target.classList.add('active');
+}
+</script>
+</body>
+</html>

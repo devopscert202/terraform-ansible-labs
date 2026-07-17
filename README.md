@@ -90,7 +90,7 @@ flowchart LR
 
 ## How to use lab manuals
 
-Lab manuals are Markdown files under `labmanuals/`. Each essentials lab is **80–180 lines** — scannable, with validation after every step.
+Lab manuals are Markdown files under `labmanuals/`. Each essentials lab is **300–500+ lines** — step-by-step with validation after every command.
 
 ### Typical workflow
 

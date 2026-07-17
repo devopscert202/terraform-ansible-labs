@@ -1,89 +1,373 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Inventory Flow</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    :root { --red: #EE0000; --ink: #1a1a1a; --muted: #64748b; --line: #e2e8f0; }
-    body { font-family: "Segoe UI", system-ui, sans-serif; background: #fafafa; color: var(--ink); line-height: 1.6; padding: 20px; }
-    .wrap { max-width: 960px; margin: 0 auto; }
-    header { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 24px; margin-bottom: 20px; text-align: center; }
-    h1 { color: var(--red); }
-    .controls { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 16px; }
-    .btn { border: 2px solid var(--red); background: #fff; color: var(--red); padding: 8px 16px; border-radius: 8px; font-weight: 700; cursor: pointer; }
-    .btn.active, .btn:hover { background: var(--red); color: #fff; }
-    .panel { display: none; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 24px; margin-bottom: 16px; }
-    .panel.active { display: block; }
-    .tree { font-family: ui-monospace, monospace; background: #f8fafc; padding: 16px; border-radius: 8px; font-size: 0.88rem; line-height: 1.8; }
-    .diagram { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; margin-top: 16px; }
-    .group-box { border: 2px solid var(--red); border-radius: 10px; padding: 14px 18px; min-width: 160px; text-align: center; }
-    .group-box.db { border-color: #334155; }
-    .vars { margin-top: 16px; padding: 12px; background: #fff5f5; border-left: 4px solid var(--red); border-radius: 0 8px 8px 0; font-size: 0.9rem; }
-    pre { background: #1e1e1e; color: #f1f5f9; padding: 14px; border-radius: 8px; font-size: 0.82rem; overflow-x: auto; margin-top: 10px; }
-    .back { display: inline-block; margin-top: 16px; color: var(--red); text-decoration: none; font-weight: 600; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Flow — Groups, Host Vars, and group_vars</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --red: #EE0000; --red-deep: #c40000; --red-light: #fff0f0;
+            --ink: #1a1a2e; --muted: #64748b; --surface: #fff; --line: #e2e8f0;
+            --web: #EE0000; --db: #334155; --all: #2563eb;
+        }
+        body { font-family: "Segoe UI", system-ui, sans-serif; background: linear-gradient(180deg, #fafafa 0%, #f1f5f9 100%); padding: 20px; line-height: 1.6; color: var(--ink); }
+        .container { max-width: 1380px; margin: 0 auto; }
+        .hero { position: relative; text-align: center; background: var(--surface); border-radius: 16px; padding: 34px 32px 28px; box-shadow: 0 4px 18px rgba(0,0,0,0.08); margin-bottom: 26px; border: 1px solid rgba(238,0,0,0.1); }
+        .eyebrow { display: inline-flex; padding: 6px 12px; border-radius: 999px; background: var(--red-light); color: var(--red-deep); font-size: 0.82rem; font-weight: 700; margin-bottom: 12px; }
+        .hero h1 { color: var(--red); font-size: clamp(1.8rem, 4vw, 2.6rem); margin-bottom: 8px; }
+        .hero p { color: var(--muted); }
+        .home-link { position: absolute; top: 16px; right: 20px; color: var(--red); text-decoration: none; font-weight: 600; padding: 6px 14px; border-radius: 8px; border: 1px solid rgba(238,0,0,0.18); background: rgba(238,0,0,0.06); }
+        .home-link:hover { background: rgba(238,0,0,0.13); }
+        .repo-note { background: #dcfce7; border-left: 4px solid #22c55e; padding: 12px 16px; border-radius: 6px; margin-bottom: 20px; font-size: 0.9rem; }
+        .repo-note ul { margin: 8px 0 0 20px; }
+        .section-title { font-size: 17px; font-weight: bold; color: #334155; margin-bottom: 12px; padding: 8px 12px; background: #f1f5f9; border-left: 4px solid var(--red); border-radius: 0 6px 6px 0; }
+        .flow-section { margin-bottom: 22px; }
+        .view-controls { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 16px; }
+        .view-btn { border: 2px solid var(--red); background: #fff; color: var(--red); padding: 8px 18px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 0.88rem; transition: all 0.2s; }
+        .view-btn.active, .view-btn:hover { background: var(--red); color: #fff; }
+        .panel { display: none; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 24px; margin-bottom: 16px; }
+        .panel.active { display: block; }
+        .inventory-graph { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 20px 0; }
+        .group-all { border: 3px solid var(--all); border-radius: 14px; padding: 20px 28px; background: #eff6ff; min-width: 320px; }
+        .group-all h3 { color: var(--all); text-align: center; margin-bottom: 14px; font-size: 1rem; }
+        .group-row { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
+        .group-box { border: 2px solid var(--web); border-radius: 12px; padding: 16px 20px; min-width: 180px; text-align: center; cursor: pointer; transition: all 0.25s; background: #fff; }
+        .group-box.db { border-color: var(--db); }
+        .group-box:hover, .group-box.active { transform: translateY(-3px); box-shadow: 0 6px 16px rgba(0,0,0,0.12); }
+        .group-box.active { background: var(--red-light); }
+        .group-box h4 { font-size: 0.95rem; margin-bottom: 8px; color: var(--web); }
+        .group-box.db h4 { color: var(--db); }
+        .host-chip { display: inline-block; background: #f1f5f9; border: 1px solid var(--line); padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; margin: 3px; font-family: ui-monospace, monospace; }
+        .host-chip:hover { background: var(--red-light); border-color: var(--red); }
+        .vars-flow { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 10px; margin-top: 16px; padding: 16px; background: #f8fafc; border-radius: 10px; }
+        .flow-box { background: linear-gradient(135deg, var(--red) 0%, var(--red-deep) 100%); color: white; padding: 12px 16px; border-radius: 8px; font-weight: 600; font-size: 12px; text-align: center; min-width: 120px; cursor: pointer; transition: transform 0.2s; }
+        .flow-box:hover { transform: translateY(-2px); }
+        .flow-box.file { background: linear-gradient(135deg, #64748b 0%, #475569 100%); }
+        .flow-box.var { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); }
+        .arrow { font-size: 20px; color: var(--muted); font-weight: 700; }
+        .tree-output { font-family: ui-monospace, monospace; background: #1e293b; color: #a5f3fc; padding: 16px; border-radius: 8px; font-size: 0.85rem; line-height: 1.8; margin-top: 14px; }
+        .code-tabs { display: flex; gap: 5px; margin-bottom: 8px; flex-wrap: wrap; }
+        .code-tab { padding: 6px 14px; background: #e9ecef; border: none; border-radius: 6px 6px 0 0; cursor: pointer; font-size: 12px; font-weight: bold; color: #495057; }
+        .code-tab.active { background: var(--red); color: white; }
+        .code-content { display: none; }
+        .code-content.active { display: block; }
+        pre { background: #1e293b; color: #e2e8f0; padding: 14px; border-radius: 8px; font-size: 11px; line-height: 1.55; white-space: pre-wrap; overflow-x: auto; }
+        .pattern-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-top: 12px; }
+        .pattern-card { background: #f8fafc; border: 1px solid var(--line); border-radius: 8px; padding: 12px; font-size: 0.85rem; cursor: pointer; transition: border-color 0.2s; }
+        .pattern-card:hover { border-color: var(--red); }
+        .pattern-card code { display: block; margin-top: 6px; color: var(--red); font-weight: 600; }
+        .detail-box { background: var(--red-light); border-left: 4px solid var(--red); padding: 12px 16px; border-radius: 0 8px 8px 0; margin-top: 14px; font-size: 0.9rem; display: none; }
+        .detail-box.visible { display: block; }
+        .compare-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; margin-top: 12px; }
+        .compare-table th, .compare-table td { padding: 10px 14px; border: 1px solid var(--line); text-align: left; }
+        .compare-table th { background: var(--red-light); color: var(--red-deep); }
+        .footer-note { text-align: center; color: var(--muted); font-size: 0.88rem; margin-top: 24px; }
+        .footer-note a { color: var(--red); text-decoration: none; }
+    </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <h1>Inventory &amp; Groups</h1>
-      <p style="color: var(--muted);">Static inventory: INI or YAML + group_vars</p>
-    </header>
-    <div class="controls">
-      <button class="btn active" data-view="graph">Group graph</button>
-      <button class="btn" data-view="ini">INI example</button>
-      <button class="btn" data-view="yaml">YAML example</button>
-    </div>
-    <section class="panel active" id="graph">
-      <div class="diagram">
-        <div class="group-box">
-          <strong>webservers</strong><br>web1, web2
+    <div class="container">
+        <header class="hero">
+            <a href="index.html" class="home-link">&#8962; Home</a>
+            <div class="eyebrow">Lesson 02 · Inventory</div>
+            <h1>Inventory &amp; Groups Flow</h1>
+            <p>How Ansible discovers hosts, groups, and variables before running any task</p>
+        </header>
+
+        <div class="repo-note">
+            <strong>Repository files:</strong>
+            <ul>
+                <li><code>labs/inventory/hosts.ini</code> — INI format with webservers and dbservers</li>
+                <li><code>labs/inventory/hosts.yaml</code> — equivalent YAML inventory</li>
+                <li><code>labs/inventory/group_vars/webservers.yml</code> — group-level variables</li>
+            </ul>
         </div>
-        <div class="group-box db">
-          <strong>dbservers</strong><br>db1
+
+        <div class="flow-section">
+            <div class="section-title">1. Inventory Resolution Flow</div>
+            <div class="vars-flow">
+                <div class="flow-box" onclick="showDetail('cli')">ansible / ansible-playbook</div>
+                <span class="arrow">→</span>
+                <div class="flow-box file" onclick="showDetail('file')">-i inventory/hosts.yaml</div>
+                <span class="arrow">→</span>
+                <div class="flow-box" onclick="showDetail('parse')">Parse INI or YAML</div>
+                <span class="arrow">→</span>
+                <div class="flow-box var" onclick="showDetail('groupvars')">Load group_vars/</div>
+                <span class="arrow">→</span>
+                <div class="flow-box" onclick="showDetail('pattern')">Match host pattern</div>
+                <span class="arrow">→</span>
+                <div class="flow-box file" onclick="showDetail('connect')">SSH to each host</div>
+            </div>
+            <div id="detail-box" class="detail-box visible">
+                <strong>CLI entry:</strong> Every Ansible command needs an inventory source via <code>-i</code> or <code>inventory =</code> in ansible.cfg. The inventory plugin parses the file and builds an in-memory graph of groups and hosts.
+            </div>
         </div>
-      </div>
-      <div class="vars">
-        <code>inventory/group_vars/webservers.yml</code> → <code>webserver_port: 80</code>, <code>app_env: production</code>
-      </div>
-      <div class="tree" style="margin-top: 16px;">
-@webservers:<br>
-  |--web1<br>
-  |--web2<br>
-@dbservers:<br>
-  |--db1
-      </div>
-    </section>
-    <section class="panel" id="ini">
-      <pre>[webservers]
+
+        <div class="flow-section">
+            <div class="section-title">2. Group Hierarchy (click a group)</div>
+            <div class="inventory-graph">
+                <div class="group-all">
+                    <h3>all (implicit root group)</h3>
+                    <div class="group-row">
+                        <div class="group-box active" id="grp-web" onclick="selectGroup('webservers')">
+                            <h4>webservers</h4>
+                            <span class="host-chip" onclick="event.stopPropagation();selectHost('web1')">web1</span>
+                            <span class="host-chip" onclick="event.stopPropagation();selectHost('web2')">web2</span>
+                            <p style="font-size:0.75rem;color:var(--muted);margin-top:8px;">:vars → python interpreter</p>
+                        </div>
+                        <div class="group-box db" id="grp-db" onclick="selectGroup('dbservers')">
+                            <h4>dbservers</h4>
+                            <span class="host-chip" onclick="event.stopPropagation();selectHost('db1')">db1</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="group-detail" class="detail-box visible" style="display:block;background:#eff6ff;border-color:#2563eb;">
+                <strong>webservers group:</strong> Contains web1 (10.0.1.10) and web2 (10.0.1.11). Variables from <code>group_vars/webservers.yml</code> apply: <code>webserver_port: 80</code>, <code>app_env: production</code>.
+            </div>
+            <div class="tree-output" id="tree-output">@all:
+  |--@ungrouped:
+  |--@webservers:
+  |  |--web1
+  |  |--web2
+  |--@dbservers:
+     |--db1</div>
+        </div>
+
+        <div class="flow-section">
+            <div class="section-title">3. Format Comparison — INI vs YAML</div>
+            <div class="view-controls">
+                <button class="view-btn active" data-view="graph">Group graph</button>
+                <button class="view-btn" data-view="ini">INI format</button>
+                <button class="view-btn" data-view="yaml">YAML format</button>
+                <button class="view-btn" data-view="groupvars">group_vars</button>
+                <button class="view-btn" data-view="commands">CLI commands</button>
+            </div>
+
+            <section class="panel active" id="graph">
+                <p style="font-size:0.9rem;margin-bottom:12px;">Use the group hierarchy above. Both INI and YAML express the same topology — pick one style per project and stay consistent.</p>
+                <table class="compare-table">
+                    <thead><tr><th>Feature</th><th>INI (hosts.ini)</th><th>YAML (hosts.yaml)</th></tr></thead>
+                    <tbody>
+                        <tr><td>Readability</td><td>Compact for small inventories</td><td>Better for nested groups</td></tr>
+                        <tr><td>Group vars</td><td><code>[group:vars]</code> section</td><td><code>vars:</code> under group</td></tr>
+                        <tr><td>Host vars</td><td>Inline on host line</td><td>Nested under host key</td></tr>
+                        <tr><td>Dynamic inventory</td><td>Separate plugin</td><td>Same plugins apply</td></tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section class="panel" id="ini">
+                <pre># labs/inventory/hosts.ini
+[webservers]
 web1 ansible_host=10.0.1.10 ansible_user=ubuntu
 web2 ansible_host=10.0.1.11 ansible_user=ubuntu
 
+[webservers:vars]
+ansible_python_interpreter=/usr/bin/python3
+
 [dbservers]
 db1 ansible_host=10.0.1.20 ansible_user=ubuntu</pre>
-    </section>
-    <section class="panel" id="yaml">
-      <pre>all:
+            </section>
+
+            <section class="panel" id="yaml">
+                <pre># labs/inventory/hosts.yaml
+all:
   children:
     webservers:
       hosts:
         web1:
           ansible_host: 10.0.1.10
+          ansible_user: ubuntu
+        web2:
+          ansible_host: 10.0.1.11
+          ansible_user: ubuntu
+      vars:
+        ansible_python_interpreter: /usr/bin/python3
+    dbservers:
+      hosts:
+        db1:
+          ansible_host: 10.0.1.20
           ansible_user: ubuntu</pre>
-    </section>
-    <a class="back" href="index.html">← Back to catalog</a>
-  </div>
-  <script>
-    document.querySelectorAll('.btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-        btn.classList.add('active');
-        document.getElementById(btn.dataset.view).classList.add('active');
-      });
-    });
-  </script>
+            </section>
+
+            <section class="panel" id="groupvars">
+                <pre># labs/inventory/group_vars/webservers.yml
+---
+webserver_port: 80
+app_env: production</pre>
+                <p style="margin-top:12px;font-size:0.88rem;color:var(--muted);">
+                    Ansible auto-discovers <code>group_vars/&lt;groupname&gt;.yml</code> adjacent to the inventory file.
+                    Directory layout: <code>inventory/group_vars/webservers.yml</code> applies to all hosts in webservers.
+                </p>
+            </section>
+
+            <section class="panel" id="commands">
+                <pre># List inventory as graph
+ansible-inventory -i inventory/hosts.yaml --graph
+
+# Show all variables for a host (merged)
+ansible-inventory -i inventory/hosts.yaml --host web1
+
+# List hosts in a group
+ansible webservers -i inventory/hosts.yaml --list-hosts
+
+# Debug a group variable
+ansible webservers -i inventory/hosts.yaml -m ansible.builtin.debug -a "var=webserver_port"</pre>
+            </section>
+        </div>
+
+        <div class="flow-section">
+            <div class="section-title">4. Host Patterns (click to learn)</div>
+            <div class="pattern-grid">
+                <div class="pattern-card" onclick="showPattern('all')"><strong>all</strong><span>Every host in inventory</span><code>ansible all -m ping</code></div>
+                <div class="pattern-card" onclick="showPattern('group')"><strong>webservers</strong><span>All hosts in group</span><code>ansible webservers -m ping</code></div>
+                <div class="pattern-card" onclick="showPattern('host')"><strong>web1</strong><span>Single host by name</span><code>ansible web1 -m ping</code></div>
+                <div class="pattern-card" onclick="showPattern('multi')"><strong>web1:web2</strong><span>Multiple hosts (OR)</span><code>ansible web1:web2 -m ping</code></div>
+                <div class="pattern-card" onclick="showPattern('intersect')"><strong>webservers:&amp;dbservers</strong><span>Intersection</span><code>ansible 'webservers:&amp;dbservers'</code></div>
+                <div class="pattern-card" onclick="showPattern('exclude')"><strong>all:!dbservers</strong><span>Exclusion</span><code>ansible 'all:!dbservers'</code></div>
+            </div>
+            <div id="pattern-detail" class="detail-box" style="display:none;margin-top:12px;"></div>
+        </div>
+
+        <div class="flow-section">
+            <div class="section-title">5. Connection Variables</div>
+            <table class="compare-table">
+                <thead><tr><th>Variable</th><th>Purpose</th><th>Lab example</th></tr></thead>
+                <tbody>
+                    <tr><td><code>ansible_host</code></td><td>IP or DNS to connect to</td><td>10.0.1.10</td></tr>
+                    <tr><td><code>ansible_user</code></td><td>SSH login user</td><td>ubuntu</td></tr>
+                    <tr><td><code>ansible_python_interpreter</code></td><td>Python path on target</td><td>/usr/bin/python3</td></tr>
+                    <tr><td><code>ansible_port</code></td><td>SSH port if not 22</td><td>22 (default)</td></tr>
+                    <tr><td><code>ansible_ssh_private_key_file</code></td><td>Key path override</td><td>~/.ssh/lab.pem</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="flow-section">
+            <div class="section-title">6. Local Override Pattern (labs)</div>
+            <pre># Never commit real IPs — use a local overlay
+cp inventory/hosts.ini.local.example inventory/hosts.ini.local
+# Edit private IPs, then:
+ansible -i inventory/hosts.ini.local webservers -m ansible.builtin.ping</pre>
+        </div>
+
+        <div class="flow-section">
+            <div class="section-title">7. Dynamic vs Static Inventory</div>
+            <table class="compare-table">
+                <thead><tr><th>Type</th><th>Source</th><th>When to use</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Static</strong></td><td>hosts.ini / hosts.yaml file</td><td>Labs, small fleets, fixed IPs</td></tr>
+                    <tr><td><strong>Dynamic</strong></td><td>aws_ec2, azure_rm, gcp_compute plugins</td><td>Cloud auto-scaling, ephemeral VMs</td></tr>
+                    <tr><td><strong>Inventory directory</strong></td><td>inventory/ with multiple files</td><td>Large orgs split by env/region</td></tr>
+                </tbody>
+            </table>
+            <p style="font-size:0.88rem;color:var(--muted);margin-top:10px;">This essentials track uses <strong>static</strong> inventory only. Terraform outputs feed your hosts.ini.local private IPs.</p>
+        </div>
+
+        <div class="flow-section">
+            <div class="section-title">8. Troubleshooting Inventory</div>
+            <table class="compare-table">
+                <thead><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr></thead>
+                <tbody>
+                    <tr><td>Could not match supplied host pattern</td><td>Typo in group name</td><td>ansible-inventory --graph</td></tr>
+                    <tr><td>Variable undefined</td><td>group_vars filename mismatch</td><td>File must be group_vars/webservers.yml</td></tr>
+                    <tr><td>YAML parse error</td><td>Tabs or bad indent</td><td>Spaces only; validate with yamllint</td></tr>
+                    <tr><td>UNREACHABLE</td><td>Wrong ansible_host IP</td><td>Update hosts.ini.local from AWS console</td></tr>
+                    <tr><td>Using wrong inventory file</td><td>ansible.cfg default vs -i</td><td>Explicit: -i inventory/hosts.ini.local</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="flow-section">
+            <div class="section-title">9. Inventory Plugin Resolution (ASCII)</div>
+            <pre style="background:#1e293b;color:#a5f3fc;padding:16px;border-radius:8px;font-size:0.82rem;line-height:1.7;">
+  ansible-playbook -i inventory/hosts.yaml site.yml
+           |
+           v
+  +------------------+
+  | Inventory plugin |  (yaml / ini / script)
+  +--------+---------+
+           |
+           v
+  +------------------+     +----------------------+
+  | Merge group_vars | &lt;--- | group_vars/webservers |
+  +--------+---------+     +----------------------+
+           |
+           v
+  +------------------+
+  | Match hosts:     |  webservers -&gt; web1, web2
+  +--------+---------+
+           |
+           v
+       SSH connect
+            </pre>
+        </div>
+
+        <p class="footer-note">
+            Deep dive: <a href="../docs/02-inventory/inventory-ini-and-yaml.md">inventory-ini-and-yaml.md</a> ·
+            Labs: <a href="../labmanuals/lab01-inventory-static-hosts.md">lab01</a> · <a href="../labmanuals/lab02-inventory-hosts-groups.md">lab02</a>
+        </p>
+    </div>
+
+    <script>
+        const details = {
+            cli: '<strong>CLI entry:</strong> ansible and ansible-playbook read inventory before any module runs.',
+            file: '<strong>Inventory file:</strong> -i flag or ansible.cfg defaults. Can be file, directory, or dynamic script.',
+            parse: '<strong>Parse:</strong> INI plugin or YAML plugin builds host/group graph. Implicit "all" group contains everything.',
+            groupvars: '<strong>group_vars:</strong> Files in inventory/group_vars/&lt;group&gt;.yml merge into group variables automatically.',
+            pattern: '<strong>Host pattern:</strong> CLI first argument or playbook hosts: key. Supports unions, intersections, exclusions.',
+            connect: '<strong>Connect:</strong> For each matched host, resolve ansible_host, open SSH, run module.'
+        };
+        const groupInfo = {
+            webservers: '<strong>webservers:</strong> web1 + web2. group_vars: webserver_port=80, app_env=production. Target for Apache and Node.js playbooks.',
+            dbservers: '<strong>dbservers:</strong> db1 only. Separate playbooks can target dbservers for database-specific tasks.'
+        };
+        const hostInfo = {
+            web1: '<strong>web1:</strong> ansible_host=10.0.1.10, ansible_user=ubuntu. Inherits webservers group_vars.',
+            web2: '<strong>web2:</strong> ansible_host=10.0.1.11, ansible_user=ubuntu. Same group vars as web1.',
+            db1: '<strong>db1:</strong> ansible_host=10.0.1.20. In dbservers group only — no webserver_port unless shared via all group.'
+        };
+        const patternInfo = {
+            all: 'Matches every host. Useful for ping checks across the entire fleet.',
+            group: 'Matches all hosts in the webservers group — web1 and web2 in the lab.',
+            host: 'Matches exactly one host by inventory name (not IP).',
+            multi: 'Colon separates host patterns (OR). web1 OR web2.',
+            intersect: 'Ampersand means AND — hosts in both groups. Empty in lab (no overlap).',
+            exclude: 'Exclamation excludes. all:!dbservers = web1 and web2 only.'
+        };
+
+        function showDetail(key) {
+            const box = document.getElementById('detail-box');
+            box.innerHTML = details[key] || '';
+            box.classList.add('visible');
+        }
+        function selectGroup(g) {
+            document.querySelectorAll('.group-box').forEach(el => el.classList.remove('active'));
+            document.getElementById(g === 'webservers' ? 'grp-web' : 'grp-db').classList.add('active');
+            const d = document.getElementById('group-detail');
+            d.innerHTML = groupInfo[g];
+            d.style.display = 'block';
+        }
+        function selectHost(h) {
+            const d = document.getElementById('group-detail');
+            d.innerHTML = hostInfo[h];
+            d.style.display = 'block';
+        }
+        function showPattern(p) {
+            const d = document.getElementById('pattern-detail');
+            d.innerHTML = patternInfo[p];
+            d.style.display = 'block';
+        }
+        document.querySelectorAll('.view-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById(btn.dataset.view).classList.add('active');
+            });
+        });
+    </script>
 </body>
 </html>

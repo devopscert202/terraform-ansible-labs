@@ -1,4 +1,369 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>State | Terraform Essentials</title><style>
-:root{--purple:#7B42BC;--ink:#261a33;--muted:#665b70;--paper:#fcfaff;--line:#e8ddf2}*{box-sizing:border-box}body{margin:0;font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink);background:var(--paper)}header{background:var(--purple);color:#fff;padding:3rem max(1.25rem,calc((100% - 960px)/2)) 2.5rem}header h1{margin:0;font-size:2.4rem}header p{max-width:48rem;margin:.5rem 0 0;opacity:.94}nav{background:#fff;border-bottom:1px solid var(--line);padding:.75rem max(1.25rem,calc((100% - 960px)/2));display:flex;gap:1rem;flex-wrap:wrap}nav a{color:var(--purple);font-weight:700;text-decoration:none}main{max-width:960px;margin:auto;padding:2rem 1.25rem 4rem}h2{color:var(--purple);margin-top:2rem}.card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:1.25rem;margin:1rem 0}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem}code,pre{background:#f3edf8;border-radius:5px}code{padding:.15rem .35rem}pre{padding:1rem;overflow:auto}footer{border-top:1px solid var(--line);padding:1rem;text-align:center;color:var(--muted)}.note{border-left:4px solid var(--purple);padding:.8rem 1rem;background:#f6f0fb}</style></head><body><header><h1>State</h1><p>State records the relationship between resource addresses and the infrastructure Terraform manages.</p></header><nav><a href="index.html">Overview</a><a href="foundations.html">Foundations</a><a href="workflow.html">Workflow</a><a href="variables.html">Variables</a><a href="state.html">State</a><a href="modules.html">Modules</a></nav><main><h2>Local state lab</h2><p>The default backend writes <code>terraform.tfstate</code> in the working directory. Inspect it through Terraform commands instead of manually editing it.</p><pre>terraform state list
-terraform show
-terraform state show random_pet.first</pre><div class="note">Never commit state. It may contain IDs, metadata, and sensitive values. Use protected remote state with locking for team workloads.</div></main><footer>Terraform Essentials · Terraform 1.5+ · AWS provider ~&gt; 5.0</footer></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terraform State — Local Inspection & Hygiene</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --purple: #7B42BC; --purple-deep: #5c2d94; --purple-sky: #ede4f7;
+            --ink: #261a33; --muted: #665b70; --line: #e8ddf2;
+            --amber: #fef3c7; --mint: #dcfce7; --slate-700: #334155;
+        }
+        body {
+            font-family: "Segoe UI", system-ui, sans-serif;
+            background: linear-gradient(180deg, #fcfaff 0%, #f3ebfa 100%);
+            color: var(--ink); line-height: 1.6; padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .hero {
+            position: relative; text-align: center; background: white;
+            border-radius: 16px; padding: 34px 32px 28px;
+            box-shadow: 0 4px 18px rgba(123, 66, 188, 0.12);
+            margin-bottom: 26px; border: 1px solid rgba(123, 66, 188, 0.15);
+        }
+        .eyebrow {
+            display: inline-flex; padding: 6px 14px; border-radius: 999px;
+            background: var(--purple-sky); color: var(--purple-deep);
+            font-size: 0.82rem; font-weight: 700; margin-bottom: 12px;
+        }
+        .hero h1 { color: var(--purple); font-size: clamp(1.8rem, 4vw, 2.6rem); }
+        .hero .subtitle { color: var(--muted); max-width: 720px; margin: 8px auto 0; }
+        .home-link {
+            position: absolute; top: 16px; right: 20px; color: var(--purple);
+            text-decoration: none; font-weight: 600; padding: 6px 14px;
+            border-radius: 8px; border: 1px solid rgba(123,66,188,0.2);
+            background: rgba(123,66,188,0.06);
+        }
+        .nav-bar {
+            display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
+            margin-bottom: 20px; padding: 10px; background: white;
+            border-radius: 10px; border: 1px solid var(--line);
+        }
+        .nav-bar a { color: var(--purple); font-weight: 600; text-decoration: none; padding: 6px 12px; border-radius: 6px; font-size: 0.88rem; }
+        .nav-bar a:hover, .nav-bar a.active { background: var(--purple-sky); }
+        .section-title {
+            font-size: 18px; font-weight: bold; color: var(--slate-700);
+            margin: 22px 0 10px; padding: 8px 12px;
+            background: #f4eef9; border-left: 4px solid var(--purple);
+        }
+        .lifecycle-flow {
+            display: flex; align-items: center; justify-content: center;
+            flex-wrap: wrap; gap: 8px; margin: 20px 0; padding: 20px;
+            background: white; border-radius: 12px; border: 1px solid var(--line);
+        }
+        .flow-box {
+            background: linear-gradient(135deg, #7B42BC 0%, #9b59d0 100%);
+            color: white; padding: 16px 22px; border-radius: 10px;
+            font-weight: bold; font-size: 14px; cursor: pointer;
+            transition: all 0.3s; box-shadow: 0 4px 10px rgba(123,66,188,0.3);
+            min-width: 100px; text-align: center;
+        }
+        .flow-box:hover { transform: translateY(-4px) scale(1.02); }
+        .flow-box.init { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .flow-box.plan { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        .flow-box.apply { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: #1a3a2e; }
+        .flow-box.destroy { background: linear-gradient(135deg, #ff0844 0%, #ffb199 100%); }
+        .flow-box.fmt { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: #4a3728; }
+        .arrow { font-size: 26px; color: var(--muted); font-weight: bold; }
+        .detail-panel {
+            background: white; border: 2px solid var(--purple); border-radius: 10px;
+            padding: 18px; margin: 14px 0; min-height: 90px;
+        }
+        .detail-panel h4 { color: var(--purple); margin-bottom: 8px; font-size: 1.1rem; }
+        .detail-panel p { font-size: 0.92rem; }
+        .detail-panel code { background: var(--purple-sky); padding: 2px 6px; border-radius: 4px; font-size: 0.88rem; }
+        .plan-legend {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 10px; margin: 16px 0;
+        }
+        .legend-item {
+            background: white; border-radius: 8px; padding: 12px;
+            border-left: 4px solid; font-size: 0.88rem;
+        }
+        .legend-item.safe { border-color: #22c55e; }
+        .legend-item.warn { border-color: #f59e0b; }
+        .legend-item.danger { border-color: #ef4444; }
+        .legend-item.info { border-color: #3b82f6; }
+        .example-scenario {
+            background: var(--amber); border-left: 4px solid #f59e0b;
+            padding: 14px; border-radius: 8px; margin: 16px 0;
+        }
+        .example-scenario h3 { font-size: 14px; color: #92400e; margin-bottom: 6px; }
+        .example-scenario p { font-size: 13px; color: #78350f; }
+        .repo-callout {
+            background: var(--mint); border-left: 4px solid #22c55e;
+            padding: 14px 18px; border-radius: 8px; margin: 16px 0;
+        }
+        .repo-callout ul { margin: 8px 0 0 18px; font-size: 0.9rem; }
+        .concept-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px; margin: 16px 0;
+        }
+        .concept-card {
+            background: white; border: 1px solid var(--line); border-radius: 10px; padding: 14px;
+            cursor: pointer; transition: box-shadow 0.2s;
+        }
+        .concept-card:hover { box-shadow: 0 4px 12px rgba(123,66,188,0.15); }
+        .concept-card h4 { color: var(--purple); font-size: 0.95rem; margin-bottom: 4px; }
+        .concept-card p { font-size: 0.82rem; color: var(--muted); }
+        .code-tabs { display: flex; gap: 5px; flex-wrap: wrap; }
+        .code-tab {
+            padding: 7px 14px; background: #e9ecef; border: none;
+            border-radius: 6px 6px 0 0; cursor: pointer; font-size: 12px; font-weight: bold;
+        }
+        .code-tab.active { background: var(--purple); color: white; }
+        .code-content { display: none; }
+        .code-content.active { display: block; }
+        pre {
+            background: #1e293b; color: #e2e8f0; padding: 14px;
+            border-radius: 0 8px 8px 8px; font-size: 12px; line-height: 1.55; overflow-x: auto;
+        }
+        .state-diagram {
+            background: white; border: 1px solid var(--line); border-radius: 12px;
+            padding: 20px; font-family: monospace; font-size: 13px; line-height: 1.8;
+            white-space: pre; overflow-x: auto; margin: 16px 0;
+        }
+        .footer-note { text-align: center; color: var(--muted); font-size: 0.9rem; margin-top: 24px; padding-top: 14px; border-top: 1px solid var(--line); }
+        .footer-note a { color: var(--purple); text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="hero">
+            <a href="index.html" class="home-link">&#8962; Home</a>
+            <div class="eyebrow">Chapter 04 · State</div>
+            <h1>Terraform State</h1>
+            <p class="subtitle">State maps configuration addresses to real infrastructure IDs. Lab 06 uses local <code>terraform.tfstate</code> with <code>random_pet</code> — inspect safely with CLI commands, never commit state to Git.</p>
+        </header>
+
+        <nav class="nav-bar">
+            <a href="index.html">Overview</a>
+            <a href="foundations.html">Foundations</a>
+            <a href="workflow.html">Workflow</a>
+            <a href="variables.html">Variables</a>
+            <a href="state.html" class="active">State</a>
+            <a href="modules.html">Modules</a>
+        </nav>
+
+        <div class="repo-callout">
+            <strong>Lab files in this repo:</strong>
+            <ul>
+                <li><code>terraform/essentials/labs/lab06-local-state/main.tf</code> — random_pet, default local backend</li>
+                <li><code>terraform/extended/labs/lab07-s3-backend/</code> — remote S3 state (Extended track)</li>
+            </ul>
+        </div>
+
+        <div class="section-title">1. State Flow — Click Each Step</div>
+        <div class="lifecycle-flow">
+            <div class="flow-box init" onclick="showCmd('config')">Configuration</div>
+            <span class="arrow">→</span>
+            <div class="flow-box plan" onclick="showCmd('refresh')">Refresh</div>
+            <span class="arrow">→</span>
+            <div class="flow-box apply" onclick="showCmd('diff')">Diff</div>
+            <span class="arrow">→</span>
+            <div class="flow-box fmt" onclick="showCmd('write')">Write State</div>
+        </div>
+        <div class="detail-panel" id="cmd-detail">
+            <h4>Configuration → State</h4>
+            <p>Click any box above to learn how Terraform uses state during plan and apply. Lab 06 writes state locally after creating <code>random_pet.first</code>.</p>
+        </div>
+
+        <div class="section-title">2. Lab 06 Architecture</div>
+        <div class="state-diagram">  main.tf                    terraform.tfstate
+  ┌──────────────────┐       ┌─────────────────────────┐
+  │ random_pet.first │ ◄────►│ address: random_pet.first│
+  │ prefix=state-lab │       │ id: state-lab-happy-dog  │
+  │ length=2         │       │ serial, lineage, ...     │
+  └──────────────────┘       └─────────────────────────┘
+
+  No backend {} block  →  local file in working directory</div>
+
+        <div class="section-title">3. Inspection Commands — Click Tabs</div>
+        <div class="code-tabs">
+            <button class="code-tab active" onclick="switchTab(event,'list')">state list</button>
+            <button class="code-tab" onclick="switchTab(event,'show')">state show</button>
+            <button class="code-tab" onclick="switchTab(event,'full')">terraform show</button>
+            <button class="code-tab" onclick="switchTab(event,'pull')">backup</button>
+        </div>
+        <div class="code-content active" id="tab-list">
+<pre>cd terraform/essentials/labs/lab06-local-state
+terraform apply
+
+terraform state list
+# random_pet.first</pre>
+        </div>
+        <div class="code-content" id="tab-show">
+<pre>terraform state show random_pet.first
+
+# id          = "state-lab-happy-dog"
+# length      = 2
+# prefix      = "state-lab"
+# ...</pre>
+        </div>
+        <div class="code-content" id="tab-full">
+<pre>terraform show              # human-readable full state
+terraform show -json        # automation / debugging</pre>
+        </div>
+        <div class="code-content" id="tab-pull">
+<pre>ls -la terraform.tfstate*
+# terraform.tfstate         — current
+# terraform.tfstate.backup  — previous version after mutation
+
+cp terraform.tfstate terraform.tfstate.manual-backup</pre>
+        </div>
+
+        <div class="section-title">4. State Hygiene Rules</div>
+        <div class="plan-legend">
+            <div class="legend-item safe"><strong>DO</strong><br>Use <code>state list</code> and <code>state show</code></div>
+            <div class="legend-item safe"><strong>DO</strong><br>Backup before risky operations</div>
+            <div class="legend-item.warn"><strong>CAUTION</strong><br>Sensitive values may live in state</div>
+            <div class="legend-item danger"><strong>DON'T</strong><br>Commit <code>terraform.tfstate</code> to Git</div>
+            <div class="legend-item danger"><strong>DON'T</strong><br>Hand-edit JSON state</div>
+            <div class="legend-item info"><strong>TEAMS</strong><br>Use remote backend + locking</div>
+        </div>
+
+        <div class="section-title">5. State Concepts — Click Cards</div>
+        <div class="concept-grid">
+            <div class="concept-card" onclick="showCmd('address')">
+                <h4>Resource Address</h4>
+                <p><code>random_pet.first</code> — unique key in state</p>
+            </div>
+            <div class="concept-card" onclick="showCmd('serial')">
+                <h4>Serial & Lineage</h4>
+                <p>Consistency metadata for concurrent writes</p>
+            </div>
+            <div class="concept-card" onclick="showCmd('drift')">
+                <h4>Drift</h4>
+                <p>Refresh detects out-of-band changes</p>
+            </div>
+            <div class="concept-card" onclick="showCmd('module')">
+                <h4>Module Addresses</h4>
+                <p><code>module.network.aws_vpc.this</code> in Lab 07</p>
+            </div>
+        </div>
+
+        <div class="section-title">6. Local vs Remote Backends</div>
+        <div class="lifecycle-flow">
+            <div class="flow-box init" onclick="showCmd('local')">Local (Lab 06)</div>
+            <span class="arrow">→</span>
+            <div class="flow-box plan" onclick="showCmd('s3')">S3 (Extended 07)</div>
+            <span class="arrow">→</span>
+            <div class="flow-box apply" onclick="showCmd('lock')">Locking (Extended 09)</div>
+        </div>
+
+        <div class="example-scenario">
+            <h3>Lab 06 Walkthrough</h3>
+            <p><strong>apply:</strong> Creates <code>random_pet.first</code>, writes <code>terraform.tfstate</code></p>
+            <p><strong>state list:</strong> One address — <code>random_pet.first</code></p>
+            <p><strong>output:</strong> <code>first_resource = "state-lab-..."</code></p>
+            <p><strong>destroy:</strong> Removes resource; state list empty</p>
+        </div>
+
+        <div class="section-title">7. State Subcommands Reference</div>
+        <pre>terraform state list
+terraform state show 'random_pet.first'
+terraform state mv 'old.name' 'new.name'
+terraform state rm 'resource.name'    # removes from state only
+terraform state pull > backup.tfstate # remote backends</pre>
+
+        <div class="example-scenario">
+            <h3>Common Mistakes</h3>
+            <p>❌ Running Terraform from repo root — wrong state file</p>
+            <p>❌ Committing state — leaks IDs and secrets</p>
+            <p>❌ Deleting state to fix errors — orphans real cloud resources</p>
+            <p>✅ One root module directory per state boundary</p>
+        </div>
+
+        <div class="section-title">8. Lab 06 Configuration</div>
+        <pre>resource "random_pet" "first" {
+  prefix = "state-lab"
+  length = 2
+}
+
+output "first_resource" {
+  value = random_pet.first.id
+}</pre>
+
+        <div class="section-title">9. State Recovery Scenarios</div>
+        <div class="concept-grid">
+            <div class="concept-card" onclick="showCmd('backup')">
+                <h4>Manual Backup</h4>
+                <p><code>cp terraform.tfstate terraform.tfstate.bak</code></p>
+            </div>
+            <div class="concept-card" onclick="showCmd('restore')">
+                <h4>Restore .backup</h4>
+                <p>After failed write, copy <code>.backup</code> over state</p>
+            </div>
+            <div class="concept-card" onclick="showCmd('import')">
+                <h4>Import</h4>
+                <p>Adopt existing cloud resource into state</p>
+            </div>
+            <div class="concept-card" onclick="showCmd('rm')">
+                <h4>state rm</h4>
+                <p>Remove from state without API destroy</p>
+            </div>
+        </div>
+
+        <div class="example-scenario">
+            <h3>Extended Track Preview</h3>
+            <p><strong>Lab 07:</strong> S3 remote backend — shared team state</p>
+            <p><strong>Lab 09:</strong> State locking — prevent concurrent apply corruption</p>
+            <p><strong>Lab 10:</strong> <code>terraform init -migrate-state</code> — move local to remote</p>
+            <p><strong>Lab 11:</strong> <code>terraform_remote_state</code> data source — read upstream outputs</p>
+        </div>
+
+        <div class="section-title">10. Gitignore Reminder</div>
+        <pre># Never commit
+terraform.tfstate
+terraform.tfstate.*
+.terraform/
+terraform.tfvars
+*.tfplan
+
+# Always commit
+.terraform.lock.hcl
+*.tf</pre>
+
+        <p class="footer-note">
+            Terraform Essentials · Terraform 1.5+<br>
+            <a href="modules.html">Next: Modules →</a> · <a href="../labmanuals/lab06-local-state.md">Lab 06 Manual</a> ·
+            <a href="../../extended/docs/state/README.md">Extended State Doc</a>
+        </p>
+    </div>
+
+    <script>
+        const cmdInfo = {
+            config: { t: 'Configuration', d: 'Your .tf files declare desired resources. State records what Terraform actually manages — the bridge between intent and reality.' },
+            refresh: { t: 'State Refresh', d: 'During plan/apply, Terraform queries providers for current attributes and updates state. Detects drift when resources changed outside Terraform.' },
+            diff: { t: 'Configuration Diff', d: 'Terraform compares refreshed state to configuration. Differences become planned create, update, or destroy actions.' },
+            write: { t: 'Write State', d: 'After successful apply, Terraform atomically updates terraform.tfstate. A .backup file may hold the previous version.' },
+            address: { t: 'Resource Address', d: 'Format: resource_type.local_name. Example: random_pet.first. Module resources: module.network.aws_vpc.this.' },
+            serial: { t: 'Serial & Lineage', d: 'State file metadata preventing blind overwrites. Remote backends increment serial on each write.' },
+            drift: { t: 'Drift Detection', d: 'If someone changed a resource in the console, refresh shows ~ updates in the next plan. apply -refresh-only updates state without changes.' },
+            module: { t: 'Module State Addresses', d: 'Child module resources are stored in the root state file with module.<label>. prefix. Lab 07 lists module.network.aws_vpc.this.' },
+            local: { t: 'Local Backend', d: 'Default when no backend block is set. terraform.tfstate in working directory. No locking — single operator only.' },
+            s3: { t: 'S3 Remote Backend', d: 'Extended Lab 07 stores state in S3 with encryption. Enables team collaboration and versioning.' },
+            lock: { t: 'State Locking', d: 'Extended Lab 09 prevents concurrent apply corruption. use_lockfile on S3 or DynamoDB table.' },
+            backup: { t: 'Manual Backup', d: 'Before risky operations: cp terraform.tfstate to a timestamped backup. S3 versioning provides the same for remote state.' },
+            restore: { t: 'Restore from Backup', d: 'If state corrupts: cp terraform.tfstate.backup terraform.tfstate, then terraform plan to verify.' },
+            import: { t: 'terraform import', d: 'Adopt an existing cloud resource: terraform import random_pet.first state-lab-new-name. Requires matching configuration block.' },
+            rm: { t: 'terraform state rm', d: 'Removes resource from state without calling destroy. Use only when you will manage the object outside Terraform or delete manually.' }
+        };
+
+        function showCmd(key) {
+            const c = cmdInfo[key];
+            document.getElementById('cmd-detail').innerHTML =
+                '<h4>' + c.t + '</h4><p>' + c.d + '</p>';
+        }
+
+        function switchTab(ev, name) {
+            document.querySelectorAll('.code-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.code-content').forEach(c => c.classList.remove('active'));
+            ev.target.classList.add('active');
+            document.getElementById('tab-' + name).classList.add('active');
+        }
+    </script>
+</body>
+</html>

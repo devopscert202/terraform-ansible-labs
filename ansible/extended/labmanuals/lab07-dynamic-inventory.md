@@ -217,4 +217,164 @@ If AWS is unavailable, continue using `inventory/hosts.ini` and compare structur
 Remove test tags or stop instances per AWS setup guide. No files to delete in repo.
 
 ---
+
+
+---
+
+## Part B extended — Deep inventory inspection
+
+### Step 11 — Count hosts per group
+
+```bash
+ansible-inventory -i inventory/aws_ec2.yml --graph | grep -c "|--" || true
+ansible-inventory -i inventory/aws_ec2.yml --list | python3 -c "
+import json,sys
+d=json.load(sys.stdin)
+for g in sorted(d):
+    if g!='_meta' and 'hosts' in d.get(g,{}):
+        print(g, len(d[g]['hosts']))
+"
+```
+
+**Validate**
+
+At least one host in `role_webservers` or your Role tag group.
+
+---
+
+### Step 12 — Verify ansible_host in hostvars
+
+```bash
+ansible-inventory -i inventory/aws_ec2.yml --list | python3 -m json.tool | grep -A3 ansible_host | head -20
+```
+
+**Validate**
+
+`ansible_host` set to private IP addresses.
+
+---
+
+### Step 13 — Compare static vs dynamic graph
+
+```bash
+echo "=== Static ===" && ansible-inventory -i inventory/hosts.ini --graph
+echo "=== Dynamic ===" && ansible-inventory -i inventory/aws_ec2.yml --graph
+```
+
+**Validate**
+
+You can explain mapping: webservers group ≈ role_webservers keyed group.
+
+---
+
+### Step 14 — ansible-doc plugin reference
+
+```bash
+ansible-doc -t inventory amazon.aws.aws_ec2 | head -40
+```
+
+**Validate**
+
+Documentation displays plugin options for filters, keyed_groups, compose.
+
+---
+
+### Step 15 — Run setup via dynamic inventory
+
+```bash
+ansible -i inventory/aws_ec2.yml all -m ansible.builtin.setup   -a "filter=ansible_distribution*" --limit role_webservers 2>/dev/null | head -30
+```
+
+**Validate**
+
+Distribution facts returned from EC2 instances.
+
+---
+
+## Part C — Playbook against dynamic inventory
+
+### Step 16 — Syntax check with dynamic inv
+
+```bash
+ansible-playbook -i inventory/aws_ec2.yml --syntax-check playbooks/loops-packages.yml
+```
+
+**Validate**
+
+No syntax errors.
+
+---
+
+### Step 17 — Check mode on dynamic group
+
+```bash
+ansible-playbook -i inventory/aws_ec2.yml playbooks/loops-packages.yml   --limit role_webservers --check 2>&1 | tail -15
+```
+
+**Validate**
+
+Play targets EC2 hosts; recap shows dynamic hostnames/IPs.
+
+---
+
+## Part D — Troubleshooting drills
+
+### Step 18 — Credential test
+
+```bash
+aws sts get-caller-identity --profile lab-terraform
+```
+
+**Validate**
+
+Returns Account, Arn, UserId.
+
+---
+
+### Step 19 — Region alignment
+
+```bash
+echo "AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION"
+grep -A2 "^regions:" inventory/aws_ec2.yml
+```
+
+**Validate**
+
+Environment region matches plugin config.
+
+---
+
+### Step 20 — Tag verification script
+
+```bash
+aws ec2 describe-instances   --filters "Name=tag:Environment,Values=ansible-lab" "Name=instance-state-name,Values=running"   --query 'Reservations[].Instances[].{IP:PrivateIpAddress,Role:Tags[?Key==`Role`].Value|[0]}'   --output table --profile lab-terraform
+```
+
+**Validate**
+
+Table shows your lab instances with Role tags.
+
+---
+
+## Fallback documentation (no AWS)
+
+If AWS unavailable, complete these steps with static inventory and document equivalence:
+
+| aws_ec2.yml key | hosts.ini equivalent |
+|-----------------|---------------------|
+| keyed_groups role_webservers | [webservers] group |
+| compose ansible_host | ansible_host= per host |
+| filters tag:Environment | manual host list |
+
+---
+
+## Knowledge check
+
+1. What Python library does the EC2 plugin require?
+2. How are `role_webservers` groups created?
+3. Why must the control node reach private IPs?
+4. When does inventory refresh?
+
+---
+
 *Source: Lesson 6 AP-03 · Next: [lab08](lab08-roles-project.md) · Deep dive: [dynamic inventory AWS](../docs/inventory/dynamic-inventory-aws.md)*

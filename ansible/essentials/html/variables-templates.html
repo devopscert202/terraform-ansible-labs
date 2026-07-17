@@ -1,55 +1,354 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Variables and Templates</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    :root { --red: #EE0000; --ink: #1a1a1a; --muted: #64748b; --line: #e2e8f0; }
-    body { font-family: "Segoe UI", system-ui, sans-serif; background: #fafafa; color: var(--ink); line-height: 1.6; padding: 20px; }
-    .wrap { max-width: 960px; margin: 0 auto; }
-    header { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 24px; margin-bottom: 20px; text-align: center; }
-    h1 { color: var(--red); }
-    .flow { display: flex; flex-wrap: wrap; align-items: stretch; justify-content: center; gap: 12px; margin-bottom: 16px; }
-    .box { background: #fff; border: 2px solid var(--line); border-radius: 10px; padding: 14px 16px; min-width: 150px; text-align: center; font-size: 0.9rem; }
-    .box.src { border-color: var(--red); background: #fff5f5; }
-    .arrow { align-self: center; color: var(--red); font-weight: 700; font-size: 1.2rem; }
-    .panel { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 20px; margin-bottom: 14px; }
-    h2 { color: var(--red); font-size: 1rem; margin-bottom: 10px; }
-    pre { background: #1e1e1e; color: #f1f5f9; padding: 12px; border-radius: 8px; font-size: 0.78rem; overflow-x: auto; }
-    .rendered { background: #f0fdf4; border: 1px solid #86efac; padding: 12px; border-radius: 8px; font-family: ui-monospace, monospace; font-size: 0.85rem; margin-top: 10px; }
-    .back { display: inline-block; margin-top: 16px; color: var(--red); text-decoration: none; font-weight: 600; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Variables and Templates — Precedence and Jinja2</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root { --red: #EE0000; --red-deep: #c40000; --red-light: #fff0f0; --ink: #1a1a2e; --muted: #64748b; --surface: #fff; --line: #e2e8f0; }
+        body { font-family: "Segoe UI", system-ui, sans-serif; background: linear-gradient(180deg, #fafafa 0%, #f1f5f9 100%); padding: 20px; line-height: 1.6; color: var(--ink); }
+        .container { max-width: 1380px; margin: 0 auto; }
+        .hero { position: relative; text-align: center; background: var(--surface); border-radius: 16px; padding: 34px 32px 28px; box-shadow: 0 4px 18px rgba(0,0,0,0.08); margin-bottom: 26px; border: 1px solid rgba(238,0,0,0.1); }
+        .eyebrow { display: inline-flex; padding: 6px 12px; border-radius: 999px; background: var(--red-light); color: var(--red-deep); font-size: 0.82rem; font-weight: 700; margin-bottom: 12px; }
+        .hero h1 { color: var(--red); font-size: clamp(1.8rem, 4vw, 2.6rem); margin-bottom: 8px; }
+        .home-link { position: absolute; top: 16px; right: 20px; color: var(--red); text-decoration: none; font-weight: 600; padding: 6px 14px; border-radius: 8px; border: 1px solid rgba(238,0,0,0.18); background: rgba(238,0,0,0.06); }
+        .section-title { font-size: 17px; font-weight: bold; color: #334155; margin-bottom: 12px; padding: 8px 12px; background: #f1f5f9; border-left: 4px solid var(--red); border-radius: 0 6px 6px 0; }
+        .flow-section { margin-bottom: 22px; }
+        .repo-note { background: #dcfce7; border-left: 4px solid #22c55e; padding: 12px 16px; border-radius: 6px; margin-bottom: 20px; font-size: 0.9rem; }
+        .precedence-ladder { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 24px; }
+        .ladder-step { display: flex; align-items: center; gap: 14px; margin-bottom: 8px; cursor: pointer; padding: 10px 14px; border-radius: 8px; border: 2px solid transparent; transition: all 0.2s; }
+        .ladder-step:hover { background: #f8fafc; border-color: var(--line); }
+        .ladder-step.active { background: var(--red-light); border-color: var(--red); }
+        .ladder-rank { flex-shrink: 0; width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.85rem; color: white; }
+        .rank-low { background: #94a3b8; }
+        .rank-mid { background: #64748b; }
+        .rank-high { background: var(--red); }
+        .rank-top { background: #7f1d1d; }
+        .ladder-label { flex: 1; }
+        .ladder-label strong { display: block; font-size: 0.92rem; }
+        .ladder-label small { color: var(--muted); font-size: 0.8rem; }
+        .ladder-arrow { text-align: center; color: var(--muted); font-size: 1.2rem; margin: 4px 0; }
+        .ladder-note { background: #f8fafc; border: 1px solid var(--line); border-radius: 10px; padding: 14px; margin-top: 14px; font-size: 0.9rem; min-height: 48px; }
+        .template-flow { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px; padding: 20px 0; }
+        .flow-box { padding: 14px 18px; border-radius: 10px; text-align: center; font-weight: 600; font-size: 12px; min-width: 130px; cursor: pointer; transition: transform 0.2s; }
+        .flow-box.src { background: linear-gradient(135deg, var(--red) 0%, var(--red-deep) 100%); color: white; }
+        .flow-box.mid { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; }
+        .flow-box.out { background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: white; }
+        .flow-box:hover { transform: translateY(-2px); }
+        .arrow { font-size: 20px; color: var(--muted); font-weight: 700; }
+        .code-tabs { display: flex; gap: 5px; margin-bottom: 8px; flex-wrap: wrap; }
+        .code-tab { padding: 6px 14px; background: #e9ecef; border: none; border-radius: 6px 6px 0 0; cursor: pointer; font-size: 12px; font-weight: bold; }
+        .code-tab.active { background: var(--red); color: white; }
+        .code-content { display: none; }
+        .code-content.active { display: block; }
+        pre { background: #1e293b; color: #e2e8f0; padding: 14px; border-radius: 8px; font-size: 11px; line-height: 1.55; white-space: pre-wrap; }
+        .rendered { background: #f0fdf4; border: 2px solid #86efac; padding: 14px; border-radius: 8px; font-family: ui-monospace, monospace; font-size: 0.85rem; margin-top: 12px; }
+        .split { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        @media (max-width: 700px) { .split { grid-template-columns: 1fr; } }
+        .builtin-vars { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+        .var-chip { background: #f8fafc; border: 1px solid var(--line); border-radius: 8px; padding: 10px; font-size: 0.82rem; cursor: pointer; }
+        .var-chip:hover { border-color: var(--red); }
+        .var-chip code { color: var(--red); font-weight: 600; }
+        .footer-note { text-align: center; color: var(--muted); font-size: 0.88rem; margin-top: 24px; }
+        .footer-note a { color: var(--red); text-decoration: none; }
+    </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <h1>Variables &amp; Jinja2 Templates</h1>
-      <p style="color: var(--muted);">group_vars → template module → file on target</p>
-    </header>
-    <div class="flow">
-      <div class="box src">group_vars/<br>webservers.yml</div>
-      <span class="arrow">→</span>
-      <div class="box">templates/<br>motd.j2</div>
-      <span class="arrow">→</span>
-      <div class="box">ansible.builtin<br>.template</div>
-      <span class="arrow">→</span>
-      <div class="box">/etc/motd<br>on web1</div>
-    </div>
-    <section class="panel">
-      <h2>Source variables</h2>
-      <pre>webserver_port: 80
+    <div class="container">
+        <header class="hero">
+            <a href="index.html" class="home-link">&#8962; Home</a>
+            <div class="eyebrow">Lesson 05 · Variables</div>
+            <h1>Variables &amp; Jinja2 Templates</h1>
+            <p>group_vars → template module → rendered file on target</p>
+        </header>
+
+        <div class="repo-note">
+            <strong>Repository files:</strong>
+            <code>inventory/group_vars/webservers.yml</code> ·
+            <code>templates/motd.j2</code> ·
+            <code>playbooks/vars-demo.yml</code>
+        </div>
+
+        <div class="flow-section">
+            <div class="section-title">1. Variable Precedence Ladder (click each level — lowest to highest wins)</div>
+            <div class="precedence-ladder">
+                <div class="ladder-step" onclick="showPrecedence('defaults')">
+                    <span class="ladder-rank rank-low">1</span>
+                    <div class="ladder-label"><strong>Role defaults</strong><small>roles/&lt;role&gt;/defaults/main.yml — lowest priority</small></div>
+                </div>
+                <div class="ladder-arrow">↑ overrides below</div>
+                <div class="ladder-step" onclick="showPrecedence('inventory')">
+                    <span class="ladder-rank rank-low">2</span>
+                    <div class="ladder-label"><strong>Inventory group_vars / host_vars</strong><small>inventory/group_vars/webservers.yml</small></div>
+                </div>
+                <div class="ladder-arrow">↑</div>
+                <div class="ladder-step" onclick="showPrecedence('facts')">
+                    <span class="ladder-rank rank-mid">3</span>
+                    <div class="ladder-label"><strong>Facts (setup module)</strong><small>ansible_distribution, ansible_hostname, etc.</small></div>
+                </div>
+                <div class="ladder-arrow">↑</div>
+                <div class="ladder-step active" onclick="showPrecedence('play')">
+                    <span class="ladder-rank rank-mid">4</span>
+                    <div class="ladder-label"><strong>Play vars / vars_files</strong><small>vars: block or vars_files in playbook</small></div>
+                </div>
+                <div class="ladder-arrow">↑</div>
+                <div class="ladder-step" onclick="showPrecedence('task')">
+                    <span class="ladder-rank rank-high">5</span>
+                    <div class="ladder-label"><strong>Task vars / include_vars</strong><small>vars: on individual tasks</small></div>
+                </div>
+                <div class="ladder-arrow">↑</div>
+                <div class="ladder-step" onclick="showPrecedence('extra')">
+                    <span class="ladder-rank rank-top">6</span>
+                    <div class="ladder-label"><strong>Extra vars (-e)</strong><small>ansible-playbook site.yml -e "app_env=staging" — always wins</small></div>
+                </div>
+                <div id="precedence-note" class="ladder-note">
+                    <strong>Play vars / vars_files:</strong> Defined in the playbook YAML. vars_files loads encrypted vault files. Higher than inventory group_vars.
+                </div>
+            </div>
+        </div>
+
+        <div class="flow-section">
+            <div class="section-title">2. Template Rendering Flow</div>
+            <div class="template-flow">
+                <div class="flow-box src" onclick="showTemplate('groupvars')">group_vars/<br>webservers.yml</div>
+                <span class="arrow">+</span>
+                <div class="flow-box mid" onclick="showTemplate('jinja')">templates/<br>motd.j2</div>
+                <span class="arrow">→</span>
+                <div class="flow-box mid" onclick="showTemplate('module')">ansible.builtin<br>.template</div>
+                <span class="arrow">→</span>
+                <div class="flow-box out" onclick="showTemplate('dest')">/etc/motd<br>on web1</div>
+            </div>
+            <div id="template-note" class="ladder-note">
+                Template module renders Jinja2 on the <strong>control node</strong>, then copies result to target. Only writes file if content changed (idempotent).
+            </div>
+        </div>
+
+        <div class="flow-section">
+            <div class="section-title">3. Lab Example — Source and Output</div>
+            <div class="split">
+                <div>
+                    <h3 style="font-size:0.95rem;color:var(--red);margin-bottom:8px;">group_vars/webservers.yml</h3>
+                    <pre>webserver_port: 80
 app_env: production</pre>
-    </section>
-    <section class="panel">
-      <h2>Template (motd.j2)</h2>
-      <pre>Welcome to {{ inventory_hostname }}
+                    <h3 style="font-size:0.95rem;color:var(--red);margin:12px 0 8px;">templates/motd.j2</h3>
+                    <pre>Welcome to {{ inventory_hostname }}
 Environment: {{ app_env }}
 Web port: {{ webserver_port }}</pre>
-      <div class="rendered">Welcome to web1<br>Environment: production<br>Web port: 80</div>
-    </section>
-    <a class="back" href="index.html">← Back to catalog</a>
-  </div>
+                </div>
+                <div>
+                    <h3 style="font-size:0.95rem;color:#16a34a;margin-bottom:8px;">Rendered on web1</h3>
+                    <div class="rendered">Welcome to web1<br>Environment: production<br>Web port: 80</div>
+                    <h3 style="font-size:0.95rem;color:var(--red);margin:12px 0 8px;">playbooks/vars-demo.yml</h3>
+                    <pre>- name: Template motd
+  ansible.builtin.template:
+    src: ../templates/motd.j2
+    dest: /etc/motd
+    mode: "0644"</pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="flow-section">
+            <div class="section-title">4. Code Examples</div>
+            <div class="code-tabs">
+                <button class="code-tab active" onclick="showCode('debug')">debug var</button>
+                <button class="code-tab" onclick="showCode('jinja')">Jinja2 filters</button>
+                <button class="code-tab" onclick="showCode('register')">register</button>
+                <button class="code-tab" onclick="showCode('facts')">magic variables</button>
+            </div>
+            <div id="debug-code" class="code-content active">
+                <pre># Show a variable value
+ansible webservers -i inventory/hosts.yaml \
+  -m ansible.builtin.debug -a "var=webserver_port"
+
+# In playbook
+- name: Show app environment
+  ansible.builtin.debug:
+    msg: "Deploying to {{ app_env }} on port {{ webserver_port }}"</pre>
+            </div>
+            <div id="jinja-code" class="code-content">
+                <pre># Common Jinja2 in templates
+{{ app_env | upper }}                    # PRODUCTION
+{{ webserver_port | string }}          # "80"
+{% if app_env == 'production' %}       # conditionals
+  Strict mode enabled
+{% endif %}
+{{ groups['webservers'] | join(',') }} # web1,web2
+{{ ansible_date_time.iso8601 }}        # timestamp from facts</pre>
+            </div>
+            <div id="register-code" class="code-content">
+                <pre># Capture task output in a variable
+- name: Check apache
+  ansible.builtin.command: systemctl is-active apache2
+  register: apache_status
+  changed_when: false
+
+- name: Report status
+  ansible.builtin.debug:
+    msg: "Apache is {{ apache_status.stdout }}"</pre>
+            </div>
+            <div id="facts-code" class="code-content">
+                <pre># Magic variables (always available)
+{{ inventory_hostname }}   # web1
+{{ group_names }}          # ['webservers']
+{{ hostvars['web2']['ansible_host'] }}
+{{ ansible_default_ipv4.address }}</pre>
+            </div>
+        </div>
+
+        <div class="flow-section">
+            <div class="section-title">5. Built-in Magic Variables (click)</div>
+            <div class="builtin-vars">
+                <div class="var-chip" onclick="showMagic('inventory_hostname')"><code>inventory_hostname</code><br>Host name from inventory</div>
+                <div class="var-chip" onclick="showMagic('group_names')"><code>group_names</code><br>Groups this host belongs to</div>
+                <div class="var-chip" onclick="showMagic('hostvars')"><code>hostvars</code><br>All variables for all hosts</div>
+                <div class="var-chip" onclick="showMagic('groups')"><code>groups</code><br>Dict of group → host list</div>
+                <div class="var-chip" onclick="showMagic('ansible_host')"><code>ansible_host</code><br>Connection IP/DNS</div>
+                <div class="var-chip" onclick="showMagic('play_hosts')"><code>play_hosts</code><br>Hosts in current play</div>
+            </div>
+            <div id="magic-note" class="ladder-note" style="margin-top:12px;display:none;"></div>
+        </div>
+
+        <div class="flow-section">
+            <div class="section-title">7. Jinja Filters Reference</div>
+            <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
+                <thead><tr style="background:var(--red-light);"><th style="padding:10px;border:1px solid var(--line);">Filter</th><th style="padding:10px;border:1px solid var(--line);">Example</th></tr></thead>
+                <tbody>
+                    <tr><td style="padding:8px;border:1px solid var(--line);">default</td><td style="padding:8px;border:1px solid var(--line);"><code>{{ missing | default('n/a') }}</code></td></tr>
+                    <tr><td style="padding:8px;border:1px solid var(--line);">upper / lower</td><td style="padding:8px;border:1px solid var(--line);"><code>{{ app_env | upper }}</code></td></tr>
+                    <tr><td style="padding:8px;border:1px solid var(--line);">length</td><td style="padding:8px;border:1px solid var(--line);"><code>{{ groups['webservers'] | length }}</code></td></tr>
+                    <tr><td style="padding:8px;border:1px solid var(--line);">join</td><td style="padding:8px;border:1px solid var(--line);"><code>{{ groups['webservers'] | join(', ') }}</code></td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="flow-section">
+            <div class="section-title">8. Troubleshooting</div>
+            <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
+                <thead><tr style="background:#fef3c7;"><th style="padding:10px;border:1px solid var(--line);">Symptom</th><th style="padding:10px;border:1px solid var(--line);">Fix</th></tr></thead>
+                <tbody>
+                    <tr><td style="padding:8px;border:1px solid var(--line);">Undefined variable</td><td style="padding:8px;border:1px solid var(--line);">Host in correct group; check group_vars filename</td></tr>
+                    <tr><td style="padding:8px;border:1px solid var(--line);">Template not found</td><td style="padding:8px;border:1px solid var(--line);"><code>src</code> path relative to playbook in playbooks/</td></tr>
+                    <tr><td style="padding:8px;border:1px solid var(--line);">changed every run</td><td style="padding:8px;border:1px solid var(--line);">Remove dynamic timestamps from .j2</td></tr>
+                    <tr><td style="padding:8px;border:1px solid var(--line);">-e override ignored</td><td style="padding:8px;border:1px solid var(--line);">Extra vars have highest precedence — expected</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="flow-section">
+            <div class="section-title">9. Lab Commands</div>
+            <pre style="background:#1e293b;color:#e2e8f0;padding:14px;border-radius:8px;font-size:11px;">cd ansible/essentials/labs
+ansible-playbook -i inventory/hosts.ini.local playbooks/vars-demo.yml
+ansible-playbook -i inventory/hosts.ini.local playbooks/vars-demo.yml -e "app_env=staging"
+ansible web1 -i inventory/hosts.ini.local -m ansible.builtin.command -a "cat /etc/motd"</pre>
+        </div>
+
+        <div class="flow-section">
+            <div class="section-title">10. Conditional Templates</div>
+            <pre style="background:#1e293b;color:#e2e8f0;padding:14px;border-radius:8px;font-size:11px;">{% if app_env == 'production' %}
+*** PRODUCTION — {{ inventory_hostname }} ***
+{% else %}
+Environment: {{ app_env }} on {{ inventory_hostname }}
+{% endif %}
+Web port: {{ webserver_port | default(80) }}</pre>
+        </div>
+
+        <div class="flow-section">
+            <div class="section-title">11. Multi-Environment Layout</div>
+            <pre style="background:#f8fafc;color:#334155;padding:14px;border-radius:8px;font-size:11px;border:1px solid var(--line);">inventories/
+├── production/group_vars/webservers.yml  # app_env: production
+└── staging/group_vars/webservers.yml     # app_env: staging
+
+ansible-playbook -i inventories/staging/hosts.ini playbooks/vars-demo.yml</pre>
+        </div>
+
+        <div class="flow-section">
+            <div class="section-title">6. Variable File Locations (discovery order)</div>
+            <table style="width:100%;border-collapse:collapse;font-size:0.88rem;">
+                <thead><tr style="background:var(--red-light);"><th style="padding:10px;border:1px solid var(--line);">Path</th><th style="padding:10px;border:1px solid var(--line);">Scope</th><th style="padding:10px;border:1px solid var(--line);">Lab example</th></tr></thead>
+                <tbody>
+                    <tr><td style="padding:8px;border:1px solid var(--line);"><code>inventory/group_vars/&lt;g&gt;.yml</code></td><td style="padding:8px;border:1px solid var(--line);">All hosts in group</td><td style="padding:8px;border:1px solid var(--line);">webserver_port: 80</td></tr>
+                    <tr><td style="padding:8px;border:1px solid var(--line);"><code>inventory/host_vars/&lt;h&gt;.yml</code></td><td style="padding:8px;border:1px solid var(--line);">Single host</td><td style="padding:8px;border:1px solid var(--line);">host_vars/web1.yml (optional)</td></tr>
+                    <tr><td style="padding:8px;border:1px solid var(--line);"><code>roles/&lt;r&gt;/defaults/main.yml</code></td><td style="padding:8px;border:1px solid var(--line);">Role default</td><td style="padding:8px;border:1px solid var(--line);">web_package: apache2</td></tr>
+                    <tr><td style="padding:8px;border:1px solid var(--line);"><code>playbook vars_files</code></td><td style="padding:8px;border:1px solid var(--line);">Play scope</td><td style="padding:8px;border:1px solid var(--line);">vault/secrets.yml</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="flow-section">
+            <div class="section-title">7. Troubleshooting Variables</div>
+            <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
+                <thead><tr style="background:#fef3c7;"><th style="padding:8px;border:1px solid var(--line);">Symptom</th><th style="padding:8px;border:1px solid var(--line);">Cause</th><th style="padding:8px;border:1px solid var(--line);">Fix</th></tr></thead>
+                <tbody>
+                    <tr><td style="padding:8px;border:1px solid var(--line);">'app_env' is undefined</td><td style="padding:8px;border:1px solid var(--line);">Host not in webservers</td><td style="padding:8px;border:1px solid var(--line);">Check inventory group membership</td></tr>
+                    <tr><td style="padding:8px;border:1px solid var(--line);">Template not updating</td><td style="padding:8px;border:1px solid var(--line);">Content unchanged</td><td style="padding:8px;border:1px solid var(--line);">Change variable or use --diff</td></tr>
+                    <tr><td style="padding:8px;border:1px solid var(--line);">Wrong value at runtime</td><td style="padding:8px;border:1px solid var(--line);">-e extra var wins</td><td style="padding:8px;border:1px solid var(--line);">ansible-playbook -e "app_env=staging"</td></tr>
+                    <tr><td style="padding:8px;border:1px solid var(--line);">Jinja syntax error</td><td style="padding:8px;border:1px solid var(--line);">Unclosed braces or bad filter</td><td style="padding:8px;border:1px solid var(--line);">Quote strings; test with ansible-playbook --check</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="flow-section">
+            <div class="section-title">8. Debug Commands</div>
+            <pre># Dump all variables for a host
+ansible-inventory -i inventory/hosts.yaml --host web1
+
+# Show one variable
+ansible web1 -i inventory/hosts.yaml -m ansible.builtin.debug -a "var=hostvars[inventory_hostname]"
+
+# Playbook dry-run with diff
+ansible-playbook -i inventory/hosts.ini.local playbooks/vars-demo.yml --check --diff</pre>
+        </div>
+
+        <p class="footer-note">
+            Deep dive: <a href="../docs/05-variables/ansible-variables.md">ansible-variables.md</a> ·
+            Lab: <a href="../labmanuals/lab05-playbook-variables.md">lab05</a>
+        </p>
+    </div>
+
+    <script>
+        const precedenceInfo = {
+            defaults: '<strong>Role defaults (lowest):</strong> roles/webserver/defaults/main.yml sets web_package: apache2. Overridden by any higher source.',
+            inventory: '<strong>Inventory group_vars:</strong> inventory/group_vars/webservers.yml — webserver_port: 80, app_env: production. Applies to all webservers hosts.',
+            facts: '<strong>Facts:</strong> Gathered by setup module. ansible_distribution, ansible_os_family. Can be cached in fact cache.',
+            play: '<strong>Play vars / vars_files:</strong> vars: block in playbook or vars_files loading vault/secrets.yml.',
+            task: '<strong>Task vars:</strong> vars: on a specific task. Rare; use for task-scoped overrides.',
+            extra: '<strong>Extra vars (-e) — highest:</strong> ansible-playbook site.yml -e "app_env=staging" always wins. Cannot be overridden.'
+        };
+        const templateInfo = {
+            groupvars: 'Variables from group_vars merge into host context before template renders.',
+            jinja: 'Jinja2 template uses {{ variable }} syntax. Processed on control node.',
+            module: 'ansible.builtin.template compares checksum; only writes if output differs.',
+            dest: 'Final file on target at dest path with specified mode (0644).'
+        };
+        const magicInfo = {
+            inventory_hostname: 'The name of the host in inventory (web1), not the IP.',
+            group_names: "List of groups: ['webservers'] for web1.",
+            hostvars: "Access another host's vars: {{ hostvars['web2']['ansible_host'] }}",
+            groups: "All groups dict: {{ groups['webservers'] }} → ['web1','web2']",
+            ansible_host: 'Connection address from inventory (10.0.1.10).',
+            play_hosts: 'List of hosts in the current play execution.'
+        };
+        function showPrecedence(key) {
+            document.querySelectorAll('.ladder-step').forEach(el => el.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            document.getElementById('precedence-note').innerHTML = precedenceInfo[key] || '';
+        }
+        function showTemplate(key) {
+            document.getElementById('template-note').innerHTML = templateInfo[key] || '';
+        }
+        function showMagic(key) {
+            const note = document.getElementById('magic-note');
+            note.innerHTML = '<strong>' + key + ':</strong> ' + (magicInfo[key] || '');
+            note.style.display = 'block';
+        }
+        function showCode(type) {
+            document.querySelectorAll('.code-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.code-tab').forEach(el => el.classList.remove('active'));
+            document.getElementById(type + '-code').classList.add('active');
+            event.target.classList.add('active');
+        }
+    </script>
 </body>
 </html>

@@ -1,7 +1,363 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Foundations | Terraform Essentials</title><style>
-:root{--purple:#7B42BC;--ink:#261a33;--muted:#665b70;--paper:#fcfaff;--line:#e8ddf2}*{box-sizing:border-box}body{margin:0;font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink);background:var(--paper)}header{background:var(--purple);color:#fff;padding:3rem max(1.25rem,calc((100% - 960px)/2)) 2.5rem}header h1{margin:0;font-size:2.4rem}header p{max-width:48rem;margin:.5rem 0 0;opacity:.94}nav{background:#fff;border-bottom:1px solid var(--line);padding:.75rem max(1.25rem,calc((100% - 960px)/2));display:flex;gap:1rem;flex-wrap:wrap}nav a{color:var(--purple);font-weight:700;text-decoration:none}main{max-width:960px;margin:auto;padding:2rem 1.25rem 4rem}h2{color:var(--purple);margin-top:2rem}.card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:1.25rem;margin:1rem 0}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem}code,pre{background:#f3edf8;border-radius:5px}code{padding:.15rem .35rem}pre{padding:1rem;overflow:auto}footer{border-top:1px solid var(--line);padding:1rem;text-align:center;color:var(--muted)}.note{border-left:4px solid var(--purple);padding:.8rem 1rem;background:#f6f0fb}</style></head><body><header><h1>Foundations</h1><p>Terraform is declarative infrastructure-as-code: configuration describes the target, and state connects it to real objects.</p></header><nav><a href="index.html">Overview</a><a href="foundations.html">Foundations</a><a href="workflow.html">Workflow</a><a href="variables.html">Variables</a><a href="state.html">State</a><a href="modules.html">Modules</a></nav><main><h2>Providers and resources</h2><p>Providers expose resource types. A resource declares an object Terraform manages; a data source reads an existing value. Version constraints keep behavior reproducible.</p><pre>terraform {
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terraform Foundations — Providers, Resources & HCL</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --purple: #7B42BC; --purple-deep: #5c2d94; --purple-sky: #ede4f7;
+            --ink: #261a33; --muted: #665b70; --line: #e8ddf2;
+            --amber: #fef3c7; --mint: #dcfce7; --slate-700: #334155;
+        }
+        body {
+            font-family: "Segoe UI", system-ui, sans-serif;
+            background: linear-gradient(180deg, #fcfaff 0%, #f3ebfa 100%);
+            color: var(--ink); line-height: 1.6; padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .hero {
+            position: relative; text-align: center; background: white;
+            border-radius: 16px; padding: 34px 32px 28px;
+            box-shadow: 0 4px 18px rgba(123, 66, 188, 0.12);
+            margin-bottom: 26px; border: 1px solid rgba(123, 66, 188, 0.15);
+        }
+        .eyebrow {
+            display: inline-flex; padding: 6px 14px; border-radius: 999px;
+            background: var(--purple-sky); color: var(--purple-deep);
+            font-size: 0.82rem; font-weight: 700; margin-bottom: 12px;
+        }
+        .hero h1 { color: var(--purple); font-size: clamp(1.8rem, 4vw, 2.6rem); }
+        .hero .subtitle { color: var(--muted); max-width: 700px; margin: 8px auto 0; }
+        .home-link {
+            position: absolute; top: 16px; right: 20px; color: var(--purple);
+            text-decoration: none; font-weight: 600; padding: 6px 14px;
+            border-radius: 8px; border: 1px solid rgba(123,66,188,0.2);
+            background: rgba(123,66,188,0.06);
+        }
+        .nav-bar {
+            display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
+            margin-bottom: 20px; padding: 10px; background: white;
+            border-radius: 10px; border: 1px solid var(--line);
+        }
+        .nav-bar a { color: var(--purple); font-weight: 600; text-decoration: none; padding: 6px 12px; border-radius: 6px; font-size: 0.88rem; }
+        .nav-bar a:hover, .nav-bar a.active { background: var(--purple-sky); }
+        .section-title {
+            font-size: 18px; font-weight: bold; color: var(--slate-700);
+            margin: 22px 0 10px; padding: 8px 12px;
+            background: #f4eef9; border-left: 4px solid var(--purple);
+        }
+        .flow-container {
+            display: flex; align-items: center; justify-content: center;
+            flex-wrap: wrap; gap: 10px; margin-bottom: 14px;
+        }
+        .flow-box {
+            background: linear-gradient(135deg, #7B42BC 0%, #9b59d0 100%);
+            color: white; padding: 12px 18px; border-radius: 8px;
+            font-weight: bold; font-size: 13px; cursor: pointer;
+            transition: all 0.3s; box-shadow: 0 4px 8px rgba(123,66,188,0.25); min-width: 130px; text-align: center;
+        }
+        .flow-box:hover { transform: translateY(-3px); }
+        .flow-box.config { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .flow-box.graph { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: #1a3a2e; }
+        .flow-box.api { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        .flow-box.state { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: #4a3728; }
+        .arrow { font-size: 22px; color: var(--muted); }
+        .concept-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 14px; margin-bottom: 18px;
+        }
+        .concept-card {
+            background: white; border: 2px solid var(--line); border-radius: 10px;
+            padding: 16px; cursor: pointer; transition: all 0.3s;
+        }
+        .concept-card:hover { border-color: var(--purple); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(123,66,188,0.15); }
+        .concept-card.active { border-color: var(--purple); background: #faf5ff; }
+        .concept-card h4 { color: var(--purple); margin-bottom: 6px; }
+        .concept-card p { font-size: 0.88rem; color: var(--muted); }
+        .example-scenario {
+            background: var(--amber); border-left: 4px solid #f59e0b;
+            padding: 14px; border-radius: 8px; margin: 16px 0;
+        }
+        .example-scenario h3 { font-size: 14px; color: #92400e; margin-bottom: 6px; }
+        .example-scenario p { font-size: 13px; color: #78350f; }
+        .repo-callout {
+            background: var(--mint); border-left: 4px solid #22c55e;
+            padding: 14px 18px; border-radius: 8px; margin: 16px 0;
+        }
+        .repo-callout ul { margin: 8px 0 0 18px; font-size: 0.9rem; }
+        .repo-callout code { background: rgba(255,255,255,0.7); padding: 2px 5px; border-radius: 3px; }
+        .code-tabs { display: flex; gap: 5px; }
+        .code-tab {
+            padding: 7px 14px; background: #e9ecef; border: none;
+            border-radius: 6px 6px 0 0; cursor: pointer; font-size: 12px; font-weight: bold;
+        }
+        .code-tab.active { background: var(--purple); color: white; }
+        .code-content { display: none; }
+        .code-content.active { display: block; }
+        pre {
+            background: #1e293b; color: #e2e8f0; padding: 14px;
+            border-radius: 0 8px 8px 8px; font-size: 12px; line-height: 1.55; overflow-x: auto;
+        }
+        .detail-panel {
+            background: white; border: 1px solid var(--line); border-radius: 10px;
+            padding: 16px; margin: 12px 0; min-height: 70px;
+        }
+        .detail-panel h4 { color: var(--purple); margin-bottom: 6px; }
+        .hierarchy {
+            display: flex; justify-content: space-around; flex-wrap: wrap; gap: 12px; margin: 16px 0;
+        }
+        .hierarchy-item { text-align: center; flex: 1; min-width: 140px; }
+        .hierarchy-box {
+            background: var(--purple); color: white; padding: 12px;
+            border-radius: 8px; font-weight: bold; font-size: 13px; margin-bottom: 6px;
+        }
+        .hierarchy-box.provider { background: #3498db; }
+        .hierarchy-box.resource { background: #27ae60; }
+        .hierarchy-box.data { background: #e67e22; }
+        .hierarchy-list { font-size: 11px; color: var(--muted); text-align: left; padding-left: 12px; }
+        .footer-note { text-align: center; color: var(--muted); font-size: 0.9rem; margin-top: 24px; padding-top: 14px; border-top: 1px solid var(--line); }
+        .footer-note a { color: var(--purple); text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="hero">
+            <a href="index.html" class="home-link">&#8962; Home</a>
+            <div class="eyebrow">Chapter 01 · Foundations</div>
+            <h1>Terraform Foundations</h1>
+            <p class="subtitle">Declarative infrastructure-as-code: you describe the desired end state in HCL, Terraform builds a dependency graph, and providers create real cloud objects.</p>
+        </header>
+
+        <nav class="nav-bar">
+            <a href="index.html">Overview</a>
+            <a href="foundations.html" class="active">Foundations</a>
+            <a href="workflow.html">Workflow</a>
+            <a href="variables.html">Variables</a>
+            <a href="state.html">State</a>
+            <a href="modules.html">Modules</a>
+        </nav>
+
+        <div class="repo-callout">
+            <strong>Lab files in this repo:</strong>
+            <ul>
+                <li><code>terraform/essentials/labs/lab01-providers-init/main.tf</code> — AWS + Random providers, version constraints, random_pet output</li>
+                <li><code>terraform/essentials/labs/lab02-ec2/main.tf</code> — EC2 instance with AMI data source and tagged resources</li>
+                <li><code>terraform/essentials/labs/lab02-ec2/variables.tf</code> — region, instance type, and name tag variables</li>
+            </ul>
+        </div>
+
+        <div class="section-title">1. How Terraform Works (Click Each Step)</div>
+        <div class="flow-container">
+            <div class="flow-box config" onclick="showFlow('config')">📝 .tf Config</div>
+            <span class="arrow">→</span>
+            <div class="flow-box graph" onclick="showFlow('graph')">🔗 Dependency Graph</div>
+            <span class="arrow">→</span>
+            <div class="flow-box api" onclick="showFlow('api')">☁️ Provider API</div>
+            <span class="arrow">→</span>
+            <div class="flow-box state" onclick="showFlow('state')">💾 State File</div>
+        </div>
+        <div class="detail-panel" id="flow-detail">
+            <h4>Configuration drives everything</h4>
+            <p>Your <code>.tf</code> files declare providers, resources, and outputs. Terraform parses them into an internal graph where edges represent dependencies (e.g., a subnet depends on its VPC).</p>
+        </div>
+
+        <div class="example-scenario">
+            <h3>Example: Lab 02 EC2 Deployment</h3>
+            <p><strong>Goal:</strong> A single Ubuntu EC2 instance tagged <code>terraform-essentials-web</code> in <code>us-east-1</code>.</p>
+            <p><strong>Flow:</strong> <code>data.aws_ami.ubuntu</code> resolves the latest AMI → <code>aws_instance.web</code> references that ID → apply calls EC2 API → state stores <code>i-0abc...</code>.</p>
+            <p><strong>Auth:</strong> Provider uses <code>AWS_PROFILE</code> — never hard-code access keys.</p>
+        </div>
+
+        <div class="section-title">2. Building Blocks (Click a Card)</div>
+        <div class="concept-grid">
+            <div class="concept-card" onclick="showConcept('terraform')">
+                <h4>terraform {} block</h4>
+                <p>Core settings: required_version, required_providers, backend</p>
+            </div>
+            <div class="concept-card" onclick="showConcept('provider')">
+                <h4>provider {} block</h4>
+                <p>Configures a plugin (region, aliases) — not credentials</p>
+            </div>
+            <div class="concept-card" onclick="showConcept('resource')">
+                <h4>resource {} block</h4>
+                <p>Creates and manages a cloud object Terraform owns</p>
+            </div>
+            <div class="concept-card" onclick="showConcept('data')">
+                <h4>data {} block</h4>
+                <p>Read-only lookup of existing values (AMIs, VPCs)</p>
+            </div>
+            <div class="concept-card" onclick="showConcept('output')">
+                <h4>output {} block</h4>
+                <p>Exports values after apply (IDs, IPs, ARNs)</p>
+            </div>
+            <div class="concept-card" onclick="showConcept('version')">
+                <h4>Version constraints</h4>
+                <p><code>~&gt; 5.0</code> allows 5.x patches, blocks 6.0</p>
+            </div>
+        </div>
+
+        <div class="section-title">3. Resource vs Data Source Hierarchy</div>
+        <div class="hierarchy">
+            <div class="hierarchy-item">
+                <div class="hierarchy-box provider">Provider</div>
+                <div class="hierarchy-list">aws, random, azurerm<br>Installed by init</div>
+            </div>
+            <div class="hierarchy-item">
+                <div class="hierarchy-box resource">Resource</div>
+                <div class="hierarchy-list">aws_instance<br>aws_vpc<br>random_pet</div>
+            </div>
+            <div class="hierarchy-item">
+                <div class="hierarchy-box data">Data Source</div>
+                <div class="hierarchy-list">aws_ami<br>aws_caller_identity<br>Read-only</div>
+            </div>
+        </div>
+
+        <div class="section-title">4. HCL Examples from the Labs</div>
+        <div class="code-tabs">
+            <button class="code-tab active" onclick="switchTab('lab01')">Lab 01 — Providers</button>
+            <button class="code-tab" onclick="switchTab('lab02')">Lab 02 — EC2</button>
+            <button class="code-tab" onclick="switchTab('ami')">AMI Data Source</button>
+        </div>
+        <div class="code-content active" id="tab-lab01">
+<pre>terraform {
   required_version = ">= 1.5.0"
   required_providers {
-    aws = { source = "hashicorp/aws", version = "~> 5.0" }
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.0"
+    }
   }
-}</pre><div class="note">Run <code>terraform init</code> after adding or changing provider requirements, then commit the lock file when this is a shared project.</div></main><footer>Terraform Essentials · Terraform 1.5+ · AWS provider ~&gt; 5.0</footer></body></html>
+}
+
+provider "aws" {
+  region = "us-east-1"
+}
+
+resource "random_pet" "lab_id" {
+  length = 2
+}
+
+output "lab_id" {
+  value = random_pet.lab_id.id
+}</pre>
+        </div>
+        <div class="code-content" id="tab-lab02">
+<pre>provider "aws" {
+  region = var.aws_region
+}
+
+resource "aws_instance" "web" {
+  ami           = data.aws_ami.ubuntu.id
+  instance_type = var.instance_type
+
+  tags = {
+    Name      = var.instance_name
+    ManagedBy = "Terraform"
+    Lab       = "terraform-essentials-lab02"
+  }
+}
+
+output "instance_id" {
+  value = aws_instance.web.id
+}
+
+output "public_ip" {
+  value = aws_instance.web.public_ip
+}</pre>
+        </div>
+        <div class="code-content" id="tab-ami">
+<pre>data "aws_ami" "ubuntu" {
+  most_recent = true
+  owners      = ["099720109477"]  # Canonical
+
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+}</pre>
+        </div>
+
+        <div class="section-title">5. Provider Version Locking</div>
+        <p style="margin-bottom:10px;font-size:0.92rem;">After <code>terraform init</code>, Terraform writes <code>.terraform.lock.hcl</code> with exact provider checksums. Commit this file in team projects so everyone downloads the same binaries.</p>
+        <div class="flow-container">
+            <div class="flow-box" onclick="showFlow('init')">terraform init</div>
+            <span class="arrow">→</span>
+            <div class="flow-box config" onclick="showFlow('lock')">.terraform.lock.hcl</div>
+            <span class="arrow">→</span>
+            <div class="flow-box graph" onclick="showFlow('providers')">.terraform/providers/</div>
+        </div>
+
+        <div class="example-scenario">
+            <h3>Common Beginner Mistakes</h3>
+            <p>❌ Putting <code>access_key</code> / <code>secret_key</code> in a provider block</p>
+            <p>❌ Skipping <code>terraform init</code> after adding a new provider</p>
+            <p>❌ Editing <code>terraform.tfstate</code> by hand</p>
+            <p>✅ Use <code>export AWS_PROFILE=...</code> and run <code>aws sts get-caller-identity</code> first</p>
+        </div>
+
+        <div class="section-title">6. Address Syntax</div>
+        <p style="font-size:0.92rem;margin-bottom:10px;">Every object has a unique address used in plans, state, and references:</p>
+        <pre>resource "aws_instance" "web" { ... }
+# Address: aws_instance.web
+# Attributes: aws_instance.web.id, aws_instance.web.public_ip
+
+data "aws_ami" "ubuntu" { ... }
+# Address: data.aws_ami.ubuntu.id</pre>
+
+        <p class="footer-note">
+            Terraform Essentials · Terraform 1.5+ · AWS provider ~&gt; 5.0<br>
+            <a href="workflow.html">Next: Workflow →</a> · <a href="../docs/01-getting-started/README.md">Docs: Getting Started</a>
+        </p>
+    </div>
+
+    <script>
+        const flowInfo = {
+            config: { t: 'Configuration (.tf files)', d: 'HCL files in your working directory. Terraform loads all .tf and .tf.json files, building one combined configuration.' },
+            graph: { t: 'Dependency Graph', d: 'Terraform orders resources so dependencies are created first. Implicit references (using another resource attribute) and explicit depends_on both affect ordering.' },
+            api: { t: 'Provider API Calls', d: 'During apply, providers translate resource changes into cloud API requests. The AWS provider calls EC2, VPC, IAM APIs on your behalf.' },
+            state: { t: 'State Persistence', d: 'After each successful apply, Terraform updates terraform.tfstate with real resource IDs, IP addresses, and metadata.' },
+            init: { t: 'terraform init', d: 'Downloads provider plugins, configures backend, and creates .terraform/ directory. Required after cloning a repo or changing providers.' },
+            lock: { t: 'Lock File', d: '.terraform.lock.hcl records exact provider versions and hashes. Run terraform providers lock for cross-platform checksums.' },
+            providers: { t: 'Provider Cache', d: 'Binaries live under .terraform/providers/. Safe to delete — init recreates them. Do not commit .terraform/ to git.' }
+        };
+
+        function showFlow(key) {
+            const f = flowInfo[key];
+            document.getElementById('flow-detail').innerHTML = '<h4>' + f.t + '</h4><p>' + f.d + '</p>';
+        }
+
+        const concepts = {
+            terraform: 'The top-level terraform block sets Terraform version requirements, declares providers, and optionally configures remote state backends.',
+            provider: 'Providers are plugins. The aws provider block sets region and optional aliases. Authentication uses the AWS SDK credential chain — AWS_PROFILE, env vars, or IAM roles.',
+            resource: 'Resources are managed objects. Terraform creates, updates, and destroys them to match configuration. Example: aws_instance.web in lab02.',
+            data: 'Data sources fetch read-only information. Lab02 uses data.aws_ami.ubuntu to find the latest Ubuntu 22.04 AMI without hard-coding an AMI ID.',
+            output: 'Outputs expose values after apply. Useful for scripts, CI pipelines, and terraform output -json automation.',
+            version: 'Version constraints prevent surprise upgrades. >= 1.5.0 requires Terraform 1.5+. ~> 5.0 allows 5.0 through 5.x but not 6.0.'
+        };
+
+        function showConcept(key) {
+            document.querySelectorAll('.concept-card').forEach(c => c.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            document.getElementById('flow-detail').innerHTML = '<h4>' + key + '</h4><p>' + concepts[key] + '</p>';
+        }
+
+        function switchTab(name) {
+            document.querySelectorAll('.code-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.code-content').forEach(c => c.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('tab-' + name).classList.add('active');
+        }
+    </script>
+</body>
+</html>

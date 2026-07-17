@@ -322,6 +322,94 @@ No critical failures (warnings acceptable in lab).
 
 ---
 
+
+
+## Part G — Extended verification
+
+### Step G1 — Role file count audit
+
+```bash
+find roles -name "*.yml" -o -name "*.j2" | wc -l
+find roles -type f | sort
+```
+
+**Validate**
+
+At least 15 files across common, webserver, nodejs_app roles.
+
+---
+
+### Step G2 — common role marker on all hosts
+
+```bash
+ansible -i inventory/hosts.ini all -b -m ansible.builtin.command   -a "cat /etc/ansible-lab-common"
+```
+
+**Validate**
+
+All three hosts show `configured_by=ansible-extended`.
+
+---
+
+### Step G3 — webserver template content
+
+```bash
+ansible -i inventory/hosts.ini web1 -m ansible.builtin.uri   -a "url=http://127.0.0.1/ return_content=yes" | grep -i "webserver"
+```
+
+**Validate**
+
+HTML contains role identification string.
+
+---
+
+### Step G4 — nodejs_app HTTP check
+
+```bash
+ansible -i inventory/hosts.ini app1 -m ansible.builtin.uri   -a "url=http://127.0.0.1:3000/ return_content=yes" -b
+```
+
+**Validate**
+
+Hello message with hostname.
+
+---
+
+### Step G5 — Role dependency order
+
+```bash
+ansible-playbook -i inventory/hosts.ini playbooks/site.yml --list-tasks 2>&1 | grep -E "common|webserver|nodejs" | head -15
+```
+
+**Validate**
+
+common tasks appear before tier-specific role tasks.
+
+---
+
+### Step G6 — Override variable test
+
+```bash
+ansible-playbook -i inventory/hosts.ini playbooks/site.yml   -e "nodejs_app_port=3002" --limit app1
+```
+
+**Validate**
+
+Re-run HTTP check on port 3002 if template/service updated.
+
+---
+
+## Part H — Portfolio deliverables
+
+Document for your records:
+
+1. Screenshot or paste of `PLAY RECAP` with zero failures
+2. Role dependency diagram (text format acceptable)
+3. List of variables at defaults vs group_vars layer
+4. One handler execution log line from web tier template change
+
+---
+
 ## Design decisions
 
 | Choice | Why |

@@ -212,6 +212,114 @@ ansible -i inventory/hosts.ini app1 -m ansible.builtin.command \
 | Template not found | Wrong path | Templates live in `playbooks/templates/` |
 | app1 unreachable | Inventory IP | Update `inventory/hosts.ini` |
 
+
+
+---
+
+## Part F — Playbook deep dive
+
+### Step 11 — Inspect NodeSource keyring task
+
+```bash
+grep -A15 "nodesource" playbooks/nodejs.yml
+```
+
+**Validate**
+
+Uses `ansible.builtin.get_url` and `ansible.builtin.apt_repository` with `signed-by` — no deprecated `apt_key`.
+
+---
+
+### Step 12 — Verify keyring on target
+
+```bash
+ansible -i inventory/hosts.ini app1 -b -m ansible.builtin.command   -a "ls -la /etc/apt/keyrings/nodesource.gpg"
+```
+
+**Validate**
+
+File exists with root ownership.
+
+---
+
+### Step 13 — Inspect deployed application
+
+```bash
+ansible -i inventory/hosts.ini app1 -b -m ansible.builtin.command   -a "cat /opt/lab-app/app.js"
+```
+
+**Validate**
+
+JavaScript references `nodejs_app_port` and hostname from template.
+
+---
+
+### Step 14 — Inspect systemd unit
+
+```bash
+ansible -i inventory/hosts.ini app1 -b -m ansible.builtin.command   -a "systemctl cat lab-app"
+```
+
+**Validate**
+
+Unit file shows `ExecStart` with node and app path.
+
+---
+
+### Step 15 — Check listening port
+
+```bash
+ansible -i inventory/hosts.ini app1 -b -m ansible.builtin.command   -a "ss -tlnp | grep 3000"
+```
+
+**Validate**
+
+node process listening on 127.0.0.1:3000 (or configured port).
+
+---
+
+## Part G — Handler verification
+
+### Step 16 — Confirm handler names match
+
+```bash
+grep -E "notify:|name:" playbooks/nodejs.yml | head -20
+```
+
+**Validate**
+
+Every `notify:` string exactly matches a handler `name:`.
+
+---
+
+### Step 17 — Handler skip on idempotent run
+
+```bash
+ansible-playbook -i inventory/hosts.ini playbooks/nodejs.yml 2>&1 | grep -i "RUNNING HANDLER" || echo "No handlers (expected on idempotent run)"
+```
+
+**Validate**
+
+No `RUNNING HANDLER` when templates unchanged.
+
+---
+
+## Knowledge check
+
+1. Why is Node 20 installed from NodeSource instead of Ubuntu default?
+2. What triggers the application restart handler?
+3. Where are `nodejs_app_port` and `nodejs_version` defined?
+4. What does `--syntax-check` validate vs `--check`?
+
+## Additional troubleshooting
+
+| Symptom | Diagnostic command | Fix |
+|---------|-------------------|-----|
+| GPG error | `ls /etc/apt/keyrings/` | Re-run playbook from keyring task |
+| Port conflict | `ss -tlnp` | Change `nodejs_app_port` in group_vars |
+| Handler not run | Compare notify/handler names | Exact string match |
+| Template error | `ansible-playbook --syntax-check` | Fix Jinja2 syntax |
+
 ## Cleanup
 
 ```bash

@@ -236,6 +236,97 @@ Output shows `changed` **would** occur or reports simulated state. Some modules 
 
 ---
 
+### Step 11 — Verbose mode for debugging
+
+When a command fails, add verbosity to see SSH and module details:
+
+```bash
+ansible -i inventory/hosts.ini web1 -m ansible.builtin.ping -vvv 2>&1 | tail -30
+```
+
+**Validate**
+
+Output includes `ESTABLISH SSH CONNECTION` and Python interpreter path. No `UNREACHABLE` or `FAILED` lines.
+
+---
+
+### Step 12 — File module: ensure directory exists
+
+```bash
+ansible -i inventory/hosts.ini webservers -b -m ansible.builtin.file \
+  -a "path=/opt/lab-demo state=directory mode=0755 owner=ubuntu"
+```
+
+**Validate**
+
+```bash
+ansible -i inventory/hosts.ini web1 -b -m ansible.builtin.command -a "ls -ld /opt/lab-demo"
+```
+
+```text
+drwxr-xr-x ... ubuntu ... /opt/lab-demo
+```
+
+---
+
+### Step 13 — Gather one fact ad hoc (preview Lab 02)
+
+```bash
+ansible -i inventory/hosts.ini web1 -m ansible.builtin.setup \
+  -a "filter=ansible_distribution*"
+```
+
+**Validate**
+
+JSON includes `"ansible_distribution": "Ubuntu"` and version `22.04`.
+
+---
+
+### Step 14 — Test appserver connectivity
+
+```bash
+ansible -i inventory/hosts.ini appservers -m ansible.builtin.ping
+```
+
+**Validate**
+
+`app1` returns `pong`. All three inventory hosts are reachable before Lab 02.
+
+---
+
+## Architecture
+
+```
+┌──────────────────┐         SSH          ┌─────────────┐
+│  Control Node    │ ───────────────────► │    web1     │
+│  ansible -m ...  │                      │  Ubuntu 22  │
+│  inventory/      │ ───────────────────► │    web2     │
+│  hosts.ini       │                      └─────────────┘
+│                  │ ───────────────────► ┌─────────────┐
+│                  │                      │    app1     │
+└──────────────────┘                      └─────────────┘
+```
+
+## Ad hoc flag reference
+
+| Flag | Long form | Purpose |
+|------|-----------|---------|
+| `-i` | `--inventory` | Inventory file or script |
+| `-m` | `--module-name` | Module to execute (FQCN) |
+| `-a` | `--args` | Module arguments |
+| `-b` | `--become` | Privilege escalation (sudo) |
+| `-l` | `--limit` | Restrict to host pattern |
+| `-f` | `--forks` | Parallelism (default 5) |
+| `-C` | `--check` | Dry-run mode |
+| `-v` | `-vvv` | Increase verbosity |
+
+## Reflection questions
+
+1. Why does `ansible.builtin.apt` require `-b` but `ping` does not?
+2. What is the difference between `changed` and `ok` in module output?
+3. When would you choose ad hoc over a playbook?
+4. Why use FQCN (`ansible.builtin.ping`) instead of short name (`ping`)?
+
 ## Module reference (this lab)
 
 | Module | Ad hoc example |

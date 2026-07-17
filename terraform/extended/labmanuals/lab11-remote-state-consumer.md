@@ -1,356 +1,509 @@
 # Lab 11 — Remote state consumer
 
-> **Goal:** Read a deliberately exposed output from an upstream state boundary.
-> **Time:** ~20 min · **Files:** `labs/lab11-remote-state-consumer/`
+> **Goal:** Read upstream stack outputs using `data.terraform_remote_state` and a configurable state path.
+> **Time:** ~35 min · **Directory:** `terraform/extended/labs/lab11-remote-state-consumer/`
+
+## Learning objectives
+
+After completing this lab you will be able to:
+
+- Configure `terraform_remote_state` with local backend
+- Set `network_state_path` to producer state file
+- Apply producer before consumer
+- Treat outputs as versioned contracts
+- Contrast local path vs S3 backend for production
+
+## Architecture
+
+Consumer stack reads producer outputs through `data.terraform_remote_state` with **local** backend pointing at producer's state file path.
+
+```hcl
+# main.tf
+terraform {
+  required_version = ">= 1.5.0"
+}
+
+variable "network_state_path" {
+  type    = string
+  default = "../lab08-state-keys/terraform.tfstate"
+}
+
+data "terraform_remote_state" "network" {
+  backend = "local"
+  config = {
+    path = var.network_state_path
+  }
+}
+
+output "upstream_outputs" {
+  value = data.terraform_remote_state.network.outputs
+}
+```
+
+```text
+lab08 (producer) ──state file──► data.terraform_remote_state.network
+                                      └──► output upstream_outputs
+```
+
+## Exercise index
+
+| # | Exercise | Outcome |
+|---|----------|----------|
+| 1 | Producer apply | State with outputs |
+| 2 | Consumer init | Data source ready |
+| 3 | upstream_outputs | Producer data visible |
+| 4 | Producer change | Consumer plan updates |
+| 5 | Custom path | Variable override |
+
+## Prerequisites
+
+- Terraform **1.5+** installed (`terraform version`)
+- Terminal access to the lab directory
+- For AWS labs: authenticated `AWS_PROFILE` or IAM role — **no access keys in `.tf` files**
+- Read the matching doc in `terraform/extended/docs/` before applying cloud resources
 
 ## Before you start
 
-- Terraform 1.5 or newer is installed (`terraform version`).
-- No cloud credentials are required to validate this configuration.
-- Run every command from `terraform/extended/labs/lab11-remote-state-consumer`.
-
-## Steps
-
-### Step 1 — Inspect the configuration
-
-Read `main.tf` and any `variables.tf` or example backend file. Identify inputs, outputs, and the ownership boundary before executing Terraform.
-
 ```bash
-cd ../labs/lab11-remote-state-consumer
-ls
+cd terraform/extended/labs/lab11-remote-state-consumer
+export AWS_PROFILE=your-training-profile   # when AWS is used
+aws sts get-caller-identity                # verify account (AWS labs)
+terraform version
 ```
 
 **Validate**
 
 ```text
-The lab configuration and its supporting files are present.
+Terraform v1.5.x or newer is reported.
+AWS identity matches your training account (if applicable).
 ```
 
-### Step 2 — Initialize and validate
+### Step 1 — Apply producer first
 
-Initialization installs only the providers declared by this root module. Backend suite labs intentionally use `-backend=false` for local syntax validation; initialize their actual backend only after completing the backend prerequisites.
+Lab 08 (or 10) must have applied state with outputs.
 
 ```bash
-terraform init && terraform validate
+cd ../lab08-state-keys
+terraform output recommended_state_key 2>/dev/null || true
 ```
 
 **Validate**
 
 ```text
-Success! The configuration is valid.
+Producer state exists or you note path to substitute.
 ```
 
-### Step 3 — Review the execution boundary
+### Step 2 — Enter consumer directory
 
-A plan is a proposal, not approval to create resources. Read additions, changes, destroys, provider region, and every input value. Stop if the target account, state location, or resource scope is unexpected.
+No managed resources — data source only.
 
 ```bash
-terraform plan # after the upstream state file exists
+cd ../lab11-remote-state-consumer
+cat main.tf
 ```
 
 **Validate**
 
 ```text
-The plan matches the intended lab outcome and contains no unexpected destroy operations.
+data block uses local backend.
 ```
 
-### Step 4 — Apply only when appropriate
+### Step 3 — Review network_state_path
 
-Labs that only transform data can be applied safely after plan review. AWS examples must be applied only in an approved training account. Remote-exec needs a host you own and can reach; it does not create that host.
+Default relative path to lab08 state.
 
 ```bash
-terraform apply
+grep -A4 'network_state_path' main.tf
 ```
 
 **Validate**
 
 ```text
-Terraform reports Apply complete and the documented outputs are shown.
+Default `../lab08-state-keys/terraform.tfstate`.
+```
+
+### Step 4 — Initialize consumer
+
+No S3 backend in consumer for this exercise.
+
+```bash
+terraform init
+terraform validate
+```
+
+**Validate**
+
+```text
+Valid consumer configuration.
+```
+
+### Step 5 — Plan consumer
+
+Reads remote state at plan time.
+
+```bash
+terraform plan
+```
+
+**Validate**
+
+```text
+Plan may show output changes based on upstream.
+```
+
+### Step 6 — Apply consumer
+
+Stores data source result in local state.
+
+```bash
+terraform apply -auto-approve
+```
+
+**Validate**
+
+```text
+upstream_outputs populated.
+```
+
+### Step 7 — Inspect outputs
+
+See producer outputs reflected.
+
+```bash
+terraform output upstream_outputs
+```
+
+**Validate**
+
+```text
+Contains producer output map.
+```
+
+### Step 8 — Change producer
+
+Re-apply producer with different environment.
+
+```bash
+cd ../lab08-state-keys
+terraform apply -auto-approve -var='environment=qa'
+```
+
+**Validate**
+
+```text
+Producer output changes.
+```
+
+### Step 9 — Re-plan consumer
+
+Downstream detects upstream drift.
+
+```bash
+cd ../lab11-remote-state-consumer
+terraform plan
+```
+
+**Validate**
+
+```text
+Output change if producer outputs changed.
+```
+
+### Step 10 — Custom state path
+
+Override via variable.
+
+```bash
+terraform plan -var='network_state_path=../lab10-state-migration/terraform.tfstate'
+```
+
+**Validate**
+
+```text
+Plan succeeds if alternate state file exists.
+```
+
+### Step 11 — Document contract
+
+List which producer outputs consumers need.
+
+```bash
+terraform output -json upstream_outputs | jq .
+```
+
+**Validate**
+
+```text
+JSON documents interface for hypothetical app stack.
 ```
 
 ## Design notes
 
-Shared state is production-sensitive metadata. Treat its bucket, key naming, retention, encryption, and IAM policy as part of the platform design. A separate state key is an ownership boundary, not merely a filename. Review the planned state location before initialization and never solve a conflict by deleting locks or editing state without understanding the active operation.
-
-For migration, make a backup and allow `terraform init -migrate-state` to copy state only after confirming the source and destination. For consumption, export narrow outputs from the producer and avoid using remote state as a broad inventory API.
+Consumers depend on producer output **names** — renames break downstream plans. Export minimal outputs (`vpc_id`, subnet ids) not entire resource objects. For production, switch data source to S3 backend matching producer key. Do not use remote state as a discovery API for unrelated resources.
 
 ## Done when
 
-- [ ] You ran the validation command and reviewed its success result.
-- [ ] You can explain what state this lab reads or writes.
-- [ ] Any cloud resource created for the lab has a documented cleanup action.
+- [ ] Applied producer and consumer successfully
+- [ ] Read upstream_outputs
+- [ ] Explained output contract risks
 
 ## If something fails
 
 | Symptom | Likely cause | Fix |
 |---------|--------------|-----|
-| Provider initialization fails | Network, registry access, or an unsupported Terraform version | Check `terraform version`, network access, then rerun `terraform init`. |
-| Plan requests an unexpected resource | Wrong workspace, variable file, region, or state | Stop; inspect `terraform workspace show`, inputs, and backend settings. |
-| AWS request is denied | Profile/role lacks access or points at the wrong account | Verify `AWS_PROFILE` and `aws sts get-caller-identity`; request least-privilege training access. |
-| Backend initialization fails | Bucket, region, IAM permissions, or key configuration is wrong | Validate the pre-created bucket and use the matching `backend.hcl.example` values. |
+| Provider initialization fails | Network, registry, or Terraform version | `terraform version`; rerun `terraform init` |
+| Plan shows unexpected resources | Wrong workspace, tfvars, or state | `terraform workspace show`; inspect variables |
+| AWS access denied | Profile/role lacks permission | `aws sts get-caller-identity` |
+| Validation errors | Syntax or type mismatch | Read error path; run `terraform fmt` |
+| Empty upstream_outputs | Producer not applied | Apply lab08 first |
+| State file not found | Wrong network_state_path | Fix relative path |
 
 ## Cleanup
 
 ```bash
-Remove any local test artifacts and do not commit state or private tfvars.
+terraform destroy -auto-approve
+rm -rf .terraform terraform.tfstate*
 ```
 
-Remove generated state, plans, and copied `terraform.tfvars` files if they contain non-public information. Do not commit them.
+Remove `.terraform/`, `terraform.tfstate*`, `backend.hcl`, and private `terraform.tfvars` before committing. Never commit secrets.
+
+## Related resources
+
+| Resource | Path |
+|----------|------|
+| Deep dive | [docs/state/README.md](../docs/state/README.md) |
+| Interactive guide | `terraform/extended/html/` |
+| Course README | `terraform/extended/README.md` |
 
 ---
-*Deep dive: [docs/state/README.md](docs/state/README.md). Next: [Lab 12](lab12-collections.md)*
+*Deep dive: [docs/state/README.md](../docs/state/README.md) · Next: [Lab 12 — Collections](lab12-collections.md)*
 
-## Operational checklist
+## Reference — command cheat sheet
 
-### Control 1 — Consumer contract
 
-Expose only stable, intentionally public outputs from a producer root module.
+| Command | Purpose |
+|---------|---------|
+| `terraform fmt -recursive` | Canonical formatting |
+| `terraform init` | Download providers and configure backend |
+| `terraform validate` | Static type and reference checks |
+| `terraform plan` | Propose infrastructure changes |
+| `terraform apply` | Execute approved plan |
+| `terraform destroy` | Tear down managed resources |
+| `terraform state list` | List addresses in state |
+| `terraform console` | Evaluate expressions interactively |
 
-**Why it matters:** Terraform state and configuration are operational interfaces. A small convention made explicit before apply prevents accidental cross-environment changes later.
+## Reference — ownership questions
 
-**Evidence to capture**
 
-- The selected workspace and account identity.
-- The reviewed plan summary and state location.
-- The operator responsible for cleanup or rollback.
+Before every apply, answer:
 
-**Validate**
+1. Which AWS account and region will change?
+2. Where is state stored and who else uses it?
+3. What is the rollback plan if apply fails mid-way?
+4. Who owns cleanup after the lab session ends?
 
-```bash
-terraform workspace show
-terraform state list
+Document answers in your lab notes — they mirror production change reviews.
+
+## Reference — peer review prompts
+
+
+Pair with a colleague and explain:
+
+- What resources this root module owns
+- Which variables are safe to change without replacement
+- What outputs downstream stacks would consume
+- How you would detect configuration drift
+
+Peer review catches wrong-account applies before they happen.
+
+## Reference — extending this lab
+
+
+Optional extensions (not required for completion):
+
+- Add variable validation blocks with `validation` stanzas
+- Export additional outputs for a hypothetical consumer stack
+- Wire an S3 remote backend using patterns from Labs 07–10
+- Add `terraform.workspace` or `var.environment` to resource names
+
+Keep extensions in a personal branch; do not commit training state.
+
+## Reference — documentation links
+
+
+| Topic | URL |
+|-------|-----|
+| Terraform language | https://developer.hashicorp.com/terraform/language |
+| AWS provider | https://registry.terraform.io/providers/hashicorp/aws/latest/docs |
+| CLI commands | https://developer.hashicorp.com/terraform/cli/commands |
+| State storage | https://developer.hashicorp.com/terraform/language/state |
+
+## Reference — S3 backend checklist
+
+
+| Item | Action |
+|------|--------|
+| Bucket exists | Created by platform team, not this lab |
+| Versioning | Enabled for rollback |
+| Encryption | `encrypt = true` in backend.hcl |
+| Locking | `use_lockfile = true` for Terraform 1.5+ |
+| IAM | Role can `s3:GetObject`, `PutObject`, `DeleteObject` on prefix |
+| Key | Matches `extended/<env>/<component>/terraform.tfstate` pattern |
+
+## Reference — migration safety
+
+
+Never migrate state during an active incident or concurrent apply.
+
+1. Announce maintenance window to team
+2. Copy `terraform.tfstate` to dated backup
+3. Run `terraform state list` and archive output
+4. Execute `terraform init -migrate-state`
+5. Run `terraform plan` — expect **no changes**
+6. If plan shows recreation, **stop** and restore backup
+
+## Reference — remote state consumer
+
+
+Producer stack exports:
+
+```hcl
+output "vpc_id" { value = aws_vpc.this.id }
 ```
 
-```text
-The command output matches the intended environment and ownership boundary.
+Consumer stack reads:
+
+```hcl
+data "terraform_remote_state" "network" {
+  backend = "s3"
+  config = {
+    bucket = "state-bucket"
+    key    = "extended/dev/network/terraform.tfstate"
+    region = "us-east-1"
+  }
+}
 ```
 
-### Control 2 — Consumer contract
+Treat output names as API contracts.
 
-Treat output names and shapes as an interface with compatibility expectations.
+## Reference — command cheat sheet (continued 2)
 
-**Why it matters:** Terraform state and configuration are operational interfaces. A small convention made explicit before apply prevents accidental cross-environment changes later.
 
-**Evidence to capture**
+| Command | Purpose |
+|---------|---------|
+| `terraform fmt -recursive` | Canonical formatting |
+| `terraform init` | Download providers and configure backend |
+| `terraform validate` | Static type and reference checks |
+| `terraform plan` | Propose infrastructure changes |
+| `terraform apply` | Execute approved plan |
+| `terraform destroy` | Tear down managed resources |
+| `terraform state list` | List addresses in state |
+| `terraform console` | Evaluate expressions interactively |
 
-- The selected workspace and account identity.
-- The reviewed plan summary and state location.
-- The operator responsible for cleanup or rollback.
+## Reference — ownership questions (continued 2)
 
-**Validate**
 
-```bash
-terraform workspace show
-terraform state list
+Before every apply, answer:
+
+1. Which AWS account and region will change?
+2. Where is state stored and who else uses it?
+3. What is the rollback plan if apply fails mid-way?
+4. Who owns cleanup after the lab session ends?
+
+Document answers in your lab notes — they mirror production change reviews.
+
+## Reference — peer review prompts (continued 2)
+
+
+Pair with a colleague and explain:
+
+- What resources this root module owns
+- Which variables are safe to change without replacement
+- What outputs downstream stacks would consume
+- How you would detect configuration drift
+
+Peer review catches wrong-account applies before they happen.
+
+## Reference — extending this lab (continued 2)
+
+
+Optional extensions (not required for completion):
+
+- Add variable validation blocks with `validation` stanzas
+- Export additional outputs for a hypothetical consumer stack
+- Wire an S3 remote backend using patterns from Labs 07–10
+- Add `terraform.workspace` or `var.environment` to resource names
+
+Keep extensions in a personal branch; do not commit training state.
+
+## Reference — documentation links (continued 2)
+
+
+| Topic | URL |
+|-------|-----|
+| Terraform language | https://developer.hashicorp.com/terraform/language |
+| AWS provider | https://registry.terraform.io/providers/hashicorp/aws/latest/docs |
+| CLI commands | https://developer.hashicorp.com/terraform/cli/commands |
+| State storage | https://developer.hashicorp.com/terraform/language/state |
+
+## Reference — S3 backend checklist (continued 2)
+
+
+| Item | Action |
+|------|--------|
+| Bucket exists | Created by platform team, not this lab |
+| Versioning | Enabled for rollback |
+| Encryption | `encrypt = true` in backend.hcl |
+| Locking | `use_lockfile = true` for Terraform 1.5+ |
+| IAM | Role can `s3:GetObject`, `PutObject`, `DeleteObject` on prefix |
+| Key | Matches `extended/<env>/<component>/terraform.tfstate` pattern |
+
+## Reference — migration safety (continued 2)
+
+
+Never migrate state during an active incident or concurrent apply.
+
+1. Announce maintenance window to team
+2. Copy `terraform.tfstate` to dated backup
+3. Run `terraform state list` and archive output
+4. Execute `terraform init -migrate-state`
+5. Run `terraform plan` — expect **no changes**
+6. If plan shows recreation, **stop** and restore backup
+
+## Reference — remote state consumer (continued 2)
+
+
+Producer stack exports:
+
+```hcl
+output "vpc_id" { value = aws_vpc.this.id }
 ```
 
-```text
-The command output matches the intended environment and ownership boundary.
+Consumer stack reads:
+
+```hcl
+data "terraform_remote_state" "network" {
+  backend = "s3"
+  config = {
+    bucket = "state-bucket"
+    key    = "extended/dev/network/terraform.tfstate"
+    region = "us-east-1"
+  }
+}
 ```
 
-### Control 3 — Consumer contract
-
-Avoid coupling a consumer to individual resource IDs when a higher-level output will do.
-
-**Why it matters:** Terraform state and configuration are operational interfaces. A small convention made explicit before apply prevents accidental cross-environment changes later.
-
-**Evidence to capture**
-
-- The selected workspace and account identity.
-- The reviewed plan summary and state location.
-- The operator responsible for cleanup or rollback.
-
-**Validate**
-
-```bash
-terraform workspace show
-terraform state list
-```
-
-```text
-The command output matches the intended environment and ownership boundary.
-```
-
-### Control 4 — Consumer contract
-
-Prefer a registry, service discovery, or data source when state is not the right integration boundary.
-
-**Why it matters:** Terraform state and configuration are operational interfaces. A small convention made explicit before apply prevents accidental cross-environment changes later.
-
-**Evidence to capture**
-
-- The selected workspace and account identity.
-- The reviewed plan summary and state location.
-- The operator responsible for cleanup or rollback.
-
-**Validate**
-
-```bash
-terraform workspace show
-terraform state list
-```
-
-```text
-The command output matches the intended environment and ownership boundary.
-```
-
-### Control 5 — Consumer contract
-
-Test a consumer after a producer output change before approving the producer release.
-
-**Why it matters:** Terraform state and configuration are operational interfaces. A small convention made explicit before apply prevents accidental cross-environment changes later.
-
-**Evidence to capture**
-
-- The selected workspace and account identity.
-- The reviewed plan summary and state location.
-- The operator responsible for cleanup or rollback.
-
-**Validate**
-
-```bash
-terraform workspace show
-terraform state list
-```
-
-```text
-The command output matches the intended environment and ownership boundary.
-```
-
-### Control 6 — Consumer contract
-
-Expose only stable, intentionally public outputs from a producer root module.
-
-**Why it matters:** Terraform state and configuration are operational interfaces. A small convention made explicit before apply prevents accidental cross-environment changes later.
-
-**Evidence to capture**
-
-- The selected workspace and account identity.
-- The reviewed plan summary and state location.
-- The operator responsible for cleanup or rollback.
-
-**Validate**
-
-```bash
-terraform workspace show
-terraform state list
-```
-
-```text
-The command output matches the intended environment and ownership boundary.
-```
-
-### Control 7 — Consumer contract
-
-Treat output names and shapes as an interface with compatibility expectations.
-
-**Why it matters:** Terraform state and configuration are operational interfaces. A small convention made explicit before apply prevents accidental cross-environment changes later.
-
-**Evidence to capture**
-
-- The selected workspace and account identity.
-- The reviewed plan summary and state location.
-- The operator responsible for cleanup or rollback.
-
-**Validate**
-
-```bash
-terraform workspace show
-terraform state list
-```
-
-```text
-The command output matches the intended environment and ownership boundary.
-```
-
-### Control 8 — Consumer contract
-
-Avoid coupling a consumer to individual resource IDs when a higher-level output will do.
-
-**Why it matters:** Terraform state and configuration are operational interfaces. A small convention made explicit before apply prevents accidental cross-environment changes later.
-
-**Evidence to capture**
-
-- The selected workspace and account identity.
-- The reviewed plan summary and state location.
-- The operator responsible for cleanup or rollback.
-
-**Validate**
-
-```bash
-terraform workspace show
-terraform state list
-```
-
-```text
-The command output matches the intended environment and ownership boundary.
-```
-
-### Control 9 — Consumer contract
-
-Prefer a registry, service discovery, or data source when state is not the right integration boundary.
-
-**Why it matters:** Terraform state and configuration are operational interfaces. A small convention made explicit before apply prevents accidental cross-environment changes later.
-
-**Evidence to capture**
-
-- The selected workspace and account identity.
-- The reviewed plan summary and state location.
-- The operator responsible for cleanup or rollback.
-
-**Validate**
-
-```bash
-terraform workspace show
-terraform state list
-```
-
-```text
-The command output matches the intended environment and ownership boundary.
-```
-
-### Control 10 — Consumer contract
-
-Test a consumer after a producer output change before approving the producer release.
-
-**Why it matters:** Terraform state and configuration are operational interfaces. A small convention made explicit before apply prevents accidental cross-environment changes later.
-
-**Evidence to capture**
-
-- The selected workspace and account identity.
-- The reviewed plan summary and state location.
-- The operator responsible for cleanup or rollback.
-
-**Validate**
-
-```bash
-terraform workspace show
-terraform state list
-```
-
-```text
-The command output matches the intended environment and ownership boundary.
-```
-
-### Control 11 — Consumer contract
-
-Expose only stable, intentionally public outputs from a producer root module.
-
-**Why it matters:** Terraform state and configuration are operational interfaces. A small convention made explicit before apply prevents accidental cross-environment changes later.
-
-**Evidence to capture**
-
-- The selected workspace and account identity.
-- The reviewed plan summary and state location.
-- The operator responsible for cleanup or rollback.
-
-**Validate**
-
-```bash
-terraform workspace show
-terraform state list
-```
-
-```text
-The command output matches the intended environment and ownership boundary.
-```
+Treat output names as API contracts.
+
+## Reference — command cheat sheet (continued 3)
+
+
+| Command | Purpose |
+|---------|---------|
+| `terraform fmt -recursive` | Canonical formatting |
+| `terraform init` | Download providers and configure backend |
+| `terraform validate` | Static type and reference checks |
+| `terraform plan` | Propose infrastructure changes |
+| `terraform apply` | Execute approved plan |
+| `terraform destroy` | Tear down managed resources |
+| `terraform state list` | List addresses in state |
+| `terraform console` | Evaluate expressions interactively |

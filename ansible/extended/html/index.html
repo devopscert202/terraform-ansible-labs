@@ -1,108 +1,406 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ansible Extended — Interactive Catalog</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    :root {
-      --ansible-red: #EE0000;
-      --ansible-dark: #1a1a1a;
-      --muted: #64748b;
-      --line: #e2e8f0;
-      --bg: #fafafa;
-    }
-    body {
-      font-family: "Segoe UI", system-ui, sans-serif;
-      background: linear-gradient(180deg, #fff 0%, var(--bg) 100%);
-      color: var(--ansible-dark);
-      line-height: 1.6;
-      padding: 24px;
-    }
-    .container { max-width: 1100px; margin: 0 auto; }
-    header {
-      text-align: center;
-      background: #fff;
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: 28px 24px;
-      margin-bottom: 24px;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.05);
-    }
-    h1 { color: var(--ansible-red); font-size: 1.8rem; margin-bottom: 8px; }
-    .subtitle { color: var(--muted); }
-    .catalog {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 16px;
-    }
-    .card {
-      background: #fff;
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 18px 20px;
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-    .card:hover {
-      border-color: var(--ansible-red);
-      box-shadow: 0 4px 16px rgba(238,0,0,0.08);
-    }
-    .card h2 { font-size: 1.05rem; margin-bottom: 6px; }
-    .card h2 a { color: var(--ansible-dark); text-decoration: none; }
-    .card h2 a:hover { color: var(--ansible-red); }
-    .card p { color: var(--muted); font-size: 0.92rem; margin-bottom: 12px; }
-    .tag {
-      display: inline-block;
-      font-size: 0.75rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: var(--ansible-red);
-      background: #fff0f0;
-      padding: 4px 10px;
-      border-radius: 999px;
-    }
-    footer {
-      margin-top: 28px;
-      text-align: center;
-      color: var(--muted);
-      font-size: 0.88rem;
-    }
-    footer a { color: var(--ansible-red); }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ansible Extended — Interactive Curriculum</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --red: #CC0000;
+            --red-deep: #990000;
+            --red-sky: #ffe4e4;
+            --ink: #1a1a2e;
+            --muted: #64748b;
+            --surface: #ffffff;
+            --line: #e2e8f0;
+            --mint: #dcfce7;
+            --amber: #fef3c7;
+            --slate-900: #0f172a;
+            --slate-700: #334155;
+            --slate-500: #64748b;
+            --slate-200: #e2e8f0;
+        }
+        body {
+            font-family: "Segoe UI", system-ui, sans-serif;
+            background: linear-gradient(180deg, #fffafa 0%, #f8f4f4 100%);
+            color: var(--ink);
+            line-height: 1.6;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .hero {
+            position: relative;
+            text-align: center;
+            background: white;
+            border-radius: 16px;
+            padding: 36px 32px 28px;
+            box-shadow: 0 4px 18px rgba(15, 23, 42, 0.08);
+            margin-bottom: 26px;
+            border: 1px solid rgba(204, 0, 0, 0.12);
+        }
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            border-radius: 999px;
+            background: var(--red-sky);
+            color: var(--red-deep);
+            font-size: 0.82rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+        .hero h1 {
+            color: var(--red);
+            font-size: clamp(1.8rem, 4vw, 2.6rem);
+            margin-bottom: 10px;
+        }
+        .subtitle { color: var(--muted); max-width: 640px; margin: 0 auto; font-size: 1rem; }
+        .track-map {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin: 24px 0;
+        }
+        .track-step {
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 14px;
+            text-align: center;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+        .track-step:hover, .track-step.active {
+            border-color: var(--red);
+            background: #fff8f8;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(204, 0, 0, 0.1);
+        }
+        .track-step .num {
+            display: inline-block;
+            background: var(--red);
+            color: white;
+            width: 28px;
+            height: 28px;
+            line-height: 28px;
+            border-radius: 50%;
+            font-weight: 700;
+            font-size: 0.8rem;
+            margin-bottom: 6px;
+        }
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--slate-700);
+            margin: 28px 0 14px;
+            padding-left: 12px;
+            border-left: 4px solid var(--red);
+        }
+        .catalog {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+        }
+        .card {
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 20px 22px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+        .card:hover {
+            border-color: var(--red);
+            box-shadow: 0 6px 20px rgba(204, 0, 0, 0.1);
+        }
+        .card.active { border-color: var(--red); background: #fffafa; }
+        .card h2 { font-size: 1.08rem; margin-bottom: 8px; }
+        .card h2 a { color: var(--ink); text-decoration: none; }
+        .card h2 a:hover { color: var(--red); }
+        .card p { color: var(--muted); font-size: 0.9rem; margin-bottom: 12px; }
+        .tag {
+            display: inline-block;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--red);
+            background: var(--red-sky);
+            padding: 4px 10px;
+            border-radius: 999px;
+            margin-bottom: 8px;
+        }
+        .card-features {
+            list-style: none;
+            font-size: 0.82rem;
+            color: var(--slate-500);
+        }
+        .card-features li { padding: 3px 0; }
+        .card-features li::before { content: "▸ "; color: var(--red); }
+        .info-panel {
+            background: white;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 18px 22px;
+            margin-top: 16px;
+            min-height: 80px;
+        }
+        .info-panel h3 { font-size: 0.95rem; color: var(--red); margin-bottom: 8px; }
+        .info-panel p { font-size: 0.88rem; color: var(--slate-700); }
+        .resources {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 12px;
+            margin-top: 20px;
+        }
+        .resource-link {
+            display: block;
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 14px 16px;
+            text-decoration: none;
+            color: var(--ink);
+            font-size: 0.9rem;
+            transition: border-color 0.2s;
+        }
+        .resource-link:hover { border-color: var(--red); color: var(--red); }
+        .resource-link strong { display: block; margin-bottom: 4px; }
+        .resource-link span { color: var(--muted); font-size: 0.82rem; }
+        .example-scenario {
+            background: var(--amber);
+            border-left: 4px solid #f59e0b;
+            padding: 14px 16px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-size: 0.88rem;
+        }
+        .example-scenario h3 { font-size: 0.92rem; color: #92400e; margin-bottom: 6px; }
+        .example-scenario p { color: #78350f; margin-bottom: 4px; }
+        .code-tabs { display: flex; gap: 6px; margin: 16px 0 8px; flex-wrap: wrap; }
+        .code-tab {
+            padding: 7px 14px;
+            background: var(--slate-200);
+            border: none;
+            border-radius: 6px 6px 0 0;
+            cursor: pointer;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--slate-700);
+            transition: all 0.2s;
+        }
+        .code-tab:hover { background: #cbd5e1; }
+        .code-tab.active { background: var(--red); color: white; }
+        .code-content { display: none; }
+        .code-content.active { display: block; }
+        pre {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        footer {
+            margin-top: 32px;
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.88rem;
+        }
+        footer a { color: var(--red); text-decoration: none; }
+        footer a:hover { text-decoration: underline; }
+        @media (max-width: 600px) {
+            .track-map { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>Ansible Extended — Interactive Pages</h1>
-      <p class="subtitle">Self-contained offline explainers for the extended track (loops, facts, dynamic inventory, break-fix)</p>
-    </header>
-    <div class="catalog">
-      <article class="card">
-        <span class="tag">Lab 04–05</span>
-        <h2><a href="loops-conditionals.html">Loops &amp; Conditionals</a></h2>
-        <p><code>loop</code>, <code>loop_control</code>, and <code>when</code> branching with facts.</p>
-      </article>
-      <article class="card">
-        <span class="tag">Lab 02</span>
-        <h2><a href="facts.html">Facts &amp; Custom Facts</a></h2>
-        <p>Gathering facts, filtering subsets, and <code>/etc/ansible/facts.d/</code> local facts.</p>
-      </article>
-      <article class="card">
-        <span class="tag">Lab 07</span>
-        <h2><a href="dynamic-inventory.html">Dynamic Inventory (AWS)</a></h2>
-        <p><code>amazon.aws.aws_ec2</code> plugin, filters, keyed groups, and compose variables.</p>
-      </article>
-      <article class="card">
-        <span class="tag">Lab 09</span>
-        <h2><a href="break-fix.html">Break-Fix Drills</a></h2>
-        <p>Diagnose YAML, become, handler names, FQCN modules, and inventory interpreter errors.</p>
-      </article>
+    <div class="container">
+        <header class="hero">
+            <span class="eyebrow">Extended Track · Labs 01–09</span>
+            <h1>Ansible Extended — Interactive Curriculum</h1>
+            <p class="subtitle">Self-contained offline explainers for facts, loops, conditionals, dynamic inventory, roles, and break-fix troubleshooting. No CDN required.</p>
+        </header>
+
+        <div class="example-scenario">
+            <h3>How to use this catalog</h3>
+            <p><strong>Before labs:</strong> Read the interactive page for the topic, then open the matching lab manual under <code>labmanuals/</code>.</p>
+            <p><strong>During labs:</strong> Return here for visual references — pipeline diagrams, decision trees, and code tabs mirror what you run on the control node.</p>
+            <p><strong>After labs:</strong> Use <code>docs/</code> markdown as quick reference and <code>break-fix.html</code> for exam-style drills.</p>
+        </div>
+
+        <div class="section-title">Learning path (click a lab)</div>
+        <div class="track-map" id="trackMap">
+            <div class="track-step" data-lab="01" onclick="highlightLab('01')"><span class="num">01</span><br>Ad Hoc Modules</div>
+            <div class="track-step" data-lab="02" onclick="highlightLab('02')"><span class="num">02</span><br>Facts</div>
+            <div class="track-step" data-lab="03" onclick="highlightLab('03')"><span class="num">03</span><br>Playbooks</div>
+            <div class="track-step" data-lab="04" onclick="highlightLab('04')"><span class="num">04</span><br>Loops</div>
+            <div class="track-step" data-lab="05" onclick="highlightLab('05')"><span class="num">05</span><br>Conditionals</div>
+            <div class="track-step" data-lab="06" onclick="highlightLab('06')"><span class="num">06</span><br>Handlers</div>
+            <div class="track-step" data-lab="07" onclick="highlightLab('07')"><span class="num">07</span><br>Dynamic Inventory</div>
+            <div class="track-step" data-lab="08" onclick="highlightLab('08')"><span class="num">08</span><br>Roles</div>
+            <div class="track-step" data-lab="09" onclick="highlightLab('09')"><span class="num">09</span><br>Break-Fix</div>
+        </div>
+
+        <div class="info-panel" id="labInfo">
+            <h3>Select a lab above</h3>
+            <p>Click any numbered step to see prerequisites, related files, and the interactive page for that topic.</p>
+        </div>
+
+        <div class="section-title">Interactive pages</div>
+        <div class="catalog">
+            <article class="card" data-card="facts" onclick="selectCard('facts')">
+                <span class="tag">Lab 02</span>
+                <h2><a href="facts.html">Facts &amp; Custom Facts</a></h2>
+                <p>Gathering pipeline, fact subsets, filtering, and <code>/etc/ansible/facts.d/</code> local facts.</p>
+                <ul class="card-features">
+                    <li>Fact gathering pipeline diagram</li>
+                    <li>Custom facts deployment flow</li>
+                    <li>Interactive fact explorer</li>
+                    <li>Code tabs: setup, filter, ansible_local</li>
+                </ul>
+            </article>
+            <article class="card" data-card="loops" onclick="selectCard('loops')">
+                <span class="tag">Lab 04–05</span>
+                <h2><a href="loops-conditionals.html">Loops &amp; Conditionals</a></h2>
+                <p><code>loop</code>, <code>loop_control</code>, <code>when</code> branching, and fact-driven decisions.</p>
+                <ul class="card-features">
+                    <li>Loop types comparison table</li>
+                    <li>When/conditional decision tree</li>
+                    <li>Package and user loop examples</li>
+                    <li>OS-family branching scenarios</li>
+                </ul>
+            </article>
+            <article class="card" data-card="inventory" onclick="selectCard('inventory')">
+                <span class="tag">Lab 07</span>
+                <h2><a href="dynamic-inventory.html">Dynamic Inventory (AWS)</a></h2>
+                <p><code>amazon.aws.aws_ec2</code> plugin, filters, keyed groups, and compose variables.</p>
+                <ul class="card-features">
+                    <li>EC2 plugin architecture diagram</li>
+                    <li>Inventory refresh flow</li>
+                    <li>Group membership simulator</li>
+                    <li>Credential and SSH checklist</li>
+                </ul>
+            </article>
+            <article class="card" data-card="breakfix" onclick="selectCard('breakfix')">
+                <span class="tag">Lab 09</span>
+                <h2><a href="break-fix.html">Break-Fix Drills</a></h2>
+                <p>Diagnose YAML, become, handler names, FQCN modules, and inventory interpreter errors.</p>
+                <ul class="card-features">
+                    <li>Troubleshooting workflow diagram</li>
+                    <li>Common failure mode cards</li>
+                    <li>Five drill scenarios with fixes</li>
+                    <li>Error message reference table</li>
+                </ul>
+            </article>
+        </div>
+
+        <div class="section-title">Quick start commands</div>
+        <div class="code-tabs">
+            <button class="code-tab active" onclick="showCode('setup')">Setup</button>
+            <button class="code-tab" onclick="showCode('ping')">Ping</button>
+            <button class="code-tab" onclick="showCode('facts')">Facts</button>
+            <button class="code-tab" onclick="showCode('playbook')">Playbook</button>
+            <button class="code-tab" onclick="showCode('dynamic')">Dynamic Inv</button>
+        </div>
+        <div id="setup-code" class="code-content active">
+            <pre>cd ~/terraform-ansible-labs/ansible/extended/labs
+# Edit inventory/hosts.ini with your private IPs
+ansible-inventory -i inventory/hosts.ini --graph</pre>
+        </div>
+        <div id="ping-code" class="code-content">
+            <pre>ansible -i inventory/hosts.ini webservers -m ansible.builtin.ping
+# Expect: "ping": "pong" on each host</pre>
+        </div>
+        <div id="facts-code" class="code-content">
+            <pre>ansible webservers -i inventory/hosts.ini \
+  -m ansible.builtin.setup -a "filter=ansible_distribution*"</pre>
+        </div>
+        <div id="playbook-code" class="code-content">
+            <pre>ansible-playbook --syntax-check playbooks/loops-packages.yml
+ansible-playbook -i inventory/hosts.ini playbooks/loops-packages.yml</pre>
+        </div>
+        <div id="dynamic-code" class="code-content">
+            <pre>export AWS_PROFILE=lab-terraform
+ansible-inventory -i inventory/aws_ec2.yml --graph
+ansible -i inventory/aws_ec2.yml role_webservers -m ansible.builtin.ping</pre>
+        </div>
+
+        <div class="section-title">Documentation &amp; lab manuals</div>
+        <div class="resources">
+            <a class="resource-link" href="../docs/README.md">
+                <strong>Extended Docs</strong>
+                <span>facts/, inventory/, playbooks/ reference guides</span>
+            </a>
+            <a class="resource-link" href="../labmanuals/README.md">
+                <strong>Lab Manuals (01–09)</strong>
+                <span>Step-by-step with validation commands</span>
+            </a>
+            <a class="resource-link" href="../../essentials/html/index.html">
+                <strong>Essentials Track</strong>
+                <span>Prerequisites: inventory, first playbook</span>
+            </a>
+            <a class="resource-link" href="../labs/inventory/hosts.ini">
+                <strong>Lab Inventory</strong>
+                <span>Static hosts.ini for webservers and appservers</span>
+            </a>
+        </div>
+
+        <footer>
+            <p>Ansible Extended Curriculum · Offline · Brand color <code>#CC0000</code></p>
+            <p>Repository: <code>ansible/extended/</code> · Interactive HTML · Markdown docs · Lab manuals</p>
+        </footer>
     </div>
-    <footer>
-      <p>Docs: <a href="../docs/README.md">../docs/README.md</a> · Labs: <a href="../labmanuals/README.md">../labmanuals/README.md</a> · Essentials: <a href="../../essentials/html/index.html">../../essentials/html/</a></p>
-    </footer>
-  </div>
+
+    <script>
+        const labDetails = {
+            '01': { title: 'Lab 01 — Ad Hoc Modules', page: null, manual: 'lab01-adhoc-modules.md', files: 'labs/inventory/hosts.ini', desc: 'Run ansible.builtin.ping, apt, service, copy, and user without playbooks.' },
+            '02': { title: 'Lab 02 — Facts', page: 'facts.html', manual: 'lab02-facts.md', files: 'labs/inventory/hosts.ini', desc: 'Gather, filter, and deploy custom facts to /etc/ansible/facts.d/.' },
+            '03': { title: 'Lab 03 — Node.js Playbook', page: null, manual: 'lab03-nodejs-playbook.md', files: 'labs/playbooks/nodejs.yml', desc: 'Write a playbook with templates, handlers, and NodeSource repo.' },
+            '04': { title: 'Lab 04 — Loops', page: 'loops-conditionals.html', manual: 'lab04-loops.md', files: 'labs/playbooks/loops-packages.yml', desc: 'Install packages and create users with loop and loop_control.' },
+            '05': { title: 'Lab 05 — Conditionals', page: 'loops-conditionals.html', manual: 'lab05-conditionals.md', files: 'labs/playbooks/conditionals-os.yml', desc: 'Branch tasks with when using facts and group membership.' },
+            '06': { title: 'Lab 06 — Handlers', page: null, manual: 'lab06-handlers.md', files: 'labs/playbooks/handlers-nginx.yml', desc: 'Use notify and handlers to reload nginx on config change.' },
+            '07': { title: 'Lab 07 — Dynamic Inventory', page: 'dynamic-inventory.html', manual: 'lab07-dynamic-inventory.md', files: 'labs/inventory/aws_ec2.yml', desc: 'Build inventory from AWS EC2 with keyed_groups and compose.' },
+            '08': { title: 'Lab 08 — Roles Project', page: null, manual: 'lab08-roles-project.md', files: 'labs/playbooks/site.yml', desc: 'Deploy common, webserver, and nodejs_app roles via site.yml.' },
+            '09': { title: 'Lab 09 — Break-Fix', page: 'break-fix.html', manual: 'lab09-break-fix-drills.md', files: 'labs/break-fix/', desc: 'Fix YAML, become, handlers, FQCN, and Python interpreter errors.' }
+        };
+
+        function highlightLab(id) {
+            document.querySelectorAll('.track-step').forEach(el => el.classList.remove('active'));
+            document.querySelector('[data-lab="' + id + '"]').classList.add('active');
+            const info = labDetails[id];
+            let html = '<h3>' + info.title + '</h3><p>' + info.desc + '</p>';
+            html += '<p style="margin-top:8px;font-size:0.85rem;"><strong>Manual:</strong> <code>labmanuals/' + info.manual + '</code><br>';
+            html += '<strong>Files:</strong> <code>' + info.files + '</code>';
+            if (info.page) html += '<br><strong>Interactive:</strong> <a href="' + info.page + '" style="color:#CC0000">' + info.page + '</a>';
+            html += '</p>';
+            document.getElementById('labInfo').innerHTML = html;
+        }
+
+        function selectCard(name) {
+            document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+            const card = document.querySelector('[data-card="' + name + '"]');
+            if (card) card.classList.add('active');
+        }
+
+        function showCode(type) {
+            document.querySelectorAll('.code-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.code-tab').forEach(el => el.classList.remove('active'));
+            document.getElementById(type + '-code').classList.add('active');
+            document.querySelectorAll('.code-tab').forEach(tab => {
+                if (tab.textContent.toLowerCase().replace(/\s/g, '').includes(type === 'dynamic' ? 'dynamic' : type)) {
+                    tab.classList.add('active');
+                }
+            });
+        }
+    </script>
 </body>
 </html>

@@ -1,1 +1,401 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Provisioners | Terraform Extended</title><style>:root{--purple:#6236a5;--ink:#21172d;--paper:#fcfaff;--line:#e8ddf2}*{box-sizing:border-box}body{margin:0;font:16px/1.6 system-ui,sans-serif;color:var(--ink);background:var(--paper)}header{background:var(--purple);color:#fff;padding:3rem max(1.25rem,calc((100% - 960px)/2))}main,nav{max-width:960px;margin:auto;padding:1rem 1.25rem}nav a{margin-right:1rem;color:var(--purple);font-weight:700}section{background:#fff;border:1px solid var(--line);border-radius:10px;padding:1.25rem;margin:1rem 0}code,pre{background:#f3edf8;padding:.2rem .4rem;border-radius:4px}pre{padding:1rem;overflow:auto}</style></head><body><header><h1>Provisioners</h1></header><nav><a href="index.html">Overview</a><a href="state.html">State</a><a href="provisioners.html">Provisioners</a><a href="functions.html">Functions</a><a href="projects.html">Projects</a></nav><main><section><p>Provisioners are an escape hatch, not a configuration-management replacement. Prefer cloud-init, image builds, or a dedicated tool such as Ansible. Use `local-exec` only for an action coupled to Terraform lifecycle and ensure it is idempotent.</p><p>`remote-exec` requires network reachability and secure authentication. Keep SSH private-key paths in a local ignored tfvars file or environment variable; never place the key itself in Terraform code. A failed provisioner taints or fails its parent resource according to its settings, so test the command outside Terraform first.</p><p>Destroy provisioners are particularly risky because dependencies may already be disappearing. Keep cleanup logic explicit and observable.</p></section><section><h2>Related labs</h2><p>Use the matching lab manual before applying any cloud example. Run <code>terraform fmt -recursive</code> and <code>terraform validate</code> before plan.</p></section></main></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Provisioners &amp; Lifecycle Hooks | Terraform Extended</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --purple: #6236a5; --purple-deep: #4a2780; --purple-sky: #ede4f7;
+            --ink: #21172d; --muted: #6b5b7a; --line: #e8ddf2;
+            --amber: #fef3c7; --mint: #dcfce7; --rose: #ffe4e6;
+        }
+        body {
+            font-family: "Segoe UI", system-ui, sans-serif;
+            background: linear-gradient(180deg, #fcfaff 0%, #f3ebfa 100%);
+            padding: 20px; line-height: 1.6; color: var(--ink);
+        }
+        .container { max-width: 1380px; margin: 0 auto; }
+        .hero {
+            position: relative; text-align: center; background: white;
+            border-radius: 16px; padding: 34px 32px 28px;
+            box-shadow: 0 4px 18px rgba(98,54,165,0.1); margin-bottom: 20px;
+            border: 1px solid rgba(98,54,165,0.12);
+        }
+        .eyebrow {
+            display: inline-flex; padding: 6px 12px; border-radius: 999px;
+            background: var(--purple-sky); color: var(--purple-deep);
+            font-size: 0.82rem; font-weight: 700; margin-bottom: 12px;
+        }
+        .hero h1 { color: var(--purple); font-size: clamp(1.8rem, 4vw, 2.5rem); }
+        .hero p { color: var(--muted); max-width: 760px; margin: 8px auto 0; }
+        .home-link {
+            position: absolute; top: 16px; right: 20px; color: var(--purple);
+            text-decoration: none; font-weight: 600; padding: 6px 14px;
+            border-radius: 8px; border: 1px solid rgba(98,54,165,0.18);
+            background: rgba(98,54,165,0.06);
+        }
+        .topnav {
+            display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+            margin-bottom: 18px; padding: 12px; background: white;
+            border-radius: 12px; border: 1px solid var(--line);
+        }
+        .topnav a { color: var(--purple); text-decoration: none; font-weight: 600; padding: 6px 14px; border-radius: 8px; font-size: 0.9rem; }
+        .topnav a:hover { background: var(--purple-sky); }
+        .flow-section {
+            background: white; border-radius: 12px; padding: 18px;
+            border: 1px solid var(--line); margin-bottom: 16px;
+        }
+        .section-title {
+            font-size: 17px; font-weight: bold; color: #3d2f4d;
+            margin-bottom: 12px; padding: 8px 12px; background: var(--purple-sky);
+            border-left: 4px solid var(--purple); border-radius: 0 8px 8px 0;
+        }
+        .lifecycle-row {
+            display: flex; align-items: stretch; flex-wrap: wrap; justify-content: center; gap: 4px;
+        }
+        .lifecycle-step {
+            flex: 1; min-width: 110px; max-width: 150px; text-align: center;
+            padding: 14px 8px; background: #faf7fd; border: 2px solid var(--line);
+            border-radius: 10px; cursor: pointer; transition: all 0.2s;
+        }
+        .lifecycle-step.active-step { border-color: var(--purple); background: var(--purple-sky); }
+        .lifecycle-step .icon { font-size: 1.5rem; }
+        .lifecycle-step .label { font-size: 11px; font-weight: 700; color: var(--purple); margin-top: 4px; }
+        .flow-container {
+            display: flex; align-items: center; justify-content: center;
+            flex-wrap: wrap; gap: 10px; margin: 12px 0;
+        }
+        .flow-box {
+            color: white; padding: 12px 16px; border-radius: 8px; text-align: center;
+            font-weight: bold; font-size: 12px; cursor: pointer; min-width: 120px;
+            box-shadow: 0 4px 8px rgba(98,54,165,0.2);
+        }
+        .flow-box.local { background: linear-gradient(135deg, #a78bfa, #7c3aed); }
+        .flow-box.remote { background: linear-gradient(135deg, #60a5fa, #2563eb); }
+        .flow-box.host { background: linear-gradient(135deg, #34d399, #059669); }
+        .flow-box.warn { background: linear-gradient(135deg, #fb7185, #e11d48); }
+        .arrow { font-size: 20px; color: var(--muted); }
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+        .card {
+            background: #faf7fd; border: 2px solid var(--line); border-radius: 10px;
+            padding: 14px; cursor: pointer;
+        }
+        .card:hover, .card.active { border-color: var(--purple); }
+        .card h3 { font-size: 14px; color: var(--purple); margin-bottom: 6px; }
+        .card p { font-size: 12px; color: #3d2f4d; }
+        .code-tabs { display: flex; gap: 5px; margin-bottom: 8px; flex-wrap: wrap; }
+        .code-tab {
+            padding: 6px 12px; background: #f3edf8; border: none; border-radius: 6px 6px 0 0;
+            cursor: pointer; font-size: 12px; font-weight: bold;
+        }
+        .code-tab.active { background: var(--purple); color: white; }
+        .code-content { display: none; }
+        .code-content.active { display: block; }
+        pre {
+            background: #2d2438; color: #ede4f7; padding: 14px; border-radius: 8px;
+            overflow-x: auto; font-size: 11px; line-height: 1.55;
+        }
+        .example-scenario {
+            background: var(--amber); border-left: 4px solid #f59e0b;
+            padding: 14px; border-radius: 8px; margin-bottom: 14px;
+        }
+        .example-scenario h3 { font-size: 14px; color: #92400e; margin-bottom: 6px; }
+        .example-scenario p { font-size: 12px; color: #78350f; margin-bottom: 4px; }
+        .repo-box {
+            background: var(--mint); border-left: 4px solid #22c55e;
+            padding: 14px 16px; border-radius: 8px; margin-bottom: 14px;
+        }
+        .repo-box ul { margin: 8px 0 0 18px; font-size: 13px; }
+        .warn-box {
+            background: var(--rose); border-left: 4px solid #e11d48;
+            padding: 14px; border-radius: 8px; margin-bottom: 14px; font-size: 13px;
+        }
+        .detail-panel {
+            background: var(--purple-sky); border-radius: 8px; padding: 12px 16px;
+            margin-top: 12px; font-size: 13px; color: var(--purple-deep); min-height: 44px;
+        }
+        .footer-note { text-align: center; color: var(--muted); font-size: 0.9rem; margin-top: 18px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header class="hero">
+        <a href="index.html" class="home-link">&#8962; Home</a>
+        <div class="eyebrow">Labs 04–05 · Escape Hatch</div>
+        <h1>Provisioners &amp; Lifecycle Hooks</h1>
+        <p>Provisioners run scripts during resource lifecycle events. They are a last resort — prefer cloud-init, images, or configuration management tools.</p>
+    </header>
+
+    <nav class="topnav">
+        <a href="index.html">Overview</a>
+        <a href="state.html">State</a>
+        <a href="provisioners.html">Provisioners</a>
+        <a href="functions.html">Functions</a>
+        <a href="projects.html">Projects</a>
+    </nav>
+
+    <div class="repo-box">
+        <strong>Repository lab paths:</strong>
+        <ul>
+            <li><code>terraform/extended/labs/lab04-local-exec-provisioner/</code> — Run commands on the machine executing Terraform</li>
+            <li><code>terraform/extended/labs/lab05-remote-exec-provisioner/</code> — SSH into a reachable host and run commands</li>
+        </ul>
+    </div>
+
+    <div class="warn-box">
+        <strong>When NOT to use provisioners:</strong> Software installation, ongoing config drift, application deployment,
+        secrets distribution, or anything requiring idempotent CM at scale. Use Ansible, cloud-init, Packer, or native
+        cloud services instead.
+    </div>
+
+    <div class="flow-section">
+        <div class="section-title">1. Resource Lifecycle (click a phase)</div>
+        <div class="lifecycle-row" id="lifecycle">
+            <div class="lifecycle-step" data-phase="create"><div class="icon">🏗️</div><div class="label">Create</div></div>
+            <div class="lifecycle-step" data-phase="provision"><div class="icon">⚙️</div><div class="label">Provision</div></div>
+            <div class="lifecycle-step" data-phase="update"><div class="icon">🔄</div><div class="label">Update</div></div>
+            <div class="lifecycle-step" data-phase="destroy"><div class="icon">💥</div><div class="label">Destroy</div></div>
+        </div>
+        <div id="lifecycle-detail" class="detail-panel">
+            Provisioners attach to create or destroy. They do not run on every update unless the resource is replaced.
+        </div>
+    </div>
+
+    <div class="flow-section">
+        <div class="section-title">2. local-exec vs remote-exec</div>
+        <div class="flow-container">
+            <div class="flow-box local" onclick="showCompare('local')">local-exec</div>
+            <span class="arrow">vs</span>
+            <div class="flow-box remote" onclick="showCompare('remote')">remote-exec</div>
+        </div>
+        <div class="flow-container" id="local-flow">
+            <div class="flow-box local">Terraform CLI host</div>
+            <span class="arrow">→</span>
+            <div class="flow-box local">shell command</div>
+            <span class="arrow">→</span>
+            <div class="flow-box local">stdout / exit code</div>
+        </div>
+        <div class="flow-container" id="remote-flow" style="display:none;">
+            <div class="flow-box remote">Terraform CLI</div>
+            <span class="arrow">→</span>
+            <div class="flow-box host">SSH connection</div>
+            <span class="arrow">→</span>
+            <div class="flow-box remote">remote shell</div>
+            <span class="arrow">→</span>
+            <div class="flow-box host">Target VM</div>
+        </div>
+        <div id="compare-detail" class="detail-panel">local-exec runs where you run terraform apply — your laptop or CI agent.</div>
+    </div>
+
+    <div class="example-scenario">
+        <h3>Example: Bootstrap notification after resource creation</h3>
+        <p><strong>Good use:</strong> Write a timestamp file locally after creating a marker resource (Lab 04).</p>
+        <p><strong>Bad use:</strong> Install nginx with apt-get via remote-exec on every apply — use an AMI or Ansible role.</p>
+        <p><strong>remote-exec caveat:</strong> Lab 05 connects to an existing host you supply. Terraform does not create that host.</p>
+    </div>
+
+    <div class="flow-section">
+        <div class="section-title">3. Code examples (tabs)</div>
+        <div class="code-tabs">
+            <button class="code-tab active" onclick="showCode('local')">local-exec</button>
+            <button class="code-tab" onclick="showCode('remote')">remote-exec</button>
+            <button class="code-tab" onclick="showCode('lifecycle')">lifecycle block</button>
+            <button class="code-tab" onclick="showCode('tfvars')">tfvars (sensitive)</button>
+        </div>
+        <div id="local-code" class="code-content active">
+<pre>resource "terraform_data" "local_action" {
+  input = var.message
+  provisioner "local-exec" {
+    command = "printf '%s\n' '${self.input}'"
+  }
+}</pre>
+        </div>
+        <div id="remote-code" class="code-content">
+<pre>resource "terraform_data" "bootstrap" {
+  input = var.host
+  connection {
+    type        = "ssh"
+    host        = var.host
+    user        = var.user
+    private_key = file(pathexpand(var.private_key_path))
+  }
+  provisioner "remote-exec" {
+    inline = ["echo Terraform remote-exec connected to $(hostname)"]
+  }
+}</pre>
+        </div>
+        <div id="lifecycle-code" class="code-content">
+<pre>resource "aws_instance" "example" {
+  # ...
+  lifecycle {
+    create_before_destroy = true
+    prevent_destroy       = false
+    ignore_changes        = [tags["LastReboot"]]
+  }
+  provisioner "local-exec" {
+    when    = destroy
+    command = "echo cleanup hook — use with extreme care"
+  }
+}</pre>
+        </div>
+        <div id="tfvars-code" class="code-content">
+<pre># terraform.tfvars — NEVER commit this file
+host             = "203.0.113.10"
+user             = "ec2-user"
+private_key_path = "~/.ssh/lab-key.pem"
+
+# Set via environment instead:
+# export TF_VAR_host=203.0.113.10
+# export TF_VAR_private_key_path=~/.ssh/lab-key.pem</pre>
+        </div>
+    </div>
+
+    <div class="flow-section">
+        <div class="section-title">4. Failure behavior</div>
+        <div class="card-grid">
+            <div class="card">
+                <h3>Provisioner fails on create</h3>
+                <p>Resource is tainted. Next apply retries creation. Partial infrastructure may exist.</p>
+            </div>
+            <div class="card">
+                <h3>on_failure = continue</h3>
+                <p>Suppresses failure (rare). Resource marked created even if script failed. Use only with strong observability.</p>
+            </div>
+            <div class="card">
+                <h3>Destroy provisioner</h3>
+                <p>Runs while dependencies are being torn down. Network routes and security groups may already be gone.</p>
+            </div>
+            <div class="card">
+                <h3>Connection retries</h3>
+                <p>SSH may not be ready immediately. Use timeouts and health checks, or wait for cloud-init completion out-of-band.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="flow-section">
+        <div class="section-title">5. Better alternatives</div>
+        <table style="width:100%;font-size:13px;border-collapse:collapse;">
+            <tr style="background:var(--purple-sky);">
+                <th style="padding:8px;text-align:left;">Need</th>
+                <th style="padding:8px;text-align:left;">Prefer</th>
+            </tr>
+            <tr><td style="padding:8px;border-bottom:1px solid var(--line);">Boot-time packages</td><td style="padding:8px;border-bottom:1px solid var(--line);">cloud-init / user_data</td></tr>
+            <tr><td style="padding:8px;border-bottom:1px solid var(--line);">Golden image</td><td style="padding:8px;border-bottom:1px solid var(--line);">Packer + AMI</td></tr>
+            <tr><td style="padding:8px;border-bottom:1px solid var(--line);">Ongoing config</td><td style="padding:8px;border-bottom:1px solid var(--line);">Ansible / SSM / Chef</td></tr>
+            <tr><td style="padding:8px;border-bottom:1px solid var(--line);">Post-apply hook in CI</td><td style="padding:8px;border-bottom:1px solid var(--line);">CI pipeline step (not Terraform)</td></tr>
+            <tr><td style="padding:8px;">One-off local script</td><td style="padding:8px;">local-exec on terraform_data (Lab 04)</td></tr>
+        </table>
+    </div>
+
+    
+    <div class="flow-section">
+        <div class="section-title">6. Lab 04–05 command reference</div>
+        <pre># Lab 04
+cd terraform/extended/labs/lab04-local-exec-provisioner
+terraform init && terraform validate
+terraform apply
+
+# Lab 05 — copy and edit tfvars first
+cp terraform.tfvars.example terraform.tfvars
+terraform apply</pre>
+    </div>
+    <div class="flow-section">
+        <div class="section-title">7. Decision tree</div>
+        <div class="card-grid">
+            <div class="card"><h3>Need boot-time setup?</h3><p>→ cloud-init / user_data</p></div>
+            <div class="card"><h3>Need ongoing config?</h3><p>→ Ansible / SSM</p></div>
+            <div class="card"><h3>One local hook?</h3><p>→ local-exec (Lab 04)</p></div>
+            <div class="card"><h3>SSH to existing host?</h3><p>→ remote-exec (Lab 05)</p></div>
+        </div>
+    </div>
+    <div class="flow-section">
+        <div class="section-title">8. Glossary</div>
+        <ul style="font-size:13px;padding-left:20px;">
+            <li><strong>Provisioner</strong> — Script hook on lifecycle events</li>
+            <li><strong>connection</strong> — Transport config for remote provisioners</li>
+            <li><strong>Taint</strong> — Mark resource for recreation on next apply</li>
+            <li><strong>self</strong> — Reference to the resource containing the provisioner</li>
+        </ul>
+    </div>
+
+    <div class="flow-section">
+        <div class="section-title">9. SSH connectivity checklist (Lab 05)</div>
+        <ol style="font-size:13px;padding-left:22px;line-height:1.8;">
+            <li>Security group allows TCP 22 from your IP (not 0.0.0.0/0 in production)</li>
+            <li>Instance has public IP, or you reach it via VPN/bastion</li>
+            <li>OS user matches AMI (ec2-user, ubuntu, admin)</li>
+            <li>Private key file mode <code>chmod 600</code></li>
+            <li>Manual <code>ssh -i key user@host hostname</code> succeeds before apply</li>
+        </ol>
+    </div>
+
+    <div class="flow-section">
+        <div class="section-title">10. Lab command walkthrough</div>
+        <pre>cd terraform/extended/labs/lab04-local-exec-provisioner
+terraform init && terraform validate && terraform apply
+
+cd ../lab05-remote-exec-provisioner
+cp terraform.tfvars.example terraform.tfvars
+# edit host and private_key_path
+terraform init && terraform validate
+terraform apply</pre>
+    </div>
+
+    <div class="flow-section">
+        <div class="section-title">11. FAQ</div>
+        <div class="card-grid">
+            <div class="card"><h3>Run on plan?</h3><p>No — provisioners execute only during apply on create/destroy/replace.</p></div>
+            <div class="card"><h3>Idempotent?</h3><p>You must write idempotent scripts; Terraform does not retry logic for you.</p></div>
+            <div class="card"><h3>Ansible?</h3><p>Preferred for multi-step configuration; keep Terraform for infrastructure graph.</p></div>
+        </div>
+    </div>
+
+    <div class="flow-section">
+        <div class="section-title">12. Instructor notes</div>
+        <p style="font-size:13px;">Demonstrate a failed provisioner by temporarily breaking the Lab 04 command, then show taint behavior with <code>terraform plan</code>. For Lab 05, never share real private keys — use ephemeral lab keys destroyed after class.</p>
+    </div>
+
+    <div class="flow-section">
+        <div class="section-title">13. Related labs cross-link</div>
+        <p style="font-size:13px;">Provisioner patterns complement but do not replace Labs 12–15 expression work. State labs (07–11) should be complete before capstone if using remote backends in production-shaped workflows.</p>
+    </div>
+
+    <p class="footer-note">Deep dive: <code>terraform/extended/docs/provisioners/README.md</code> · Manuals: <code>lab04</code>, <code>lab05</code></p>
+</div>
+
+<script>
+const phaseInfo = {
+    create: 'Terraform calls the provider API to create the resource. create-time provisioners run after the resource exists.',
+    provision: 'Default provisioner timing. Scripts run once after creation. Not re-run on in-place updates.',
+    update: 'In-place updates do not re-run create provisioners. Changes requiring replacement trigger destroy then create.',
+    destroy: 'Destroy-time provisioners run before the resource is destroyed. Dependencies may already be unavailable.'
+};
+document.querySelectorAll('.lifecycle-step').forEach(el => {
+    el.addEventListener('click', () => {
+        document.querySelectorAll('.lifecycle-step').forEach(s => s.classList.remove('active-step'));
+        el.classList.add('active-step');
+        document.getElementById('lifecycle-detail').textContent = phaseInfo[el.dataset.phase];
+    });
+});
+
+const compareInfo = {
+    local: 'local-exec runs on the Terraform executor (laptop/CI). No network path to targets required. Ideal for lightweight hooks tied to state changes.',
+    remote: 'remote-exec requires SSH/WinRM connectivity, credentials, and a running target. Lab 05 demonstrates SSH with a private key path from tfvars.'
+};
+function showCompare(type) {
+    document.getElementById('local-flow').style.display = type === 'local' ? 'flex' : 'none';
+    document.getElementById('remote-flow').style.display = type === 'remote' ? 'flex' : 'none';
+    document.getElementById('compare-detail').textContent = compareInfo[type];
+}
+
+function showCode(type) {
+    document.querySelectorAll('.code-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.code-tab').forEach(el => el.classList.remove('active'));
+    document.getElementById(type + '-code').classList.add('active');
+    event.target.classList.add('active');
+}
+</script>
+</body>
+</html>
