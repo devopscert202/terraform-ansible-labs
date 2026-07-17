@@ -1,0 +1,17 @@
+---
+# DRILL 03: Handler never runs — wrong notify name
+- name: Handler name mismatch
+  hosts: webservers
+  become: true
+  tasks:
+    - name: Deploy config
+      ansible.builtin.copy:
+        content: "worker_processes 2;\n"
+        dest: /etc/nginx/nginx.conf
+      notify: restart nginx
+
+  handlers:
+    - name: Restart nginx
+      ansible.builtin.service:
+        name: nginx
+        state: restarted

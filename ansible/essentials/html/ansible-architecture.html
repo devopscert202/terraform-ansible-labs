@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ansible Architecture</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root { --red: #EE0000; --ink: #1a1a1a; --muted: #64748b; --line: #e2e8f0; }
+    body { font-family: "Segoe UI", system-ui, sans-serif; background: #fafafa; color: var(--ink); line-height: 1.6; padding: 20px; }
+    .wrap { max-width: 960px; margin: 0 auto; }
+    header { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 24px; margin-bottom: 20px; text-align: center; }
+    h1 { color: var(--red); font-size: 1.7rem; }
+    .sub { color: var(--muted); margin-top: 6px; }
+    .panel { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 24px; margin-bottom: 16px; }
+    h2 { font-size: 1.1rem; margin-bottom: 12px; color: var(--red); }
+    .flow { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px; padding: 20px 0; }
+    .node { min-width: 140px; padding: 16px; border-radius: 10px; text-align: center; font-weight: 600; border: 2px solid var(--line); background: #fff; }
+    .node.control { border-color: var(--red); background: #fff5f5; }
+    .node.target { border-color: #334155; }
+    .arrow { font-size: 1.4rem; color: var(--red); font-weight: 700; }
+    .legend { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-top: 12px; }
+    .legend div { padding: 10px 12px; background: #f8fafc; border-radius: 8px; font-size: 0.9rem; }
+    pre { background: #1e1e1e; color: #f1f5f9; padding: 14px; border-radius: 8px; overflow-x: auto; font-size: 0.85rem; margin-top: 10px; }
+    .back { display: inline-block; margin-top: 16px; color: var(--red); text-decoration: none; font-weight: 600; }
+    .back:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Ansible Architecture</h1>
+      <p class="sub">Agentless configuration over SSH (port 22)</p>
+    </header>
+    <section class="panel">
+      <h2>Control node → managed nodes</h2>
+      <div class="flow">
+        <div class="node control">Control node<br><small>ansible / ansible-playbook</small></div>
+        <span class="arrow">SSH →</span>
+        <div class="node target">web1</div>
+        <div class="node target">web2</div>
+        <div class="node target">db1</div>
+      </div>
+      <div class="legend">
+        <div><strong>Inventory</strong> — lists hosts and groups</div>
+        <div><strong>Playbook</strong> — desired state in YAML</div>
+        <div><strong>Modules</strong> — apt, service, template, …</div>
+        <div><strong>No agent</strong> — Python + SSH on targets only</div>
+      </div>
+    </section>
+    <section class="panel">
+      <h2>Typical workflow</h2>
+      <ol style="margin-left: 20px;">
+        <li>Edit inventory with private IPs and <code>ansible_user</code></li>
+        <li>Test: <code>ansible webservers -m ansible.builtin.ping</code></li>
+        <li>Apply: <code>ansible-playbook playbooks/apache.yml</code></li>
+      </ol>
+      <pre>ansible -i inventory/hosts.ini webservers -m ansible.builtin.ping</pre>
+    </section>
+    <a class="back" href="index.html">← Back to catalog</a>
+  </div>
+</body>
+</html>

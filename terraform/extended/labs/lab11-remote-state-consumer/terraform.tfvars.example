@@ -1,0 +1,1 @@
+network_state_path = "../lab08-state-keys/terraform.tfstate"

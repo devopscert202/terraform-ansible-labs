@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Facts — Ansible Extended</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root { --red: #EE0000; --dark: #1a1a1a; --muted: #64748b; --line: #e2e8f0; --bg: #f8fafc; --code: #1e293b; }
+    body { font-family: "Segoe UI", system-ui, sans-serif; background: var(--bg); color: var(--dark); line-height: 1.65; padding: 24px; }
+    .wrap { max-width: 900px; margin: 0 auto; }
+    nav a { color: var(--red); text-decoration: none; font-size: 0.9rem; }
+    h1 { color: var(--red); margin: 12px 0 8px; }
+    .lead { color: var(--muted); margin-bottom: 20px; }
+    section { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+    h2 { font-size: 1.1rem; border-bottom: 2px solid var(--red); padding-bottom: 6px; margin-bottom: 12px; }
+    pre { background: var(--code); color: #e2e8f0; padding: 12px; border-radius: 8px; font-size: 0.82rem; overflow-x: auto; margin: 10px 0; }
+    .fact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .fact-card { border: 1px solid var(--line); border-radius: 8px; padding: 12px; cursor: pointer; }
+    .fact-card:hover, .fact-card.selected { border-color: var(--red); background: #fff8f8; }
+    .fact-name { font-weight: 700; font-size: 0.85rem; color: var(--red); }
+    .fact-val { font-size: 0.9rem; margin-top: 4px; color: var(--muted); }
+    #output { min-height: 48px; padding: 12px; background: #f1f5f9; border-radius: 8px; font-family: monospace; font-size: 0.85rem; margin-top: 12px; }
+    footer { text-align: center; color: var(--muted); font-size: 0.85rem; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <nav><a href="index.html">← Catalog</a> · Lab 02</nav>
+    <h1>Facts &amp; Custom Facts</h1>
+    <p class="lead">The setup module collects ansible_* variables. Custom facts use /etc/ansible/facts.d/.</p>
+    <section>
+      <h2>Click a fact (simulated)</h2>
+      <div class="fact-grid">
+        <div class="fact-card" data-fact="ansible_distribution = Ubuntu">
+          <div class="fact-name">ansible_distribution</div>
+          <div class="fact-val">Ubuntu 22.04</div>
+        </div>
+        <div class="fact-card" data-fact="ansible_os_family = Debian">
+          <div class="fact-name">ansible_os_family</div>
+          <div class="fact-val">Debian</div>
+        </div>
+        <div class="fact-card" data-fact="ansible_memtotal_mb = 976">
+          <div class="fact-name">ansible_memtotal_mb</div>
+          <div class="fact-val">976 MB</div>
+        </div>
+        <div class="fact-card" data-fact="ansible_local.lab.tier = web">
+          <div class="fact-name">ansible_local.lab.tier</div>
+          <div class="fact-val">web (custom)</div>
+        </div>
+      </div>
+      <p id="output">Select a fact card above.</p>
+    </section>
+    <section>
+      <h2>Filter facts</h2>
+      <pre><code>ansible webservers -m ansible.builtin.setup -a "filter=ansible_distribution*"</code></pre>
+    </section>
+    <footer>Ansible Extended · Offline · No CDN</footer>
+  </div>
+  <script>
+    document.querySelectorAll(".fact-card").forEach(function(card) {
+      card.addEventListener("click", function() {
+        document.querySelectorAll(".fact-card").forEach(function(c) { c.classList.remove("selected"); });
+        card.classList.add("selected");
+        document.getElementById("output").textContent = card.dataset.fact;
+      });
+    });
+  </script>
+</body>
+</html>

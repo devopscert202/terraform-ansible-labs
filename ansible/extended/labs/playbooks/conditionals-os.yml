@@ -1,0 +1,55 @@
+---
+# Conditionals based on facts and variables (Lesson 5 AP-04)
+- name: Apply OS-specific configuration with conditionals
+  hosts: all
+  become: true
+  vars:
+    enable_firewall: true
+  tasks:
+    - name: Gather minimal facts when needed
+      ansible.builtin.setup:
+        gather_subset:
+          - "!all"
+          - distribution
+          - distribution_version
+
+    - name: Install nginx on Debian family
+      ansible.builtin.apt:
+        name: nginx
+        state: present
+        update_cache: true
+      when: ansible_facts.os_family == "Debian"
+
+    - name: Ensure nginx is running on webservers
+      ansible.builtin.service:
+        name: nginx
+        state: started
+        enabled: true
+      when:
+        - inventory_hostname in groups.get('webservers', [])
+        - ansible_facts.os_family == "Debian"
+
+    - name: Create custom index page on webservers
+      ansible.builtin.copy:
+        content: |
+          <html><body>
+          <h1>{{ inventory_hostname }}</h1>
+          <p>OS: {{ ansible_facts.distribution }} {{ ansible_facts.distribution_version }}</p>
+          </body></html>
+        dest: /var/www/html/index.html
+        mode: "0644"
+      when: inventory_hostname in groups.get('webservers', [])
+
+    - name: Allow HTTP when firewall enabled (ufw)
+      ansible.builtin.ufw:
+        rule: allow
+        port: "80"
+        proto: tcp
+      when:
+        - enable_firewall | bool
+        - ansible_facts.os_family == "Debian"
+
+    - name: Report skipped hosts for app tier
+      ansible.builtin.debug:
+        msg: "{{ inventory_hostname }} is not in appservers — skipping app tasks"
+      when: inventory_hostname not in groups.get('appservers', [])

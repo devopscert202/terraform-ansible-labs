@@ -1,0 +1,5 @@
+---
+nodejs_version: "20"
+nodejs_app_name: lab-app
+nodejs_app_port: 3000
+nodejs_app_user: ubuntu

@@ -1,0 +1,8 @@
+---
+# DRILL 04: Deprecated/non-FQCN module name
+- name: Non-FQCN module
+  hosts: webservers
+  become: true
+  tasks:
+    - name: Ping with short name
+      ping:

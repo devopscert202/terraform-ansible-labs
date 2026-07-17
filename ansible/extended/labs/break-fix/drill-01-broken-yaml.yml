@@ -1,0 +1,10 @@
+---
+# DRILL 01: Fix YAML indentation (extra space before module name)
+- name: Broken YAML playbook
+  hosts: webservers
+  become: true
+  tasks:
+    - name: Install curl
+     ansible.builtin.apt:
+        name: curl
+        state: present

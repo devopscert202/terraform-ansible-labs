@@ -1,0 +1,3 @@
+aws_region = "us-east-1"
+project    = "capstone"
+# Do not place AWS credentials here. Use AWS_PROFILE or an IAM role.

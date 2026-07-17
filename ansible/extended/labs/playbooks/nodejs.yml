@@ -1,0 +1,90 @@
+---
+# Install Node.js 20 LTS and deploy a sample app (Lesson 5 LEP)
+- name: Install Node.js and deploy lab application
+  hosts: appservers
+  become: true
+  tasks:
+    - name: Install prerequisite packages
+      ansible.builtin.apt:
+        name:
+          - ca-certificates
+          - curl
+          - gnupg
+        state: present
+        update_cache: true
+
+    - name: Create keyrings directory
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: "0755"
+
+    - name: Add NodeSource GPG key
+      ansible.builtin.get_url:
+        url: https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key
+        dest: /etc/apt/keyrings/nodesource.gpg
+        mode: "0644"
+
+    - name: Add NodeSource apt repository
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_{{ nodejs_version }}.x nodistro main"
+        filename: nodesource
+        state: present
+
+    - name: Install Node.js
+      ansible.builtin.apt:
+        name: nodejs
+        state: present
+        update_cache: true
+
+    - name: Verify Node.js version
+      ansible.builtin.command: node --version
+      register: node_version
+      changed_when: false
+
+    - name: Display Node.js version
+      ansible.builtin.debug:
+        msg: "Node.js installed: {{ node_version.stdout }}"
+
+    - name: Create application directory
+      ansible.builtin.file:
+        path: /opt/{{ nodejs_app_name }}
+        state: directory
+        owner: ubuntu
+        group: ubuntu
+        mode: "0755"
+
+    - name: Deploy application file
+      ansible.builtin.template:
+        src: app.js.j2
+        dest: /opt/{{ nodejs_app_name }}/app.js
+        owner: ubuntu
+        group: ubuntu
+        mode: "0644"
+      notify: Restart nodejs app
+
+    - name: Deploy systemd unit
+      ansible.builtin.template:
+        src: nodejs-app.service.j2
+        dest: /etc/systemd/system/{{ nodejs_app_name }}.service
+        mode: "0644"
+      notify:
+        - Reload systemd
+        - Restart nodejs app
+
+    - name: Enable and start application service
+      ansible.builtin.systemd:
+        name: "{{ nodejs_app_name }}"
+        enabled: true
+        state: started
+        daemon_reload: true
+
+  handlers:
+    - name: Reload systemd
+      ansible.builtin.systemd:
+        daemon_reload: true
+
+    - name: Restart nodejs app
+      ansible.builtin.systemd:
+        name: "{{ nodejs_app_name }}"
+        state: restarted

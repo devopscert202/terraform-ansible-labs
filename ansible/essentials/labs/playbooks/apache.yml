@@ -1,0 +1,22 @@
+---
+- name: Install and configure Apache
+  hosts: webservers
+  become: true
+  tasks:
+    - name: Install apache2
+      ansible.builtin.apt:
+        name: apache2
+        state: present
+        update_cache: true
+
+    - name: Enable mod_rewrite
+      ansible.builtin.apache2_module:
+        name: rewrite
+        state: present
+      notify: Restart apache2
+
+  handlers:
+    - name: Restart apache2
+      ansible.builtin.service:
+        name: apache2
+        state: restarted

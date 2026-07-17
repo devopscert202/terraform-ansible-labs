@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loops &amp; Conditionals — Ansible Extended</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --red: #EE0000;
+      --dark: #1a1a1a;
+      --muted: #64748b;
+      --line: #e2e8f0;
+      --bg: #f8fafc;
+      --code-bg: #1e293b;
+    }
+    body {
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--dark);
+      line-height: 1.65;
+      padding: 24px;
+    }
+    .wrap { max-width: 900px; margin: 0 auto; }
+    nav { margin-bottom: 20px; font-size: 0.9rem; }
+    nav a { color: var(--red); text-decoration: none; }
+    h1 { color: var(--red); font-size: 1.6rem; margin-bottom: 8px; }
+    .lead { color: var(--muted); margin-bottom: 24px; }
+    section {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 20px;
+    }
+    h2 { font-size: 1.15rem; margin-bottom: 12px; border-bottom: 2px solid var(--red); padding-bottom: 6px; }
+    pre {
+      background: var(--code-bg);
+      color: #e2e8f0;
+      padding: 14px 16px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 0.82rem;
+      margin: 12px 0;
+    }
+    .flow { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 16px 0; }
+    .box {
+      background: #fff0f0;
+      border: 2px solid var(--red);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+    .arrow { color: var(--muted); font-size: 1.2rem; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+    .tab {
+      padding: 8px 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    .tab.active { background: var(--red); color: #fff; border-color: var(--red); }
+    .panel { display: none; }
+    .panel.active { display: block; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; margin-top: 10px; }
+    th, td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; }
+    th { background: #f1f5f9; }
+    footer { margin-top: 24px; color: var(--muted); font-size: 0.85rem; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <nav><a href="index.html">← Catalog</a> · Lab 04–05</nav>
+    <h1>Loops &amp; Conditionals</h1>
+    <p class="lead">Repeat tasks with <code>loop</code> and branch with <code>when</code>.</p>
+
+    <section>
+      <h2>Loop execution flow</h2>
+      <div class="flow">
+        <span class="box">baseline_packages[]</span>
+        <span class="arrow">→</span>
+        <span class="box">item = htop</span>
+        <span class="arrow">→</span>
+        <span class="box">ansible.builtin.apt</span>
+      </div>
+      <pre><code>- ansible.builtin.apt:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ baseline_packages }}"
+  loop_control:
+    label: "{{ item }}"</code></pre>
+    </section>
+
+    <section>
+      <h2>Interactive: loop vs when</h2>
+      <div class="tabs">
+        <button class="tab active" data-tab="loop">Loop</button>
+        <button class="tab" data-tab="when">When</button>
+      </div>
+      <div id="loop" class="panel active">
+        <p><strong>Loop</strong> — same module, many items (packages, users).</p>
+      </div>
+      <div id="when" class="panel">
+        <p><strong>When</strong> — skip tasks based on facts or groups.</p>
+        <pre><code>when: ansible_facts.os_family == "Debian"</code></pre>
+      </div>
+    </section>
+
+    <footer>Ansible Extended · Offline · No CDN</footer>
+  </div>
+  <script>
+    document.querySelectorAll('.tab').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+        document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('active'); });
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.tab).classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>

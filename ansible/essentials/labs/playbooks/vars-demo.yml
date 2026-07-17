@@ -1,0 +1,10 @@
+---
+- name: Deploy MOTD from template
+  hosts: webservers
+  become: true
+  tasks:
+    - name: Template motd
+      ansible.builtin.template:
+        src: ../templates/motd.j2
+        dest: /etc/motd
+        mode: "0644"

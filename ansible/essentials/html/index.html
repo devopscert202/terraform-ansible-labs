@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ansible Essentials — Interactive Catalog</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --ansible-red: #EE0000;
+      --ansible-dark: #1a1a1a;
+      --muted: #64748b;
+      --line: #e2e8f0;
+      --bg: #fafafa;
+    }
+    body {
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: linear-gradient(180deg, #fff 0%, var(--bg) 100%);
+      color: var(--ansible-dark);
+      line-height: 1.6;
+      padding: 24px;
+    }
+    .container { max-width: 1100px; margin: 0 auto; }
+    header {
+      text-align: center;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 28px 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+    }
+    h1 { color: var(--ansible-red); font-size: 1.8rem; margin-bottom: 8px; }
+    .subtitle { color: var(--muted); }
+    .catalog {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 16px;
+    }
+    .card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 18px 20px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .card:hover {
+      border-color: var(--ansible-red);
+      box-shadow: 0 4px 16px rgba(238,0,0,0.08);
+    }
+    .card h2 { font-size: 1.05rem; margin-bottom: 6px; }
+    .card h2 a { color: var(--ansible-dark); text-decoration: none; }
+    .card h2 a:hover { color: var(--ansible-red); }
+    .card p { color: var(--muted); font-size: 0.92rem; margin-bottom: 12px; }
+    .tag {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--ansible-red);
+      background: #fff0f0;
+      padding: 4px 10px;
+      border-radius: 999px;
+    }
+    footer {
+      margin-top: 28px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+    footer a { color: var(--ansible-red); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Ansible Essentials — Interactive Pages</h1>
+      <p class="subtitle">Self-contained offline explainers for the 10-hour essentials track</p>
+    </header>
+    <div class="catalog">
+      <article class="card">
+        <span class="tag">01 Getting started</span>
+        <h2><a href="ansible-architecture.html">Ansible Architecture</a></h2>
+        <p>Control node, managed nodes, inventory, and playbook flow over SSH.</p>
+      </article>
+      <article class="card">
+        <span class="tag">02 Inventory</span>
+        <h2><a href="inventory-flow.html">Inventory &amp; Groups</a></h2>
+        <p>INI vs YAML inventory, groups, and group_vars discovery.</p>
+      </article>
+      <article class="card">
+        <span class="tag">03 Ad hoc</span>
+        <h2><a href="adhoc-vs-playbook.html">Ad Hoc vs Playbook</a></h2>
+        <p>When to run one-off modules vs committed playbooks.</p>
+      </article>
+      <article class="card">
+        <span class="tag">04 Playbooks</span>
+        <h2><a href="playbook-handlers.html">Playbooks &amp; Handlers</a></h2>
+        <p>Task order, notify, and handler execution at end of play.</p>
+      </article>
+      <article class="card">
+        <span class="tag">05 Variables</span>
+        <h2><a href="variables-templates.html">Variables &amp; Templates</a></h2>
+        <p>Variable sources and Jinja2 template rendering.</p>
+      </article>
+      <article class="card">
+        <span class="tag">06–07 Roles &amp; Vault</span>
+        <h2><a href="roles-and-vault.html">Roles &amp; Vault</a></h2>
+        <p>Role directory layout and encrypting secrets at rest.</p>
+      </article>
+    </div>
+    <footer>
+      <p>Docs: <a href="../docs/README.md">../docs/README.md</a> · Labs: <a href="../labmanuals/README.md">../labmanuals/README.md</a></p>
+    </footer>
+  </div>
+</body>
+</html>

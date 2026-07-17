@@ -1,0 +1,24 @@
+# Ansible
+*.retry
+.vault_pass
+.vault-password
+**/vault/*.decrypted.*
+
+# Terraform
+**/.terraform/
+**/.terraform.lock.hcl
+**/terraform.tfstate
+**/terraform.tfstate.*
+**/*.tfvars
+!**/*.tfvars.example
+**/crash.log
+**/override.tf
+
+# Secrets
+.env
+*.pem
+**/credentials*
+
+# OS
+.DS_Store
+Thumbs.db

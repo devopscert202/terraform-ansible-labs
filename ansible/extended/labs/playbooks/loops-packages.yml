@@ -1,0 +1,48 @@
+---
+# Loop over packages and users (Lesson 5 AP-03)
+- name: Manage packages and users with loops
+  hosts: webservers
+  become: true
+  vars:
+    baseline_packages:
+      - htop
+      - vim
+      - curl
+      - jq
+    lab_users:
+      - name: deploy
+        groups: sudo
+        shell: /bin/bash
+      - name: monitor
+        groups: adm
+        shell: /bin/bash
+  tasks:
+    - name: Install baseline packages
+      ansible.builtin.apt:
+        name: "{{ item }}"
+        state: present
+        update_cache: true
+      loop: "{{ baseline_packages }}"
+      loop_control:
+        label: "{{ item }}"
+
+    - name: Create lab users
+      ansible.builtin.user:
+        name: "{{ item.name }}"
+        groups: "{{ item.groups }}"
+        shell: "{{ item.shell }}"
+        create_home: true
+      loop: "{{ lab_users }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Authorize deploy user SSH key
+      ansible.builtin.authorized_key:
+        user: deploy
+        key: "{{ lookup('file', '~/.ssh/id_ed25519.pub') }}"
+        state: present
+      when: lookup('file', '~/.ssh/id_ed25519.pub', errors='ignore') | length > 0
+
+    - name: Report installed package count
+      ansible.builtin.debug:
+        msg: "Installed {{ baseline_packages | length }} packages on {{ inventory_hostname }}"

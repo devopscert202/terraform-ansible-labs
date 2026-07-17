@@ -1,0 +1,12 @@
+---
+galaxy_info:
+  role_name: nodejs_app
+  author: lab
+  description: Node.js 20 application role
+  min_ansible_version: "2.14"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - jammy
+dependencies:
+  - role: common

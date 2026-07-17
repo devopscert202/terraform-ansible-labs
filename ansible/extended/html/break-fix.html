@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Break-Fix — Ansible Extended</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root { --red: #EE0000; --green: #16a34a; --dark: #1a1a1a; --muted: #64748b; --line: #e2e8f0; --bg: #f8fafc; }
+    body { font-family: "Segoe UI", system-ui, sans-serif; background: var(--bg); color: var(--dark); padding: 24px; line-height: 1.6; }
+    .wrap { max-width: 900px; margin: 0 auto; }
+    nav a { color: var(--red); text-decoration: none; }
+    h1 { color: var(--red); margin: 12px 0; }
+    .drill { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-bottom: 12px; cursor: pointer; }
+    .drill.open { border-color: var(--red); }
+    .drill h3 { font-size: 1rem; }
+    .fix { display: none; margin-top: 10px; padding: 10px; background: #f0fdf4; border-left: 4px solid var(--green); font-size: 0.9rem; }
+    .drill.open .fix { display: block; }
+    .err { color: #b91c1c; font-family: monospace; font-size: 0.82rem; }
+    footer { text-align: center; color: var(--muted); font-size: 0.85rem; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <nav><a href="index.html">← Catalog</a> · Lab 09</nav>
+    <h1>Break-Fix Drills</h1>
+    <p style="color:var(--muted);margin-bottom:16px;">Click each drill to reveal the fix.</p>
+    <div class="drill"><h3>01 — YAML indentation</h3><p class="err">ERROR! We were unable to read valid YAML</p><div class="fix">Align ansible.builtin.apt with sibling keys under the task.</div></div>
+    <div class="drill"><h3>02 — Missing become</h3><p class="err">E: Could not open lock /var/lib/dpkg/lock</p><div class="fix">Add become: true at play level for apt tasks.</div></div>
+    <div class="drill"><h3>03 — Handler mismatch</h3><p class="err">(no error — handler silently skipped)</p><div class="fix">notify must exactly match handler name.</div></div>
+    <div class="drill"><h3>04 — Non-FQCN module</h3><p class="err">[DEPRECATION WARNING]...</p><div class="fix">Use ansible.builtin.ping.</div></div>
+    <div class="drill"><h3>05 — Wrong Python interpreter</h3><p class="err">/usr/bin/python2: not found</p><div class="fix">Set ansible_python_interpreter=/usr/bin/python3.</div></div>
+    <footer>Ansible Extended · Offline · No CDN</footer>
+  </div>
+  <script>
+    document.querySelectorAll(".drill").forEach(function(d) {
+      d.addEventListener("click", function() { d.classList.toggle("open"); });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+---
+webserver_port: 80
+webserver_package: nginx
+webserver_service: nginx

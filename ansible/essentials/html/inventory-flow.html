@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inventory Flow</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root { --red: #EE0000; --ink: #1a1a1a; --muted: #64748b; --line: #e2e8f0; }
+    body { font-family: "Segoe UI", system-ui, sans-serif; background: #fafafa; color: var(--ink); line-height: 1.6; padding: 20px; }
+    .wrap { max-width: 960px; margin: 0 auto; }
+    header { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 24px; margin-bottom: 20px; text-align: center; }
+    h1 { color: var(--red); }
+    .controls { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 16px; }
+    .btn { border: 2px solid var(--red); background: #fff; color: var(--red); padding: 8px 16px; border-radius: 8px; font-weight: 700; cursor: pointer; }
+    .btn.active, .btn:hover { background: var(--red); color: #fff; }
+    .panel { display: none; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 24px; margin-bottom: 16px; }
+    .panel.active { display: block; }
+    .tree { font-family: ui-monospace, monospace; background: #f8fafc; padding: 16px; border-radius: 8px; font-size: 0.88rem; line-height: 1.8; }
+    .diagram { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; margin-top: 16px; }
+    .group-box { border: 2px solid var(--red); border-radius: 10px; padding: 14px 18px; min-width: 160px; text-align: center; }
+    .group-box.db { border-color: #334155; }
+    .vars { margin-top: 16px; padding: 12px; background: #fff5f5; border-left: 4px solid var(--red); border-radius: 0 8px 8px 0; font-size: 0.9rem; }
+    pre { background: #1e1e1e; color: #f1f5f9; padding: 14px; border-radius: 8px; font-size: 0.82rem; overflow-x: auto; margin-top: 10px; }
+    .back { display: inline-block; margin-top: 16px; color: var(--red); text-decoration: none; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Inventory &amp; Groups</h1>
+      <p style="color: var(--muted);">Static inventory: INI or YAML + group_vars</p>
+    </header>
+    <div class="controls">
+      <button class="btn active" data-view="graph">Group graph</button>
+      <button class="btn" data-view="ini">INI example</button>
+      <button class="btn" data-view="yaml">YAML example</button>
+    </div>
+    <section class="panel active" id="graph">
+      <div class="diagram">
+        <div class="group-box">
+          <strong>webservers</strong><br>web1, web2
+        </div>
+        <div class="group-box db">
+          <strong>dbservers</strong><br>db1
+        </div>
+      </div>
+      <div class="vars">
+        <code>inventory/group_vars/webservers.yml</code> → <code>webserver_port: 80</code>, <code>app_env: production</code>
+      </div>
+      <div class="tree" style="margin-top: 16px;">
+@webservers:<br>
+  |--web1<br>
+  |--web2<br>
+@dbservers:<br>
+  |--db1
+      </div>
+    </section>
+    <section class="panel" id="ini">
+      <pre>[webservers]
+web1 ansible_host=10.0.1.10 ansible_user=ubuntu
+web2 ansible_host=10.0.1.11 ansible_user=ubuntu
+
+[dbservers]
+db1 ansible_host=10.0.1.20 ansible_user=ubuntu</pre>
+    </section>
+    <section class="panel" id="yaml">
+      <pre>all:
+  children:
+    webservers:
+      hosts:
+        web1:
+          ansible_host: 10.0.1.10
+          ansible_user: ubuntu</pre>
+    </section>
+    <a class="back" href="index.html">← Back to catalog</a>
+  </div>
+  <script>
+    document.querySelectorAll('.btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.view).classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>

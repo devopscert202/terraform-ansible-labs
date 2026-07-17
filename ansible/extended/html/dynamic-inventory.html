@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dynamic Inventory — Ansible Extended</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root { --red: #EE0000; --dark: #1a1a1a; --muted: #64748b; --line: #e2e8f0; --bg: #f8fafc; --code: #1e293b; }
+    body { font-family: "Segoe UI", system-ui, sans-serif; background: var(--bg); color: var(--dark); padding: 24px; line-height: 1.65; }
+    .wrap { max-width: 920px; margin: 0 auto; }
+    nav a { color: var(--red); text-decoration: none; }
+    h1 { color: var(--red); margin: 12px 0; }
+    section { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+    h2 { font-size: 1.1rem; border-bottom: 2px solid var(--red); padding-bottom: 6px; margin-bottom: 12px; }
+    pre { background: var(--code); color: #e2e8f0; padding: 12px; border-radius: 8px; font-size: 0.8rem; overflow-x: auto; }
+    .pipeline { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 16px 0; }
+    .step { background: #fff0f0; border: 2px solid var(--red); padding: 10px 14px; border-radius: 8px; font-size: 0.88rem; font-weight: 600; }
+    .sep { color: var(--muted); }
+    select, button { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--line); margin: 4px 0; }
+    button { background: var(--red); color: #fff; border: none; cursor: pointer; }
+    #result { margin-top: 12px; padding: 12px; background: #f1f5f9; border-radius: 8px; font-family: monospace; font-size: 0.82rem; white-space: pre-wrap; }
+    footer { text-align: center; color: var(--muted); font-size: 0.85rem; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <nav><a href="index.html">← Catalog</a> · Lab 07</nav>
+    <h1>Dynamic Inventory (AWS EC2)</h1>
+    <section>
+      <h2>Pipeline</h2>
+      <div class="pipeline">
+        <span class="step">ansible-inventory</span><span class="sep">→</span>
+        <span class="step">EC2 API</span><span class="sep">→</span>
+        <span class="step">filters + tags</span><span class="sep">→</span>
+        <span class="step">keyed_groups</span>
+      </div>
+    </section>
+    <section>
+      <h2>Simulate group membership</h2>
+      <label>Instance Role tag:
+        <select id="role">
+          <option value="webservers">webservers</option>
+          <option value="appservers">appservers</option>
+        </select>
+      </label><br>
+      <button id="btn" type="button">Build inventory group</button>
+      <div id="result">@role_webservers:
+  |--i-0abc123 (10.0.1.10)</div>
+    </section>
+    <section>
+      <h2>Plugin config</h2>
+      <pre><code>plugin: amazon.aws.aws_ec2
+filters:
+  instance-state-name: running
+  tag:Environment: ansible-lab
+keyed_groups:
+  - key: tags.Role
+    prefix: role</code></pre>
+    </section>
+    <footer>Ansible Extended · Offline · No CDN</footer>
+  </div>
+  <script>
+    document.getElementById("btn").addEventListener("click", function() {
+      var role = document.getElementById("role").value;
+      document.getElementById("result").textContent =
+        "@role_" + role + ":\n  |--i-0abc123 (10.0.1.10)\n  |--i-0def456 (10.0.1.11)";
+    });
+  </script>
+</body>
+</html>

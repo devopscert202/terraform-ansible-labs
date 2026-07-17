@@ -1,0 +1,8 @@
+cloud      = "aws"
+department = "platform"
+cost_code  = "123"
+ip_address = "192.0.2.10"
+
+# Do not add real secrets to a committed tfvars file.
+# Set the secret at runtime instead:
+# export TF_VAR_phone_number='example-only'

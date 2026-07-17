@@ -1,0 +1,13 @@
+[Unit]
+Description={{ nodejs_app_name }} Node.js application
+After=network.target
+
+[Service]
+Type=simple
+User={{ nodejs_app_user }}
+WorkingDirectory=/opt/{{ nodejs_app_name }}
+ExecStart=/usr/bin/node /opt/{{ nodejs_app_name }}/app.js
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

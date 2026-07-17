@@ -1,0 +1,5 @@
+bucket       = "replace-with-unique-state-bucket"
+key          = "extended/lab10/terraform.tfstate"
+region       = "us-east-1"
+encrypt      = true
+use_lockfile = true

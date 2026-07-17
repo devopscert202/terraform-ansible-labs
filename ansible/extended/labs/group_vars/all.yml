@@ -1,0 +1,6 @@
+---
+# Shared variables for the extended Ansible track
+lab_environment: extended
+nodejs_version: "20"
+nodejs_app_port: 3000
+nodejs_app_name: lab-app

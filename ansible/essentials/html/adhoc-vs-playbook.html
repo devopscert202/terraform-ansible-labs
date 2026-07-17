@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ad Hoc vs Playbook</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root { --red: #EE0000; --ink: #1a1a1a; --muted: #64748b; --line: #e2e8f0; }
+    body { font-family: "Segoe UI", system-ui, sans-serif; background: #fafafa; color: var(--ink); line-height: 1.6; padding: 20px; }
+    .wrap { max-width: 960px; margin: 0 auto; }
+    header { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 24px; margin-bottom: 20px; text-align: center; }
+    h1 { color: var(--red); }
+    .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 700px) { .compare { grid-template-columns: 1fr; } }
+    .col { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 20px; }
+    .col h2 { color: var(--red); font-size: 1.05rem; margin-bottom: 10px; }
+    .col.playbook h2 { color: #334155; }
+    ul { margin: 10px 0 10px 18px; font-size: 0.92rem; }
+    pre { background: #1e1e1e; color: #f1f5f9; padding: 12px; border-radius: 8px; font-size: 0.78rem; overflow-x: auto; margin-top: 8px; }
+    .when { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 20px; margin-top: 16px; }
+    .when h2 { color: var(--red); font-size: 1.05rem; margin-bottom: 8px; }
+    .back { display: inline-block; margin-top: 16px; color: var(--red); text-decoration: none; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Ad Hoc vs Playbook</h1>
+      <p style="color: var(--muted);">Same modules — different packaging</p>
+    </header>
+    <div class="compare">
+      <article class="col">
+        <h2>Ad hoc command</h2>
+        <ul>
+          <li>One module, one shot</li>
+          <li>Great for probes and quick fixes</li>
+          <li>Not stored in Git by default</li>
+        </ul>
+        <pre>ansible web1 -i inventory/hosts.ini \
+  -b -m ansible.builtin.apt \
+  -a "name=tree state=present"</pre>
+      </article>
+      <article class="col playbook">
+        <h2>Playbook</h2>
+        <ul>
+          <li>Many tasks, version controlled</li>
+          <li>Handlers, roles, variables</li>
+          <li>Production automation</li>
+        </ul>
+        <pre>ansible-playbook -i inventory/hosts.ini \
+  playbooks/apache.yml</pre>
+      </article>
+    </div>
+    <section class="when">
+      <h2>When to use which</h2>
+      <p><strong>Ad hoc:</strong> ping, uptime, install one package to test sudo, gather a fact.</p>
+      <p style="margin-top: 8px;"><strong>Playbook:</strong> Apache install, MOTD template, Node.js capstone—anything you will run again.</p>
+    </section>
+    <a class="back" href="index.html">← Back to catalog</a>
+  </div>
+</body>
+</html>

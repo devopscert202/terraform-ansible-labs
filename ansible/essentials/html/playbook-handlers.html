@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Playbooks and Handlers</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root { --red: #EE0000; --ink: #1a1a1a; --muted: #64748b; --line: #e2e8f0; }
+    body { font-family: "Segoe UI", system-ui, sans-serif; background: #fafafa; color: var(--ink); line-height: 1.6; padding: 20px; }
+    .wrap { max-width: 960px; margin: 0 auto; }
+    header { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 24px; margin-bottom: 20px; text-align: center; }
+    h1 { color: var(--red); }
+    .timeline { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 24px; margin-bottom: 16px; }
+    .step { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 14px; }
+    .num { flex-shrink: 0; width: 32px; height: 32px; background: var(--red); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; }
+    .step.handler .num { background: #334155; }
+    .step.notify .num { background: #b91c1c; }
+    .note { font-size: 0.88rem; color: var(--muted); margin-top: 4px; }
+    pre { background: #1e1e1e; color: #f1f5f9; padding: 14px; border-radius: 8px; font-size: 0.8rem; overflow-x: auto; }
+    .back { display: inline-block; margin-top: 16px; color: var(--red); text-decoration: none; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Playbook Execution &amp; Handlers</h1>
+      <p style="color: var(--muted);">Tasks run in order; handlers run once at the end if notified</p>
+    </header>
+    <section class="timeline">
+      <div class="step">
+        <span class="num">1</span>
+        <div><strong>Install apache2</strong> (apt module)<div class="note">Reports changed if package was missing</div></div>
+      </div>
+      <div class="step notify">
+        <span class="num">2</span>
+        <div><strong>Enable mod_rewrite</strong> + <code>notify: Restart apache2</code><div class="note">Queues handler; does not restart immediately</div></div>
+      </div>
+      <div class="step">
+        <span class="num">3</span>
+        <div><strong>End of play</strong><div class="note">All tasks finished on all hosts</div></div>
+      </div>
+      <div class="step handler">
+        <span class="num">H</span>
+        <div><strong>Handler: Restart apache2</strong><div class="note">Runs only if step 2 changed something</div></div>
+      </div>
+    </section>
+    <pre>- name: Enable mod_rewrite
+  ansible.builtin.apache2_module:
+    name: rewrite
+    state: present
+  notify: Restart apache2
+
+handlers:
+  - name: Restart apache2
+    ansible.builtin.service:
+      name: apache2
+      state: restarted</pre>
+    <a class="back" href="index.html">← Back to catalog</a>
+  </div>
+</body>
+</html>

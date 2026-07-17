@@ -1,0 +1,6 @@
+---
+- name: Site with webserver role
+  hosts: webservers
+  become: true
+  roles:
+    - webserver

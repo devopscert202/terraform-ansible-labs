@@ -1,0 +1,6 @@
+---
+- name: Fixed FQCN module
+  hosts: webservers
+  tasks:
+    - name: Ping with FQCN
+      ansible.builtin.ping:

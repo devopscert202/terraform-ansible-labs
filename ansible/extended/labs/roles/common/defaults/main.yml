@@ -1,0 +1,7 @@
+---
+common_packages:
+  - htop
+  - vim
+  - curl
+  - jq
+  - unzip

@@ -1,0 +1,15 @@
+---
+# Site playbook — applies roles (Lesson 6 LEP)
+- name: Configure web tier with roles
+  hosts: webservers
+  become: true
+  roles:
+    - role: common
+    - role: webserver
+
+- name: Configure app tier with roles
+  hosts: appservers
+  become: true
+  roles:
+    - role: common
+    - role: nodejs_app

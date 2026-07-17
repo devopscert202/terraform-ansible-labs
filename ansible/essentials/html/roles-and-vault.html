@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Roles and Vault</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root { --red: #EE0000; --ink: #1a1a1a; --muted: #64748b; --line: #e2e8f0; }
+    body { font-family: "Segoe UI", system-ui, sans-serif; background: #fafafa; color: var(--ink); line-height: 1.6; padding: 20px; }
+    .wrap { max-width: 960px; margin: 0 auto; }
+    header { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 24px; margin-bottom: 20px; text-align: center; }
+    h1 { color: var(--red); }
+    .split { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 700px) { .split { grid-template-columns: 1fr; } }
+    .panel { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 20px; }
+    h2 { color: var(--red); font-size: 1.05rem; margin-bottom: 10px; }
+    .tree { font-family: ui-monospace, monospace; font-size: 0.82rem; background: #f8fafc; padding: 14px; border-radius: 8px; line-height: 1.7; }
+    .vault { background: #1e1e1e; color: #fbbf24; padding: 14px; border-radius: 8px; font-family: ui-monospace, monospace; font-size: 0.78rem; margin-top: 8px; word-break: break-all; }
+    ul { margin: 8px 0 0 18px; font-size: 0.9rem; }
+    .back { display: inline-block; margin-top: 16px; color: var(--red); text-decoration: none; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Roles &amp; Ansible Vault</h1>
+      <p style="color: var(--muted);">Reusable automation + encrypted secrets</p>
+    </header>
+    <div class="split">
+      <section class="panel">
+        <h2>Role layout</h2>
+        <div class="tree">roles/webserver/<br>
+├── defaults/main.yml<br>
+├── tasks/main.yml<br>
+├── handlers/main.yml<br>
+└── templates/ (optional)</div>
+        <p style="margin-top: 10px; font-size: 0.9rem; color: var(--muted);">Playbook lists <code>roles: [webserver]</code> instead of inline tasks.</p>
+      </section>
+      <section class="panel">
+        <h2>Vault at rest</h2>
+        <ul>
+          <li>Encrypt <code>vault/secrets.yml</code></li>
+          <li>Supply password at runtime</li>
+          <li>Reference via <code>vars_files</code></li>
+        </ul>
+        <div class="vault">$ANSIBLE_VAULT;1.1;AES256<br>663864396538...</div>
+        <p style="margin-top: 10px; font-size: 0.9rem;">Lab07 combines Vault with Node.js 20 install (modern NodeSource, no apt_key).</p>
+      </section>
+    </div>
+    <a class="back" href="index.html">← Back to catalog</a>
+  </div>
+</body>
+</html>

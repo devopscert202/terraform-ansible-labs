@@ -1,0 +1,9 @@
+---
+# DRILL 02: Missing become for package install
+- name: Missing privilege escalation
+  hosts: webservers
+  tasks:
+    - name: Install nginx without become
+      ansible.builtin.apt:
+        name: nginx
+        state: present

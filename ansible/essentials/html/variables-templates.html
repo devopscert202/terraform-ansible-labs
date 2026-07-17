@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Variables and Templates</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root { --red: #EE0000; --ink: #1a1a1a; --muted: #64748b; --line: #e2e8f0; }
+    body { font-family: "Segoe UI", system-ui, sans-serif; background: #fafafa; color: var(--ink); line-height: 1.6; padding: 20px; }
+    .wrap { max-width: 960px; margin: 0 auto; }
+    header { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 24px; margin-bottom: 20px; text-align: center; }
+    h1 { color: var(--red); }
+    .flow { display: flex; flex-wrap: wrap; align-items: stretch; justify-content: center; gap: 12px; margin-bottom: 16px; }
+    .box { background: #fff; border: 2px solid var(--line); border-radius: 10px; padding: 14px 16px; min-width: 150px; text-align: center; font-size: 0.9rem; }
+    .box.src { border-color: var(--red); background: #fff5f5; }
+    .arrow { align-self: center; color: var(--red); font-weight: 700; font-size: 1.2rem; }
+    .panel { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 20px; margin-bottom: 14px; }
+    h2 { color: var(--red); font-size: 1rem; margin-bottom: 10px; }
+    pre { background: #1e1e1e; color: #f1f5f9; padding: 12px; border-radius: 8px; font-size: 0.78rem; overflow-x: auto; }
+    .rendered { background: #f0fdf4; border: 1px solid #86efac; padding: 12px; border-radius: 8px; font-family: ui-monospace, monospace; font-size: 0.85rem; margin-top: 10px; }
+    .back { display: inline-block; margin-top: 16px; color: var(--red); text-decoration: none; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Variables &amp; Jinja2 Templates</h1>
+      <p style="color: var(--muted);">group_vars → template module → file on target</p>
+    </header>
+    <div class="flow">
+      <div class="box src">group_vars/<br>webservers.yml</div>
+      <span class="arrow">→</span>
+      <div class="box">templates/<br>motd.j2</div>
+      <span class="arrow">→</span>
+      <div class="box">ansible.builtin<br>.template</div>
+      <span class="arrow">→</span>
+      <div class="box">/etc/motd<br>on web1</div>
+    </div>
+    <section class="panel">
+      <h2>Source variables</h2>
+      <pre>webserver_port: 80
+app_env: production</pre>
+    </section>
+    <section class="panel">
+      <h2>Template (motd.j2)</h2>
+      <pre>Welcome to {{ inventory_hostname }}
+Environment: {{ app_env }}
+Web port: {{ webserver_port }}</pre>
+      <div class="rendered">Welcome to web1<br>Environment: production<br>Web port: 80</div>
+    </section>
+    <a class="back" href="index.html">← Back to catalog</a>
+  </div>
+</body>
+</html>

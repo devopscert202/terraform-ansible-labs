@@ -1,0 +1,19 @@
+---
+# Dynamic inventory plugin for AWS EC2 (Lesson 6 AP-03)
+# Requires: boto3, botocore on control node; IAM permissions or AWS_PROFILE
+plugin: amazon.aws.aws_ec2
+regions:
+  - us-east-1
+filters:
+  instance-state-name: running
+  tag:Environment: ansible-lab
+keyed_groups:
+  - key: tags.Role
+    prefix: role
+  - key: placement.region
+    prefix: aws_region
+hostnames:
+  - private-ip-address
+compose:
+  ansible_host: private_ip_address
+  ansible_user: "'ubuntu'"
