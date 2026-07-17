@@ -1,0 +1,64 @@
+# GitHub Pages — https://devopscert202.github.io/terraform-ansible-labs/
+title: Terraform & Ansible Labs
+description: Hands-on Ansible and Terraform labs — essentials bootcamp plus extended tracks
+baseurl: "/terraform-ansible-labs"
+url: "https://devopscert202.github.io"
+
+theme: jekyll-theme-cayman
+
+markdown: kramdown
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+
+plugins:
+  - jekyll-relative-links
+  - jekyll-optional-front-matter
+  - jekyll-readme-index
+  - jekyll-titles-from-headings
+
+relative_links:
+  enabled: true
+  collections: false
+
+optional_front_matter:
+  remove_originals: false
+
+titles_from_headings:
+  enabled: true
+  strip_title: false
+  collections: false
+
+# Ensure lab content is published (HTML is copied as static files without Liquid)
+include:
+  - ansible/essentials/docs
+  - ansible/essentials/html
+  - ansible/essentials/labmanuals
+  - ansible/extended/docs
+  - ansible/extended/html
+  - ansible/extended/labmanuals
+  - terraform/essentials/docs
+  - terraform/essentials/html
+  - terraform/essentials/labmanuals
+  - terraform/extended/docs
+  - terraform/extended/html
+  - terraform/extended/labmanuals
+  - curriculum
+
+exclude:
+  - .git
+  - .github
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor
+  - README.md
+  - ansible/**/labs
+  - terraform/**/labs
+  - ansible/projects
+
+keep_files:
+  - ansible/essentials/html
+  - ansible/extended/html
+  - terraform/essentials/html
+  - terraform/extended/html

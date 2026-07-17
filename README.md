@@ -4,6 +4,15 @@ Hands-on curriculum for **configuration management** and **infrastructure as cod
 
 **Repository:** [github.com/devopscert202/terraform-ansible-labs](https://github.com/devopscert202/terraform-ansible-labs)
 
+**Browse online (GitHub Pages):** [devopscert202.github.io/terraform-ansible-labs](https://devopscert202.github.io/terraform-ansible-labs/)
+
+| HTML catalog | Live link |
+|--------------|-----------|
+| Ansible essentials | [open](https://devopscert202.github.io/terraform-ansible-labs/ansible/essentials/html/index.html) |
+| Ansible extended | [open](https://devopscert202.github.io/terraform-ansible-labs/ansible/extended/html/index.html) |
+| Terraform essentials | [open](https://devopscert202.github.io/terraform-ansible-labs/terraform/essentials/html/index.html) |
+| Terraform extended | [open](https://devopscert202.github.io/terraform-ansible-labs/terraform/extended/html/index.html) |
+
 ---
 
 ## Who this is for
@@ -131,13 +140,15 @@ terraform destroy
 
 ## How to use HTML files
 
-HTML pages are **self-contained** (embedded CSS, no CDN). Open them locally:
+HTML pages are **self-contained** (embedded CSS, no CDN). You can open them locally **or** browse on GitHub Pages after each push to `main`:
+
+**Live catalogs:** [devopscert202.github.io/terraform-ansible-labs](https://devopscert202.github.io/terraform-ansible-labs/)
 
 ```bash
-# macOS
+# macOS (local)
 open ansible/essentials/html/index.html
 
-# Linux — or serve the folder
+# Linux — or serve the folder locally
 python3 -m http.server 8765 --directory ansible/essentials/html
 # browse to http://localhost:8765
 ```
