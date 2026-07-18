@@ -1,26 +1,22 @@
 # Ansible Extended — HTML Catalog
 
-Offline interactive pages for the extended track. **No CDN** — all CSS and JavaScript are embedded.
-
-## Open locally
+Offline interactive pages (embedded CSS, no CDN). Open `index.html` in any browser.
 
 ```bash
 open ansible/extended/html/index.html
-# or
-python3 -m http.server 8765 --directory ansible/extended/html
 ```
 
-## Pages
+## Pages (5 total including index)
 
-| File | Topic | Lab |
-|------|-------|-----|
-| [index.html](index.html) | Catalog | — |
-| [loops-conditionals.html](loops-conditionals.html) | Loops and `when` | 04–05 |
-| [facts.html](facts.html) | Facts and custom facts | 02 |
-| [dynamic-inventory.html](dynamic-inventory.html) | AWS EC2 plugin | 07 |
-| [break-fix.html](break-fix.html) | Troubleshooting drills | 09 |
+| File | Topic |
+|------|-------|
+| [index.html](index.html) | Catalog |
+| [break-fix.html](break-fix.html) | Break Fix |
+| [dynamic-inventory.html](dynamic-inventory.html) | Dynamic Inventory |
+| [facts.html](facts.html) | Facts |
+| [loops-conditionals.html](loops-conditionals.html) | Loops Conditionals |
 
 ## Related
 
-- [Lab manuals](../labmanuals/README.md)
-- [Docs](../docs/README.md)
+- Lab manuals: `../labmanuals/`
+- Docs: `../docs/`

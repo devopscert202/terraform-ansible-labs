@@ -3,39 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ansible Architecture — Control Node to Managed Nodes</title>
+    <title>Ansible Architecture — Interactive Guide</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
-            --red: #EE0000;
-            --red-deep: #c40000;
-            --red-light: #fff0f0;
+            --brand: #EE0000;
+            --brand-deep: #CC0000;
+            --brand-sky: #ffe4e6;
             --ink: #1a1a2e;
             --muted: #64748b;
             --surface: #ffffff;
-            --line: #e2e8f0;
-            --slate-700: #334155;
+            --panel: #ffffff;
+            --line: #dbe3f1;
             --mint: #dcfce7;
             --amber: #fef3c7;
-            --sky: #e0f2fe;
+            --rose: #ffe4e6;
+            --blue: #2563eb;
+            --slate-900: #0f172a;
+            --slate-700: #334155;
+            --slate-500: #64748b;
+            --slate-200: #e2e8f0;
         }
         body {
             font-family: "Segoe UI", system-ui, sans-serif;
-            background: linear-gradient(180deg, #fafafa 0%, #f1f5f9 100%);
-            padding: 20px;
-            line-height: 1.6;
+            background: linear-gradient(180deg, #f8fbff 0%, #eef4fb 100%);
             color: var(--ink);
+            line-height: 1.6;
+            padding: 20px;
         }
         .container { max-width: 1380px; margin: 0 auto; }
         .hero {
             position: relative;
             text-align: center;
-            background: var(--surface);
+            background: white;
             border-radius: 16px;
             padding: 34px 32px 28px;
             box-shadow: 0 4px 18px rgba(15, 23, 42, 0.08);
             margin-bottom: 26px;
-            border: 1px solid rgba(238, 0, 0, 0.1);
+            border: 1px solid color-mix(in srgb, var(--brand) 10%, transparent);
         }
         .eyebrow {
             display: inline-flex;
@@ -43,213 +48,236 @@
             gap: 8px;
             padding: 6px 12px;
             border-radius: 999px;
-            background: var(--red-light);
-            color: var(--red-deep);
+            background: var(--brand-sky);
+            color: var(--brand-deep);
             font-size: 0.82rem;
             font-weight: 700;
-            letter-spacing: 0.02em;
-            margin-bottom: 12px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 14px;
         }
-        .hero h1 { color: var(--red); margin-bottom: 8px; font-size: clamp(1.8rem, 4vw, 2.6rem); }
-        .hero p { color: var(--muted); font-size: 1rem; }
+        h1 {
+            font-size: clamp(2rem, 4vw, 3rem);
+            color: var(--brand);
+            margin-bottom: 10px;
+            line-height: 1.1;
+        }
+        .subtitle {
+            font-size: 1.03rem;
+            color: var(--muted);
+            max-width: 980px;
+            margin: 0 auto 18px;
+        }
+        .lead-panel {
+            background: linear-gradient(180deg, #f8fbff 0%, color-mix(in srgb, var(--brand-sky) 60%, white) 100%);
+            border: 1px solid color-mix(in srgb, var(--brand) 12%, transparent);
+            border-radius: 14px;
+            padding: 18px 20px;
+            max-width: 980px;
+            margin: 0 auto;
+        }
+        .lead-panel p { color: #334155; font-size: 0.98rem; }
+        .controls {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 0 0 24px;
+        }
+        .btn {
+            border: 2px solid var(--brand);
+            background: white;
+            color: var(--brand-deep);
+            padding: 11px 20px;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+        }
+        .btn:hover, .btn.active {
+            background: var(--brand);
+            color: white;
+            box-shadow: 0 4px 12px color-mix(in srgb, var(--brand) 30%, transparent);
+            transform: translateY(-2px);
+        }
+        .view {
+            display: none;
+            background: var(--panel);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 30px;
+            margin-bottom: 26px;
+            border: 1px solid rgba(15,23,42,0.04);
+        }
+        .view.active { display: block; }
+        .section-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 18px;
+            align-items: end;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .section-head h2 { color: var(--ink); font-size: 1.45rem; }
+        .section-kicker {
+            color: var(--brand-deep);
+            text-transform: uppercase;
+            font-size: 0.76rem;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            margin-bottom: 10px;
+        }
+        .section-note {
+            border-left: 4px solid var(--brand);
+            background: color-mix(in srgb, var(--brand-sky) 50%, white);
+            color: var(--brand-deep);
+            padding: 14px 16px;
+            border-radius: 12px;
+            margin-top: 18px;
+        }
+        .concept-grid, .practice-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));
+            gap: 18px;
+        }
+        .card {
+            background: linear-gradient(180deg, #ffffff, #f8fbff);
+            border: 1px solid var(--line);
+            border-top: 4px solid var(--brand);
+            border-radius: 16px;
+            padding: 20px;
+            min-height: 170px;
+            box-shadow: 0 6px 18px rgba(15,23,42,0.05);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .card:hover, .flow-step:hover, .example-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 24px rgba(15,23,42,0.1);
+        }
+        .card-badge {
+            display: inline-flex;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: var(--brand-sky);
+            color: var(--brand-deep);
+            font-weight: 700;
+            margin-bottom: 14px;
+        }
+        .practice-card .card-badge { background: var(--mint); color: #166534; }
+        .practice-card { border-top-color: #22c55e; }
+        .card p { color: #475569; }
+        .flow-track {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));
+            gap: 18px;
+        }
+        .flow-step {
+            position: relative;
+            border-radius: 16px;
+            padding: 22px 18px 18px;
+            border: 1px solid color-mix(in srgb, var(--brand) 18%, transparent);
+            background: linear-gradient(160deg, #ffffff 0%, color-mix(in srgb, var(--brand-sky) 40%, white) 100%);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .step-number {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            background: var(--brand);
+            color: white;
+            font-weight: 800;
+            margin-bottom: 14px;
+            box-shadow: 0 10px 20px color-mix(in srgb, var(--brand) 22%, transparent);
+        }
+        .flow-step h3 { font-size: 1rem; margin-bottom: 10px; color: #0f172a; }
+        .flow-step p { color: #475569; font-size: 0.95rem; }
+        .example-stack { display: grid; gap: 18px; }
+        .example-card {
+            border: 1px solid rgba(15,23,42,0.08);
+            border-radius: 16px;
+            padding: 18px;
+            background: linear-gradient(180deg, #ffffff, #f8fafc);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .lab-callout {
+            border: 1px dashed color-mix(in srgb, var(--brand) 35%, transparent);
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin: 14px 0;
+            background: color-mix(in srgb, var(--brand-sky) 35%, white);
+            color: #334155;
+            font-size: 0.92rem;
+        }
+        .lab-callout strong { color: var(--brand-deep); }
+        pre {
+            margin-top: 10px;
+            background: #0f172a;
+            color: #dbeafe;
+            border-radius: 16px;
+            padding: 18px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            overflow-x: hidden;
+            font-size: 0.88rem;
+            line-height: 1.55;
+            border: 1px solid rgba(148,163,184,0.18);
+        }
+        code { font-family: Consolas, 'Cascadia Code', monospace; }
+        .table-wrap {
+            overflow-x: auto;
+            border-radius: 16px;
+            border: 1px solid var(--line);
+            background: white;
+        }
+        table { width: 100%; border-collapse: collapse; }
+        th, td {
+            padding: 14px 16px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+            vertical-align: top;
+        }
+        th {
+            background: linear-gradient(180deg, var(--brand), var(--brand-deep));
+            color: white;
+            font-weight: 700;
+        }
+        tbody tr:nth-child(even) { background: #f8fbff; }
+        .footer-note {
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.9rem;
+            margin-top: 18px;
+        }
+        .footer-note a { color: var(--brand); text-decoration: none; }
+        .footer-note a:hover { text-decoration: underline; }
+        @media (max-width: 900px) {
+            body { padding: 14px; }
+            .hero, .view { padding: 22px; }
+            .controls { justify-content: flex-start; }
+            .concept-grid, .practice-grid, .flow-track { grid-template-columns: 1fr; }
+        }
         .home-link {
             position: absolute;
             top: 16px;
             right: 20px;
-            color: var(--red);
+            color: var(--brand);
             text-decoration: none;
             font-size: 0.88rem;
             font-weight: 600;
             padding: 6px 14px;
             border-radius: 8px;
-            border: 1px solid rgba(238, 0, 0, 0.18);
-            background: rgba(238, 0, 0, 0.06);
-            transition: background 0.2s;
+            border: 1px solid color-mix(in srgb, var(--brand) 18%, transparent);
+            background: color-mix(in srgb, var(--brand) 6%, transparent);
+            transition: background 0.2s, color 0.2s;
         }
-        .home-link:hover { background: rgba(238, 0, 0, 0.13); }
-        .repo-note {
-            background: var(--mint);
-            border-left: 4px solid #22c55e;
-            padding: 12px 16px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            font-size: 0.9rem;
-        }
-        .repo-note ul { margin: 8px 0 0 20px; }
-        .flow-section { margin-bottom: 22px; }
-        .section-title {
-            font-size: 17px;
-            font-weight: bold;
-            color: var(--slate-700);
-            margin-bottom: 12px;
-            padding: 8px 12px;
-            background: #f1f5f9;
-            border-left: 4px solid var(--red);
-            border-radius: 0 6px 6px 0;
-        }
-        .flow-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin-bottom: 14px;
-            padding: 16px 0;
-        }
-        .flow-box {
-            background: linear-gradient(135deg, var(--red) 0%, var(--red-deep) 100%);
-            color: white;
-            padding: 14px 20px;
-            border-radius: 10px;
-            text-align: center;
-            font-weight: bold;
-            font-size: 13px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 10px rgba(238, 0, 0, 0.25);
-            min-width: 130px;
-        }
-        .flow-box:hover { transform: translateY(-3px); box-shadow: 0 6px 14px rgba(238, 0, 0, 0.35); }
-        .flow-box.control { background: linear-gradient(135deg, #EE0000 0%, #b91c1c 100%); }
-        .flow-box.ssh { background: linear-gradient(135deg, #64748b 0%, #334155 100%); min-width: 90px; }
-        .flow-box.target { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); }
-        .flow-box.module { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); }
-        .flow-box.active { outline: 3px solid #fbbf24; outline-offset: 2px; }
-        .arrow { font-size: 22px; color: var(--muted); font-weight: 700; }
-        .info-panel {
-            display: none;
-            background: var(--surface);
-            border: 1px solid var(--line);
-            border-radius: 10px;
-            padding: 16px 20px;
-            margin-bottom: 16px;
-            font-size: 0.92rem;
-        }
-        .info-panel.visible { display: block; }
-        .info-panel h3 { color: var(--red); font-size: 1rem; margin-bottom: 8px; }
-        .component-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-        .component-card {
-            background: var(--surface);
-            border: 2px solid var(--line);
-            border-radius: 10px;
-            padding: 14px;
-            cursor: pointer;
-            transition: all 0.25s ease;
-        }
-        .component-card:hover {
-            border-color: var(--red);
-            box-shadow: 0 4px 12px rgba(238, 0, 0, 0.12);
-            transform: translateY(-2px);
-        }
-        .component-card.active { border-color: var(--red); background: var(--red-light); }
-        .component-card h3 { font-size: 14px; color: var(--red); margin-bottom: 6px; }
-        .component-card .tag {
-            display: inline-block;
-            background: var(--red);
-            color: white;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 10px;
-            font-weight: bold;
-            margin-bottom: 6px;
-        }
-        .component-card p { font-size: 12px; color: #555; }
-        .code-section { margin-top: 12px; }
-        .code-tabs { display: flex; gap: 5px; margin-bottom: 8px; flex-wrap: wrap; }
-        .code-tab {
-            padding: 6px 14px;
-            background: #e9ecef;
-            border: none;
-            border-radius: 6px 6px 0 0;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: bold;
-            color: #495057;
-            transition: all 0.2s;
-        }
-        .code-tab:hover { background: #dee2e6; }
-        .code-tab.active { background: var(--red); color: white; }
-        .code-content { display: none; }
-        .code-content.active { display: block; }
-        pre {
-            background: #1e293b;
-            color: #e2e8f0;
-            padding: 14px;
-            border-radius: 8px;
-            overflow-x: auto;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            font-size: 11px;
-            line-height: 1.55;
-            margin: 0;
-        }
-        .compare-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.88rem;
-            background: var(--surface);
-            border-radius: 10px;
-            overflow: hidden;
-            border: 1px solid var(--line);
-        }
-        .compare-table th, .compare-table td {
-            padding: 10px 14px;
-            text-align: left;
-            border-bottom: 1px solid var(--line);
-        }
-        .compare-table th { background: var(--red-light); color: var(--red-deep); }
-        .compare-table tr:last-child td { border-bottom: none; }
-        .workflow-steps { counter-reset: step; }
-        .workflow-step {
-            display: flex;
-            gap: 14px;
-            align-items: flex-start;
-            margin-bottom: 14px;
-            background: var(--surface);
-            border: 1px solid var(--line);
-            border-radius: 10px;
-            padding: 14px 16px;
-        }
-        .step-num {
-            flex-shrink: 0;
-            width: 32px;
-            height: 32px;
-            background: var(--red);
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 0.9rem;
-        }
-        .workflow-step h4 { font-size: 0.95rem; margin-bottom: 4px; }
-        .workflow-step p { font-size: 0.85rem; color: var(--muted); }
-        .example-scenario {
-            background: var(--amber);
-            border-left: 4px solid #f59e0b;
-            padding: 14px 16px;
-            border-radius: 6px;
-            margin-bottom: 16px;
-            font-size: 0.9rem;
-        }
-        .example-scenario h3 { font-size: 14px; color: #92400e; margin-bottom: 6px; }
-        .example-scenario p { color: #78350f; margin-bottom: 4px; font-size: 0.88rem; }
-        .footer-note {
-            text-align: center;
-            color: var(--muted);
-            font-size: 0.88rem;
-            margin-top: 24px;
-        }
-        .footer-note a { color: var(--red); text-decoration: none; }
-        .footer-note a:hover { text-decoration: underline; }
-        @media (max-width: 600px) {
-            .flow-box { min-width: 100px; font-size: 11px; padding: 10px 12px; }
+        .home-link:hover {
+            background: color-mix(in srgb, var(--brand) 13%, transparent);
+            color: var(--brand-deep);
         }
     </style>
 </head>
@@ -257,359 +285,387 @@
     <div class="container">
         <header class="hero">
             <a href="index.html" class="home-link">&#8962; Home</a>
-            <div class="eyebrow">Lesson 01 · Getting Started</div>
-            <h1>Ansible Architecture</h1>
-            <p>Agentless configuration management over SSH — no daemon on managed nodes</p>
+            <div class="eyebrow">Ansible Essentials</div>
+            <h1>Architecture</h1>
+            <p class="subtitle">Control node, managed nodes, inventory, modules, and the agentless push model.</p>
+            <div class="lead-panel">
+                <p>Ansible automates configuration from a <strong>control node</strong> over SSH (or WinRM) — no agent installed on managed nodes.</p>
+            </div>
         </header>
 
-        <div class="repo-note">
-            <strong>Repository files in this track:</strong>
-            <ul>
-                <li><code>labs/ansible.cfg</code> — default inventory path, roles_path, privilege escalation</li>
-                <li><code>labs/inventory/hosts.ini</code> — INI inventory with webservers and dbservers groups</li>
-                <li><code>labs/playbooks/apache.yml</code> — sample playbook targeting webservers</li>
-            </ul>
+        <div class="controls">
+            <button class="btn active" data-view="concept">Concept</button>
+            <button class="btn" data-view="architecture">Architecture</button>
+            <button class="btn" data-view="flow">Flow</button>
+            <button class="btn" data-view="setup">Setup</button>
+            <button class="btn" data-view="commands">Commands</button>
+            <button class="btn" data-view="examples">Examples</button>
+            <button class="btn" data-view="comparison">Compare</button>
+            <button class="btn" data-view="practice">Practice</button>
         </div>
 
-        <!-- Architecture Flow -->
-        <div class="flow-section">
-            <div class="section-title">1. Architecture Flow — Click each component</div>
-            <div class="flow-container">
-                <div class="flow-box control" data-stage="control" onclick="showStage('control')">🖥️ Control Node<br><small>ansible / ansible-playbook</small></div>
-                <span class="arrow">→</span>
-                <div class="flow-box" data-stage="inventory" onclick="showStage('inventory')">📋 Inventory<br><small>hosts.ini / hosts.yaml</small></div>
-                <span class="arrow">→</span>
-                <div class="flow-box ssh" data-stage="ssh" onclick="showStage('ssh')">🔐 SSH :22<br><small>no agent required</small></div>
-                <span class="arrow">→</span>
-                <div class="flow-box target" data-stage="web1" onclick="showStage('web1')">web1</div>
-                <div class="flow-box target" data-stage="web2" onclick="showStage('web2')">web2</div>
-                <div class="flow-box target" data-stage="db1" onclick="showStage('db1')">db1</div>
-            </div>
-            <div class="flow-container">
-                <div class="flow-box module" data-stage="module" onclick="showStage('module')">📦 Modules<br><small>apt, service, template</small></div>
-                <span class="arrow">← runs on target via</span>
-                <div class="flow-box" data-stage="python" onclick="showStage('python')">🐍 Python 3<br><small>on managed node</small></div>
-            </div>
-            <div id="info-panel" class="info-panel visible">
-                <h3>Control Node</h3>
-                <p>The control node is where you install Ansible and run commands. It holds your playbooks, inventory, roles, and vault files. It does <strong>not</strong> need to be a server — your laptop or a CI runner works. Ansible pushes configuration outward; managed nodes never pull from a central Ansible server.</p>
-            </div>
-        </div>
-
-        <!-- Example Scenario -->
-        <div class="example-scenario">
-            <h3>📋 Example: First connectivity check</h3>
-            <p><strong>Goal:</strong> Verify Ansible can reach all web servers before running playbooks.</p>
-            <p><strong>Command:</strong> <code>ansible webservers -i inventory/hosts.ini -m ansible.builtin.ping</code></p>
-            <p><strong>Flow:</strong> Control node reads inventory → resolves web1/web2 IPs → opens SSH → runs ping module → returns <code>pong</code> per host.</p>
-            <p><strong>Result:</strong> Both hosts report SUCCESS with <code>"ping": "pong"</code> ✅</p>
-        </div>
-
-        <!-- Core Components -->
-        <div class="flow-section">
-            <div class="section-title">2. Core Components (click to view details)</div>
-            <div class="component-grid">
-                <div class="component-card active" onclick="showCode('inventory')">
-                    <span class="tag">Required</span>
-                    <h3>Inventory</h3>
-                    <p>Lists hosts, groups, and connection variables (ansible_host, ansible_user).</p>
-                </div>
-                <div class="component-card" onclick="showCode('playbook')">
-                    <span class="tag">Automation</span>
-                    <h3>Playbook</h3>
-                    <p>YAML file describing desired state: plays, tasks, handlers, roles.</p>
-                </div>
-                <div class="component-card" onclick="showCode('modules')">
-                    <span class="tag">Execution</span>
-                    <h3>Modules</h3>
-                    <p>Units of work with idempotent behavior. Use FQCN: ansible.builtin.apt.</p>
-                </div>
-                <div class="component-card" onclick="showCode('cfg')">
-                    <span class="tag">Config</span>
-                    <h3>ansible.cfg</h3>
-                    <p>Project defaults: inventory path, roles_path, host_key_checking.</p>
-                </div>
-                <div class="component-card" onclick="showCode('collections')">
-                    <span class="tag">Packaging</span>
-                    <h3>Collections</h3>
-                    <p>Bundle modules, plugins, roles. ansible.builtin is the core collection.</p>
-                </div>
-                <div class="component-card" onclick="showCode('vault')">
-                    <span class="tag">Security</span>
-                    <h3>Ansible Vault</h3>
-                    <p>Encrypt secrets at rest in YAML files; decrypt at runtime with password.</p>
+        <section id="concept" class="view active">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Core Model</div>
+                    <h2>Ansible Components</h2>
                 </div>
             </div>
-        </div>
-
-        <!-- Code Examples -->
-        <div class="code-section">
-            <div class="code-tabs">
-                <button class="code-tab active" onclick="showCode('inventory')">Inventory</button>
-                <button class="code-tab" onclick="showCode('playbook')">Playbook</button>
-                <button class="code-tab" onclick="showCode('modules')">Modules</button>
-                <button class="code-tab" onclick="showCode('cfg')">ansible.cfg</button>
-                <button class="code-tab" onclick="showCode('collections')">Collections</button>
-                <button class="code-tab" onclick="showCode('vault')">Vault</button>
+<div class="concept-grid">
+                <article class="card">
+                    <div class="card-badge">Control node</div>
+                    <p>Where ansible-playbook runs — your laptop or CI runner.</p>
+                </article>
+                <article class="card">
+                    <div class="card-badge">Managed nodes</div>
+                    <p>Targets listed in inventory — EC2, VMs, containers.</p>
+                </article>
+                <article class="card">
+                    <div class="card-badge">Inventory</div>
+                    <p>Hosts, groups, vars — INI or YAML format.</p>
+                </article>
+                <article class="card">
+                    <div class="card-badge">Modules</div>
+                    <p>Units of work — apt, copy, service — idempotent when possible.</p>
+                </article>
+                <article class="card">
+                    <div class="card-badge">Playbooks</div>
+                    <p>YAML ordered lists of plays and tasks.</p>
+                </article>
+                <article class="card">
+                    <div class="card-badge">Facts</div>
+                    <p>Auto-gathered host data — OS, IPs, mounts — via setup module.</p>
+                </article>
             </div>
-            <div id="inventory-code" class="code-content active">
-                <pre># labs/inventory/hosts.ini
-[webservers]
-web1 ansible_host=10.0.1.10 ansible_user=ubuntu
-web2 ansible_host=10.0.1.11 ansible_user=ubuntu
-
-[webservers:vars]
-ansible_python_interpreter=/usr/bin/python3
-
-[dbservers]
-db1 ansible_host=10.0.1.20 ansible_user=ubuntu</pre>
+        </section>
+        <section id="architecture" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Topology</div>
+                    <h2>Control → Managed Flow</h2>
+                </div>
             </div>
-            <div id="playbook-code" class="code-content">
-                <pre># labs/playbooks/apache.yml
----
-- name: Install and configure Apache
-  hosts: webservers
-  become: true
-  tasks:
-    - name: Install apache2
-      ansible.builtin.apt:
-        name: apache2
-        state: present
-        update_cache: true
-
-    - name: Enable mod_rewrite
-      ansible.builtin.apache2_module:
-        name: rewrite
-        state: present
-      notify: Restart apache2
-
-  handlers:
-    - name: Restart apache2
-      ansible.builtin.service:
-        name: apache2
-        state: restarted</pre>
-            </div>
-            <div id="modules-code" class="code-content">
-                <pre># Ad hoc module examples (FQCN recommended)
-ansible webservers -m ansible.builtin.ping
-ansible web1 -b -m ansible.builtin.apt -a "name=curl state=present"
-ansible webservers -b -m ansible.builtin.service -a "name=apache2 state=started"
-ansible web1 -m ansible.builtin.template -a "src=motd.j2 dest=/etc/motd"
-
-# Module returns JSON: changed, failed, msg, and module-specific keys</pre>
-            </div>
-            <div id="cfg-code" class="code-content">
-                <pre># labs/ansible.cfg
-[defaults]
+<div class="example-stack">
+            <div class="lab-callout"><strong>Repo lab files:</strong> ansible/essentials/labs/inventory/hosts.ini</div>
+                <section class="example-card">
+                    <div class="section-kicker">ansible.cfg excerpt</div>
+                    <pre><code>[defaults]
 inventory = inventory/hosts.ini
-roles_path = roles
-host_key_checking = False
-interpreter_python = auto_silent
-retry_files_enabled = False
-
-[privilege_escalation]
-become_method = sudo</pre>
+remote_user = ubuntu
+host_key_checking = False</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">Ping module</div>
+                    <pre><code>ansible all -i inventory/hosts.ini -m ansible.builtin.ping</code></pre>
+                </section>
             </div>
-            <div id="collections-code" class="code-content">
-                <pre># Fully Qualified Collection Name (FQCN)
-ansible.builtin.ping          # core collection
-ansible.builtin.apt           # package management (Debian/Ubuntu)
-ansible.builtin.service       # systemd/sysv service control
-community.general.docker_container  # from community collection
-
-# List installed collections
-ansible-galaxy collection list</pre>
-            </div>
-            <div id="vault-code" class="code-content">
-                <pre># Encrypt secrets for Git storage
-ansible-vault encrypt vault/secrets.yml --vault-password-file ~/.vault_pass
-
-# Playbook loads encrypted vars
-vars_files:
-  - ../vault/secrets.yml
-
-# Run with decryption
-ansible-playbook playbooks/nodejs.yml --vault-password-file ~/.vault_pass</pre>
-            </div>
-        </div>
-
-        <!-- Workflow -->
-        <div class="flow-section">
-            <div class="section-title">3. Typical Workflow (from zero to running playbook)</div>
-            <div class="workflow-steps">
-                <div class="workflow-step">
-                    <span class="step-num">1</span>
-                    <div>
-                        <h4>Provision infrastructure</h4>
-                        <p>Terraform (or cloud console) creates VMs with private IPs, security groups allowing SSH from control node.</p>
-                    </div>
-                </div>
-                <div class="workflow-step">
-                    <span class="step-num">2</span>
-                    <div>
-                        <h4>Configure inventory</h4>
-                        <p>Copy <code>hosts.ini.local.example</code> to <code>hosts.ini.local</code> and set real private IPs and ansible_user.</p>
-                    </div>
-                </div>
-                <div class="workflow-step">
-                    <span class="step-num">3</span>
-                    <div>
-                        <h4>Test connectivity</h4>
-                        <p><code>ansible webservers -i inventory/hosts.ini.local -m ansible.builtin.ping</code> — all hosts must return pong.</p>
-                    </div>
-                </div>
-                <div class="workflow-step">
-                    <span class="step-num">4</span>
-                    <div>
-                        <h4>Run playbooks</h4>
-                        <p><code>ansible-playbook -i inventory/hosts.ini.local playbooks/apache.yml</code> — apply desired state idempotently.</p>
-                    </div>
-                </div>
-                <div class="workflow-step">
-                    <span class="step-num">5</span>
-                    <div>
-                        <h4>Version control and CI/CD</h4>
-                        <p>Commit playbooks to Git; run ansible-playbook from pipeline with vault password from secrets manager.</p>
-                    </div>
+            <svg viewBox="0 0 950 380" style="width:100%;max-width:950px;margin:20px auto;display:block;">
+                <text x="475" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#1e293b">Ansible Push Architecture</text>
+                <rect x="40" y="60" width="180" height="70" rx="8" fill="#ffe4e6" stroke="#EE0000" stroke-width="2"/>
+                <text x="130" y="88" text-anchor="middle" font-size="13" font-weight="bold" fill="#CC0000">Control Node</text>
+                <text x="130" y="108" text-anchor="middle" font-size="10" fill="#991b1b" font-family="monospace">ansible-playbook</text>
+                <line x1="220" y1="95" x2="280" y2="95" stroke="#EE0000" stroke-width="2" marker-end="url(#a1)"/>
+                <rect x="280" y="55" width="160" height="80" rx="10" fill="#f8fafc" stroke="#EE0000" stroke-width="3"/>
+                <text x="360" y="85" text-anchor="middle" font-size="14" font-weight="bold" fill="#CC0000">Inventory</text>
+                <text x="360" y="105" text-anchor="middle" font-size="10" fill="#64748b">hosts.ini · groups</text>
+                <line x1="440" y1="95" x2="500" y2="95" stroke="#EE0000" stroke-width="2" marker-end="url(#a1)"/>
+                <rect x="500" y="55" width="180" height="80" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+                <text x="590" y="85" text-anchor="middle" font-size="13" font-weight="bold" fill="#1e40af">SSH / WinRM</text>
+                <text x="590" y="105" text-anchor="middle" font-size="10" fill="#1e3a8a">agentless :22</text>
+                <line x1="680" y1="95" x2="740" y2="95" stroke="#3b82f6" stroke-width="2" marker-end="url(#a2)"/>
+                <rect x="740" y="55" width="170" height="80" rx="8" fill="#dcfce7" stroke="#22c55e" stroke-width="2"/>
+                <text x="825" y="85" text-anchor="middle" font-size="13" font-weight="bold" fill="#166534">Managed Nodes</text>
+                <text x="825" y="105" text-anchor="middle" font-size="10" fill="#14532d">web1 · web2 · db1</text>
+                <rect x="280" y="180" width="200" height="70" rx="8" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+                <text x="380" y="210" text-anchor="middle" font-size="13" font-weight="bold" fill="#92400e">Modules</text>
+                <text x="380" y="230" text-anchor="middle" font-size="10" fill="#78350f" font-family="monospace">apt · copy · service</text>
+                <line x1="380" y1="135" x2="380" y2="180" stroke="#f59e0b" stroke-width="2" marker-end="url(#a3)"/>
+                <rect x="40" y="280" width="870" height="80" rx="8" fill="#fff1f2" stroke="#f43f5e" stroke-width="2"/>
+                <text x="475" y="310" text-anchor="middle" font-size="13" font-weight="bold" fill="#be123c">Lab 01 — ansible/essentials/labs/inventory/hosts.ini</text>
+                <text x="475" y="335" text-anchor="middle" font-size="11" fill="#9f1239">ansible all -m ansible.builtin.ping → verify SSH connectivity</text>
+                <defs>
+                    <marker id="a1" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#EE0000"/></marker>
+                    <marker id="a2" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#3b82f6"/></marker>
+                    <marker id="a3" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#f59e0b"/></marker>
+                </defs>
+            </svg>
+        </section>
+        <section id="flow" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Lab 01</div>
+                    <h2>First Connectivity Check</h2>
                 </div>
             </div>
-        </div>
-
-        <!-- Agentless comparison -->
-        <div class="flow-section">
-            <div class="section-title">4. Agentless vs Agent-Based CM</div>
-            <table class="compare-table">
-                <thead>
-                    <tr>
-                        <th>Aspect</th>
-                        <th>Ansible (agentless)</th>
-                        <th>Agent-based tools</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Software on targets</td>
-                        <td>SSH + Python only</td>
-                        <td>Daemon/agent installed and maintained</td>
-                    </tr>
-                    <tr>
-                        <td>Firewall</td>
-                        <td>Port 22 (SSH) inbound from control</td>
-                        <td>Custom agent port + central server</td>
-                    </tr>
-                    <tr>
-                        <td>Bootstrap</td>
-                        <td>Works immediately if SSH works</td>
-                        <td>Install agent before first config</td>
-                    </tr>
-                    <tr>
-                        <td>Scale model</td>
-                        <td>Parallel forks from control node</td>
-                        <td>Agents pull or server pushes</td>
-                    </tr>
-                    <tr>
-                        <td>Windows</td>
-                        <td>WinRM instead of SSH</td>
-                        <td>Often native agent</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Parallel execution -->
-        <div class="flow-section">
-            <div class="section-title">5. Parallel Execution (forks)</div>
-            <div class="flow-container">
-                <div class="flow-box control">Control Node<br><small>forks=5 default</small></div>
-                <span class="arrow">⇉</span>
-                <div class="flow-box target">web1<br><small>task 1..n</small></div>
-                <div class="flow-box target">web2<br><small>task 1..n</small></div>
-                <div class="flow-box target">db1<br><small>task 1..n</small></div>
+<div class="flow-track">
+                <div class="flow-step">
+                    <div class="step-number">1</div>
+                    <h3>cd labs</h3>
+                    <p>cd ansible/essentials/labs</p>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">2</div>
+                    <h3>inventory</h3>
+                    <p>cp inventory/hosts.ini.local.example inventory/hosts.ini.local — edit IPs</p>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">3</div>
+                    <h3>ping</h3>
+                    <p>ansible all -i inventory/hosts.ini.local -m ansible.builtin.ping</p>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">4</div>
+                    <h3>verbose</h3>
+                    <p>ansible all -i inventory/hosts.ini.local -m ping -vvv</p>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">5</div>
+                    <h3>ad hoc command</h3>
+                    <p>ansible webservers -i inventory/hosts.ini.local -m command -a 'hostname'</p>
+                </div>
             </div>
-            <p style="font-size: 0.88rem; color: var(--muted); padding: 0 8px;">
-                Ansible runs tasks in parallel across hosts (default 5 forks). Each host progresses through the play independently.
-                Tune with <code>-f 10</code> or <code>forks = 10</code> in ansible.cfg. Serial execution uses <code>serial:</code> in the play.
-            </p>
-        </div>
-
-        <p class="footer-note">
-            Deep dive: <a href="../docs/01-getting-started/ansible-architecture.md">ansible-architecture.md</a> ·
-            Lab: <a href="../labmanuals/lab01-inventory-static-hosts.md">lab01</a>
-        </p>
+        </section>
+        <section id="setup" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Install</div>
+                    <h2>Ansible on Control Node</h2>
+                </div>
+            </div>
+<div class="example-stack">
+                <section class="example-card">
+                    <div class="section-kicker">pip install</div>
+                    <pre><code>python3 -m pip install ansible
+ansible --version</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">Ubuntu apt</div>
+                    <pre><code>sudo apt update &amp;&amp; sudo apt install -y ansible</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">Verify collections</div>
+                    <pre><code>ansible-galaxy collection list</code></pre>
+                </section>
+            </div>
+        </section>
+        <section id="commands" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Quick Reference</div>
+                    <h2>Core ansible CLI</h2>
+                </div>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Category</th><th>Command</th><th>Description</th></tr></thead>
+                    <tbody>
+                        <tr><td>Ping</td><td><code>ansible HOSTS -m ping</code></td><td>Connectivity test</td></tr>
+                        <tr><td>Ad hoc</td><td><code>ansible HOSTS -m command -a 'CMD'</code></td><td>One-off command</td></tr>
+                        <tr><td>Playbook</td><td><code>ansible-playbook site.yml</code></td><td>Run playbook</td></tr>
+                        <tr><td>Inventory</td><td><code>ansible-inventory --list</code></td><td>Parsed inventory JSON</td></tr>
+                        <tr><td>Config</td><td><code>ansible-config dump</code></td><td>Effective settings</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="section-note">Extended reference appendix — bookmark for exam prep and on-the-job lookup.</div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Topic</th><th>Command / Pattern</th><th>Notes</th></tr></thead>
+                    <tbody>
+                        <tr><td>FQCN</td><td>ansible.builtin.ping</td><td>Lab 01</td></tr>
+                        <tr><td>Inventory</td><td>-i inventory/hosts.ini.local</td><td>All labs</td></tr>
+                        <tr><td>Become</td><td>-b for sudo</td><td>Lab 03+</td></tr>
+                        <tr><td>Limit</td><td>-l web1</td><td>Subset hosts</td></tr>
+                        <tr><td>Forks</td><td>-f 5 parallel</td><td>Performance</td></tr>
+                    </tbody>
+                </table>
+            </div>            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Architecture — reference drill 1</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Architecture — reference drill 2</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Architecture — reference drill 3</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="section-note">Extended reference appendix — bookmark for exam prep and on-the-job lookup.</div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Topic</th><th>Command / Pattern</th><th>Notes</th></tr></thead>
+                    <tbody>
+                        <tr><td>Review</td><td>Re-read lab manual objectives</td><td>Architecture</td></tr>
+                        <tr><td>Validate</td><td>Run syntax-check or validate</td><td>Before apply</td></tr>
+                        <tr><td>Cleanup</td><td>Destroy or remove lab changes</td><td>End of session</td></tr>
+                        <tr><td>Docs</td><td>Cross-link markdown docs</td><td>../docs/</td></tr>
+                        <tr><td>Git</td><td>Commit only safe files</td><td>No secrets/state</td></tr>
+                        <tr><td>Pair</td><td>Walk through with teammate</td><td>Teaching reinforces</td></tr>
+                        <tr><td>Notes</td><td>Document failures and fixes</td><td>Personal runbook</td></tr>
+                        <tr><td>Next</td><td>Follow learning path order</td><td>curriculum/learning-paths.md</td></tr>
+                    </tbody>
+                </table>
+            </div>            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Architecture — reference drill 1</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Architecture — reference drill 2</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Architecture — reference drill 3</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+        </section>
+        <section id="examples" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Hands-On</div>
+                    <h2>Lab 01 Commands</h2>
+                </div>
+            </div>
+<div class="example-stack">
+            <div class="lab-callout"><strong>Repo lab files:</strong> ansible/essentials/labs/</div>
+                <section class="example-card">
+                    <div class="section-kicker">Ping all</div>
+                    <pre><code>cd ansible/essentials/labs
+ansible all -i inventory/hosts.ini.local -m ansible.builtin.ping</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">Hostname</div>
+                    <pre><code>ansible webservers -i inventory/hosts.ini.local -m ansible.builtin.command -a 'hostname'</code></pre>
+                </section>
+            </div>
+            <div class="section-note">Extended reference appendix — bookmark for exam prep and on-the-job lookup.</div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Topic</th><th>Command / Pattern</th><th>Notes</th></tr></thead>
+                    <tbody>
+                        <tr><td>Review</td><td>Re-read lab manual objectives</td><td>Architecture</td></tr>
+                        <tr><td>Validate</td><td>Run syntax-check or validate</td><td>Before apply</td></tr>
+                        <tr><td>Cleanup</td><td>Destroy or remove lab changes</td><td>End of session</td></tr>
+                        <tr><td>Docs</td><td>Cross-link markdown docs</td><td>../docs/</td></tr>
+                        <tr><td>Git</td><td>Commit only safe files</td><td>No secrets/state</td></tr>
+                        <tr><td>Pair</td><td>Walk through with teammate</td><td>Teaching reinforces</td></tr>
+                        <tr><td>Notes</td><td>Document failures and fixes</td><td>Personal runbook</td></tr>
+                        <tr><td>Next</td><td>Follow learning path order</td><td>curriculum/learning-paths.md</td></tr>
+                    </tbody>
+                </table>
+            </div>            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Architecture — reference drill 1</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Architecture — reference drill 2</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Architecture — reference drill 3</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+        </section>
+        <section id="comparison" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Decision Guide</div>
+                    <h2>Ansible vs Terraform</h2>
+                </div>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th></th><th>Ansible</th><th>Terraform</th></tr></thead>
+                    <tbody>
+                        <tr><td>Primary use</td><td>Configure OS/apps</td><td>Provision infrastructure</td></tr>
+                        <tr><td>State</td><td>None by default</td><td>Explicit state file</td></tr>
+                        <tr><td>Agent</td><td>Agentless SSH</td><td>Agentless API</td></tr>
+                        <tr><td>Idempotency</td><td>Module-level</td><td>Plan/apply graph</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        <section id="practice" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Use It Well</div>
+                    <h2>Architecture Practice</h2>
+                </div>
+            </div>
+<div class="practice-grid">
+                <article class="card practice-card">
+                    <div class="card-badge">Lab 01</div>
+                    <p>Static inventory and ping all hosts.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab01-inventory-static-hosts.md">Open lab manual →</a></p>
+                </article>
+                <article class="card practice-card">
+                    <div class="card-badge">Verbose debug</div>
+                    <p>Run ping with -vvv; identify SSH step.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab01-inventory-static-hosts.md">Open lab manual →</a></p>
+                </article>
+                <article class="card practice-card">
+                    <div class="card-badge">Draw diagram</div>
+                    <p>Sketch control node to two web servers.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab01-inventory-static-hosts.md">Open lab manual →</a></p>
+                </article>
+                <article class="card practice-card">
+                    <div class="card-badge">ansible.cfg</div>
+                    <p>Locate effective inventory path.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab01-inventory-static-hosts.md">Open lab manual →</a></p>
+                </article>
+                <article class="card practice-card">
+                    <div class="card-badge">FQCN</div>
+                    <p>Rewrite ping using full collection name.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab03-adhoc-commands.md">Open lab manual →</a></p>
+                </article>
+                <article class="card practice-card">
+                    <div class="card-badge">Compare TF</div>
+                    <p>List one task for Ansible vs Terraform.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab01-inventory-static-hosts.md">Open lab manual →</a></p>
+                </article>
+            </div>
+            <div class="section-note">Extended reference appendix — bookmark for exam prep and on-the-job lookup.</div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Topic</th><th>Command / Pattern</th><th>Notes</th></tr></thead>
+                    <tbody>
+                        <tr><td>Review</td><td>Re-read lab manual objectives</td><td>Architecture</td></tr>
+                        <tr><td>Validate</td><td>Run syntax-check or validate</td><td>Before apply</td></tr>
+                        <tr><td>Cleanup</td><td>Destroy or remove lab changes</td><td>End of session</td></tr>
+                        <tr><td>Docs</td><td>Cross-link markdown docs</td><td>../docs/</td></tr>
+                        <tr><td>Git</td><td>Commit only safe files</td><td>No secrets/state</td></tr>
+                        <tr><td>Pair</td><td>Walk through with teammate</td><td>Teaching reinforces</td></tr>
+                        <tr><td>Notes</td><td>Document failures and fixes</td><td>Personal runbook</td></tr>
+                        <tr><td>Next</td><td>Follow learning path order</td><td>curriculum/learning-paths.md</td></tr>
+                    </tbody>
+                </table>
+            </div>            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Architecture — reference drill 1</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Architecture — reference drill 2</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Architecture — reference drill 3</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+        </section>
     </div>
 
     <script>
-        const stageInfo = {
-            control: {
-                title: 'Control Node',
-                text: 'Where Ansible is installed. Runs ansible and ansible-playbook. Holds inventory, playbooks, roles, vault. Not a central "Ansible server" — can be laptop, jump box, or CI runner.'
-            },
-            inventory: {
-                title: 'Inventory',
-                text: 'Static or dynamic list of hosts and groups. Defines ansible_host (IP), ansible_user, groups like webservers. Ansible resolves host patterns from inventory before connecting.'
-            },
-            ssh: {
-                title: 'SSH Connection',
-                text: 'Default connection plugin for Linux. Opens SSH session on port 22, copies module code, executes Python on target, returns JSON result. No persistent agent. Requires key-based or password auth.'
-            },
-            web1: {
-                title: 'Managed Node: web1',
-                text: 'Target server in webservers group. Receives modules over SSH. Needs Python 3 and sudo for privileged tasks. ansible_host=10.0.1.10 in lab inventory.'
-            },
-            web2: {
-                title: 'Managed Node: web2',
-                text: 'Second web server. Same group variables as web1 from inventory/group_vars/webservers.yml. Playbooks target webservers to configure both in parallel.'
-            },
-            db1: {
-                title: 'Managed Node: db1',
-                text: 'Database server in dbservers group. Separate group allows different playbooks (e.g., only install DB packages on dbservers).'
-            },
-            module: {
-                title: 'Modules',
-                text: 'Idempotent units of work. ansible.builtin.apt installs packages; ansible.builtin.service manages systemd. Modules check current state before changing. Return changed=true/false.'
-            },
-            python: {
-                title: 'Python on Target',
-                text: 'Ansible modules execute as Python on the managed node. interpreter_python=auto_silent in ansible.cfg auto-discovers Python. Set ansible_python_interpreter in inventory if needed.'
-            }
-        };
-
-        function showStage(stage) {
-            document.querySelectorAll('.flow-box').forEach(el => el.classList.remove('active'));
-            const box = document.querySelector('[data-stage="' + stage + '"]');
-            if (box) box.classList.add('active');
-            const panel = document.getElementById('info-panel');
-            const info = stageInfo[stage];
-            if (info) {
-                panel.innerHTML = '<h3>' + info.title + '</h3><p>' + info.text + '</p>';
-                panel.classList.add('visible');
-            }
-        }
-
-        function showCode(type) {
-            document.querySelectorAll('.code-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.code-tab').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.component-card').forEach(el => el.classList.remove('active'));
-            const codeEl = document.getElementById(type + '-code');
-            if (codeEl) codeEl.classList.add('active');
-            document.querySelectorAll('.code-tab').forEach(tab => {
-                if (tab.textContent.toLowerCase().replace(/\s/g, '') === type ||
-                    (type === 'cfg' && tab.textContent.includes('ansible.cfg'))) {
-                    tab.classList.add('active');
-                }
+        const buttons = document.querySelectorAll('.btn');
+        const views = document.querySelectorAll('.view');
+        buttons.forEach((button) => {
+            button.addEventListener('click', () => {
+                const viewId = button.dataset.view;
+                buttons.forEach((b) => b.classList.remove('active'));
+                views.forEach((v) => v.classList.remove('active'));
+                button.classList.add('active');
+                document.getElementById(viewId).classList.add('active');
             });
-            document.querySelectorAll('.component-card').forEach(card => {
-                const h3 = card.querySelector('h3');
-                if (h3 && h3.textContent.toLowerCase().replace(/\s/g, '').includes(type.replace('cfg', 'ansiblecfg').replace('collections', 'collections').substring(0, 4))) {
-                    card.classList.add('active');
-                }
-            });
-            const cardMap = { inventory: 0, playbook: 1, modules: 2, cfg: 3, collections: 4, vault: 5 };
-            const cards = document.querySelectorAll('.component-card');
-            if (cardMap[type] !== undefined && cards[cardMap[type]]) {
-                cards[cardMap[type]].classList.add('active');
-            }
-        }
+        });
     </script>
 </body>
 </html>

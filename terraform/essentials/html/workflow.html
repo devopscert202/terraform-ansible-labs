@@ -3,388 +3,678 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Terraform Workflow — Init, Plan, Apply, Destroy</title>
+    <title>Terraform Workflow — Interactive Guide</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
-            --purple: #7B42BC; --purple-deep: #5c2d94; --purple-sky: #ede4f7;
-            --ink: #261a33; --muted: #665b70; --line: #e8ddf2;
-            --amber: #fef3c7; --mint: #dcfce7; --slate-700: #334155;
+            --brand: #7B42BC;
+            --brand-deep: #5c2d94;
+            --brand-sky: #ede4f7;
+            --ink: #1a1a2e;
+            --muted: #64748b;
+            --surface: #ffffff;
+            --panel: #ffffff;
+            --line: #dbe3f1;
+            --mint: #dcfce7;
+            --amber: #fef3c7;
+            --rose: #ffe4e6;
+            --blue: #2563eb;
+            --slate-900: #0f172a;
+            --slate-700: #334155;
+            --slate-500: #64748b;
+            --slate-200: #e2e8f0;
         }
         body {
             font-family: "Segoe UI", system-ui, sans-serif;
-            background: linear-gradient(180deg, #fcfaff 0%, #f3ebfa 100%);
-            color: var(--ink); line-height: 1.6; padding: 20px;
+            background: linear-gradient(180deg, #f8fbff 0%, #eef4fb 100%);
+            color: var(--ink);
+            line-height: 1.6;
+            padding: 20px;
         }
-        .container { max-width: 1200px; margin: 0 auto; }
+        .container { max-width: 1380px; margin: 0 auto; }
         .hero {
-            position: relative; text-align: center; background: white;
-            border-radius: 16px; padding: 34px 32px 28px;
-            box-shadow: 0 4px 18px rgba(123, 66, 188, 0.12);
-            margin-bottom: 26px; border: 1px solid rgba(123, 66, 188, 0.15);
+            position: relative;
+            text-align: center;
+            background: white;
+            border-radius: 16px;
+            padding: 34px 32px 28px;
+            box-shadow: 0 4px 18px rgba(15, 23, 42, 0.08);
+            margin-bottom: 26px;
+            border: 1px solid color-mix(in srgb, var(--brand) 10%, transparent);
         }
         .eyebrow {
-            display: inline-flex; padding: 6px 14px; border-radius: 999px;
-            background: var(--purple-sky); color: var(--purple-deep);
-            font-size: 0.82rem; font-weight: 700; margin-bottom: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: var(--brand-sky);
+            color: var(--brand-deep);
+            font-size: 0.82rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 14px;
         }
-        .hero h1 { color: var(--purple); font-size: clamp(1.8rem, 4vw, 2.6rem); }
-        .hero .subtitle { color: var(--muted); max-width: 720px; margin: 8px auto 0; }
-        .home-link {
-            position: absolute; top: 16px; right: 20px; color: var(--purple);
-            text-decoration: none; font-weight: 600; padding: 6px 14px;
-            border-radius: 8px; border: 1px solid rgba(123,66,188,0.2);
-            background: rgba(123,66,188,0.06);
+        h1 {
+            font-size: clamp(2rem, 4vw, 3rem);
+            color: var(--brand);
+            margin-bottom: 10px;
+            line-height: 1.1;
         }
-        .nav-bar {
-            display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
-            margin-bottom: 20px; padding: 10px; background: white;
-            border-radius: 10px; border: 1px solid var(--line);
+        .subtitle {
+            font-size: 1.03rem;
+            color: var(--muted);
+            max-width: 980px;
+            margin: 0 auto 18px;
         }
-        .nav-bar a { color: var(--purple); font-weight: 600; text-decoration: none; padding: 6px 12px; border-radius: 6px; font-size: 0.88rem; }
-        .nav-bar a:hover, .nav-bar a.active { background: var(--purple-sky); }
-        .section-title {
-            font-size: 18px; font-weight: bold; color: var(--slate-700);
-            margin: 22px 0 10px; padding: 8px 12px;
-            background: #f4eef9; border-left: 4px solid var(--purple);
+        .lead-panel {
+            background: linear-gradient(180deg, #f8fbff 0%, color-mix(in srgb, var(--brand-sky) 60%, white) 100%);
+            border: 1px solid color-mix(in srgb, var(--brand) 12%, transparent);
+            border-radius: 14px;
+            padding: 18px 20px;
+            max-width: 980px;
+            margin: 0 auto;
         }
-        .lifecycle-flow {
-            display: flex; align-items: center; justify-content: center;
-            flex-wrap: wrap; gap: 8px; margin: 20px 0; padding: 20px;
-            background: white; border-radius: 12px; border: 1px solid var(--line);
+        .lead-panel p { color: #334155; font-size: 0.98rem; }
+        .controls {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 0 0 24px;
         }
-        .flow-box {
-            background: linear-gradient(135deg, #7B42BC 0%, #9b59d0 100%);
-            color: white; padding: 16px 22px; border-radius: 10px;
-            font-weight: bold; font-size: 14px; cursor: pointer;
-            transition: all 0.3s; box-shadow: 0 4px 10px rgba(123,66,188,0.3);
-            min-width: 100px; text-align: center;
+        .btn {
+            border: 2px solid var(--brand);
+            background: white;
+            color: var(--brand-deep);
+            padding: 11px 20px;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
         }
-        .flow-box:hover { transform: translateY(-4px) scale(1.02); }
-        .flow-box.init { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .flow-box.plan { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
-        .flow-box.apply { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: #1a3a2e; }
-        .flow-box.destroy { background: linear-gradient(135deg, #ff0844 0%, #ffb199 100%); }
-        .flow-box.fmt { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: #4a3728; }
-        .flow-box.validate { background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%); color: #3d2a55; }
-        .arrow { font-size: 26px; color: var(--muted); font-weight: bold; }
-        .detail-panel {
-            background: white; border: 2px solid var(--purple); border-radius: 10px;
-            padding: 18px; margin: 14px 0; min-height: 90px;
+        .btn:hover, .btn.active {
+            background: var(--brand);
+            color: white;
+            box-shadow: 0 4px 12px color-mix(in srgb, var(--brand) 30%, transparent);
+            transform: translateY(-2px);
         }
-        .detail-panel h4 { color: var(--purple); margin-bottom: 8px; font-size: 1.1rem; }
-        .detail-panel p { font-size: 0.92rem; }
-        .detail-panel code { background: var(--purple-sky); padding: 2px 6px; border-radius: 4px; font-size: 0.88rem; }
-        .plan-legend {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 10px; margin: 16px 0;
+        .view {
+            display: none;
+            background: var(--panel);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 30px;
+            margin-bottom: 26px;
+            border: 1px solid rgba(15,23,42,0.04);
         }
-        .legend-item {
-            background: white; border-radius: 8px; padding: 12px;
-            border-left: 4px solid; font-size: 0.88rem;
+        .view.active { display: block; }
+        .section-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 18px;
+            align-items: end;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid #e2e8f0;
         }
-        .legend-item.create { border-color: #22c55e; }
-        .legend-item.update { border-color: #f59e0b; }
-        .legend-item.destroy { border-color: #ef4444; }
-        .legend-item.noop { border-color: #94a3b8; }
-        .example-scenario {
-            background: var(--amber); border-left: 4px solid #f59e0b;
-            padding: 14px; border-radius: 8px; margin: 16px 0;
+        .section-head h2 { color: var(--ink); font-size: 1.45rem; }
+        .section-kicker {
+            color: var(--brand-deep);
+            text-transform: uppercase;
+            font-size: 0.76rem;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            margin-bottom: 10px;
         }
-        .example-scenario h3 { font-size: 14px; color: #92400e; margin-bottom: 6px; }
-        .example-scenario p { font-size: 13px; color: #78350f; }
-        .repo-callout {
-            background: var(--mint); border-left: 4px solid #22c55e;
-            padding: 14px 18px; border-radius: 8px; margin: 16px 0;
+        .section-note {
+            border-left: 4px solid var(--brand);
+            background: color-mix(in srgb, var(--brand-sky) 50%, white);
+            color: var(--brand-deep);
+            padding: 14px 16px;
+            border-radius: 12px;
+            margin-top: 18px;
         }
-        .repo-callout ul { margin: 8px 0 0 18px; font-size: 0.9rem; }
-        .concept-grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 12px; margin: 16px 0;
+        .concept-grid, .practice-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));
+            gap: 18px;
         }
-        .concept-card {
-            background: white; border: 1px solid var(--line); border-radius: 10px; padding: 14px;
+        .card {
+            background: linear-gradient(180deg, #ffffff, #f8fbff);
+            border: 1px solid var(--line);
+            border-top: 4px solid var(--brand);
+            border-radius: 16px;
+            padding: 20px;
+            min-height: 170px;
+            box-shadow: 0 6px 18px rgba(15,23,42,0.05);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
-        .concept-card h4 { color: var(--purple); font-size: 0.95rem; margin-bottom: 4px; }
-        .concept-card p { font-size: 0.82rem; color: var(--muted); }
-        .code-tabs { display: flex; gap: 5px; flex-wrap: wrap; }
-        .code-tab {
-            padding: 7px 14px; background: #e9ecef; border: none;
-            border-radius: 6px 6px 0 0; cursor: pointer; font-size: 12px; font-weight: bold;
+        .card:hover, .flow-step:hover, .example-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 24px rgba(15,23,42,0.1);
         }
-        .code-tab.active { background: var(--purple); color: white; }
-        .code-content { display: none; }
-        .code-content.active { display: block; }
+        .card-badge {
+            display: inline-flex;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: var(--brand-sky);
+            color: var(--brand-deep);
+            font-weight: 700;
+            margin-bottom: 14px;
+        }
+        .practice-card .card-badge { background: var(--mint); color: #166534; }
+        .practice-card { border-top-color: #22c55e; }
+        .card p { color: #475569; }
+        .flow-track {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));
+            gap: 18px;
+        }
+        .flow-step {
+            position: relative;
+            border-radius: 16px;
+            padding: 22px 18px 18px;
+            border: 1px solid color-mix(in srgb, var(--brand) 18%, transparent);
+            background: linear-gradient(160deg, #ffffff 0%, color-mix(in srgb, var(--brand-sky) 40%, white) 100%);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .step-number {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            background: var(--brand);
+            color: white;
+            font-weight: 800;
+            margin-bottom: 14px;
+            box-shadow: 0 10px 20px color-mix(in srgb, var(--brand) 22%, transparent);
+        }
+        .flow-step h3 { font-size: 1rem; margin-bottom: 10px; color: #0f172a; }
+        .flow-step p { color: #475569; font-size: 0.95rem; }
+        .example-stack { display: grid; gap: 18px; }
+        .example-card {
+            border: 1px solid rgba(15,23,42,0.08);
+            border-radius: 16px;
+            padding: 18px;
+            background: linear-gradient(180deg, #ffffff, #f8fafc);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .lab-callout {
+            border: 1px dashed color-mix(in srgb, var(--brand) 35%, transparent);
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin: 14px 0;
+            background: color-mix(in srgb, var(--brand-sky) 35%, white);
+            color: #334155;
+            font-size: 0.92rem;
+        }
+        .lab-callout strong { color: var(--brand-deep); }
         pre {
-            background: #1e293b; color: #e2e8f0; padding: 14px;
-            border-radius: 0 8px 8px 8px; font-size: 12px; line-height: 1.55; overflow-x: auto;
+            margin-top: 10px;
+            background: #0f172a;
+            color: #dbeafe;
+            border-radius: 16px;
+            padding: 18px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            overflow-x: hidden;
+            font-size: 0.88rem;
+            line-height: 1.55;
+            border: 1px solid rgba(148,163,184,0.18);
         }
-        .ci-pipeline {
-            display: flex; align-items: center; justify-content: center;
-            flex-wrap: wrap; gap: 6px; margin: 16px 0;
-            padding: 16px; background: #f8f5fc; border-radius: 10px;
+        code { font-family: Consolas, 'Cascadia Code', monospace; }
+        .table-wrap {
+            overflow-x: auto;
+            border-radius: 16px;
+            border: 1px solid var(--line);
+            background: white;
         }
-        .ci-step {
-            background: white; border: 2px solid var(--purple); border-radius: 8px;
-            padding: 10px 14px; font-size: 12px; font-weight: 600; color: var(--purple);
+        table { width: 100%; border-collapse: collapse; }
+        th, td {
+            padding: 14px 16px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+            vertical-align: top;
         }
-        .footer-note { text-align: center; color: var(--muted); font-size: 0.9rem; margin-top: 24px; padding-top: 14px; border-top: 1px solid var(--line); }
-        .footer-note a { color: var(--purple); text-decoration: none; }
+        th {
+            background: linear-gradient(180deg, var(--brand), var(--brand-deep));
+            color: white;
+            font-weight: 700;
+        }
+        tbody tr:nth-child(even) { background: #f8fbff; }
+        .footer-note {
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.9rem;
+            margin-top: 18px;
+        }
+        .footer-note a { color: var(--brand); text-decoration: none; }
+        .footer-note a:hover { text-decoration: underline; }
+        @media (max-width: 900px) {
+            body { padding: 14px; }
+            .hero, .view { padding: 22px; }
+            .controls { justify-content: flex-start; }
+            .concept-grid, .practice-grid, .flow-track { grid-template-columns: 1fr; }
+        }
+        .home-link {
+            position: absolute;
+            top: 16px;
+            right: 20px;
+            color: var(--brand);
+            text-decoration: none;
+            font-size: 0.88rem;
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: 8px;
+            border: 1px solid color-mix(in srgb, var(--brand) 18%, transparent);
+            background: color-mix(in srgb, var(--brand) 6%, transparent);
+            transition: background 0.2s, color 0.2s;
+        }
+        .home-link:hover {
+            background: color-mix(in srgb, var(--brand) 13%, transparent);
+            color: var(--brand-deep);
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <header class="hero">
             <a href="index.html" class="home-link">&#8962; Home</a>
-            <div class="eyebrow">Chapter 02 · Core Workflow</div>
+            <div class="eyebrow">Terraform Essentials</div>
             <h1>Terraform Workflow</h1>
-            <p class="subtitle">The repeatable loop every operator runs: initialize plugins, preview changes with plan, apply approved changes, and destroy when tearing down environments.</p>
+            <p class="subtitle">Init, fmt, validate, plan, apply, and destroy — the daily operator loop.</p>
+            <div class="lead-panel">
+                <p>Every Terraform change follows the same <strong>read → plan → apply</strong> rhythm. Labs 03–04 drill this until it becomes muscle memory.</p>
+            </div>
         </header>
 
-        <nav class="nav-bar">
-            <a href="index.html">Overview</a>
-            <a href="foundations.html">Foundations</a>
-            <a href="workflow.html" class="active">Workflow</a>
-            <a href="variables.html">Variables</a>
-            <a href="state.html">State</a>
-            <a href="modules.html">Modules</a>
-        </nav>
-
-        <div class="repo-callout">
-            <strong>Lab files in this repo:</strong>
-            <ul>
-                <li><code>terraform/essentials/labs/lab03-plan-apply-destroy/main.tf</code> — random_string lifecycle practice (no cloud cost)</li>
-                <li><code>terraform/essentials/labs/lab04-fmt-validate/main.tf</code> — formatting and validation with sensitive output</li>
-            </ul>
+        <div class="controls">
+            <button class="btn active" data-view="concept">Concept</button>
+            <button class="btn" data-view="architecture">Architecture</button>
+            <button class="btn" data-view="flow">Flow</button>
+            <button class="btn" data-view="setup">Setup</button>
+            <button class="btn" data-view="commands">Commands</button>
+            <button class="btn" data-view="examples">Examples</button>
+            <button class="btn" data-view="comparison">Compare</button>
+            <button class="btn" data-view="practice">Practice</button>
         </div>
 
-        <div class="section-title">1. Core Lifecycle — Click Each Command</div>
-        <div class="lifecycle-flow">
-            <div class="flow-box init" onclick="showCmd('init')">init</div>
-            <span class="arrow">→</span>
-            <div class="flow-box plan" onclick="showCmd('plan')">plan</div>
-            <span class="arrow">→</span>
-            <div class="flow-box apply" onclick="showCmd('apply')">apply</div>
-            <span class="arrow">→</span>
-            <div class="flow-box destroy" onclick="showCmd('destroy')">destroy</div>
-        </div>
-        <div class="detail-panel" id="cmd-detail">
-            <h4>init → plan → apply → destroy</h4>
-            <p>Click any command above to see what it does, when to run it, and what output to expect from the labs.</p>
-        </div>
-
-        <div class="section-title">2. Quality Gates (Lab 04)</div>
-        <div class="lifecycle-flow" style="padding:14px;">
-            <div class="flow-box fmt" onclick="showCmd('fmt')">fmt</div>
-            <span class="arrow">→</span>
-            <div class="flow-box validate" onclick="showCmd('validate')">validate</div>
-            <span class="arrow">→</span>
-            <div class="flow-box plan" onclick="showCmd('plan')">plan</div>
-        </div>
-
-        <div class="example-scenario">
-            <h3>Lab 03 Walkthrough: random_string.example</h3>
-            <p><strong>init:</strong> Downloads hashicorp/random ~&gt; 3.0</p>
-            <p><strong>plan:</strong> Shows <code>+ random_string.example</code> — one resource to create</p>
-            <p><strong>apply:</strong> Generates a 12-character lowercase string; output <code>generated_value</code></p>
-            <p><strong>destroy:</strong> Removes the resource; state returns to empty</p>
-        </div>
-
-        <div class="section-title">3. Reading Plan Output</div>
-        <div class="plan-legend">
-            <div class="legend-item create"><strong>+ create</strong><br>Resource does not exist yet; Terraform will create it.</div>
-            <div class="legend-item update"><strong>~ update in-place</strong><br>Attribute changes that can be applied without replacement.</div>
-            <div class="legend-item destroy"><strong>- destroy</strong><br>Resource removed from config or marked for deletion.</div>
-            <div class="legend-item noop"><strong>No changes</strong><br>Real infrastructure matches configuration.</div>
-        </div>
-
-        <div class="section-title">4. Command Reference (Code Tabs)</div>
-        <div class="code-tabs">
-            <button class="code-tab active" onclick="switchTab('init')">init</button>
-            <button class="code-tab" onclick="switchTab('plan')">plan</button>
-            <button class="code-tab" onclick="switchTab('apply')">apply</button>
-            <button class="code-tab" onclick="switchTab('destroy')">destroy</button>
-            <button class="code-tab" onclick="switchTab('fmt')">fmt</button>
-            <button class="code-tab" onclick="switchTab('validate')">validate</button>
-        </div>
-        <div class="code-content active" id="tab-init">
-<pre># Run after clone or when providers change
-cd terraform/essentials/labs/lab03-plan-apply-destroy
-terraform init
-
-# Expected tail output:
-# Terraform has been successfully initialized!</pre>
-        </div>
-        <div class="code-content" id="tab-plan">
-<pre>terraform plan
-
-# Plan: 1 to add, 0 to change, 0 to destroy.
-#
-# Changes to Outputs:
-#   + generated_value = (known after apply)
-#
-# Do you want to perform these actions?
-# (plan is read-only — it does not change infrastructure)</pre>
-        </div>
-        <div class="code-content" id="tab-apply">
-<pre>terraform apply
-
-# Review the plan, then type: yes
-#
-# Apply complete! Resources: 1 added, 0 changed, 0 destroyed.
-#
-# Outputs:
-# generated_value = "abcdefghijkl"</pre>
-        </div>
-        <div class="code-content" id="tab-destroy">
-<pre>terraform destroy
-
-# Plan: 0 to add, 0 to change, 1 to destroy.
-# Type yes to confirm
-#
-# Destroy complete! Resources: 0 added, 0 changed, 1 destroyed.</pre>
-        </div>
-        <div class="code-content" id="tab-fmt">
-<pre># Rewrite .tf files to canonical style
-terraform fmt -recursive .
-
-# No output = already formatted
-# File names printed = files were reformatted</pre>
-        </div>
-        <div class="code-content" id="tab-validate">
-<pre>terraform validate
-
-# Success! The configuration is valid.
-
-# Run AFTER init; catches type errors and
-# invalid references before plan</pre>
-        </div>
-
-        <div class="section-title">5. What Happens During Plan Internally</div>
-        <div class="lifecycle-flow">
-            <div class="flow-box init" onclick="showCmd('refresh')">Refresh State</div>
-            <span class="arrow">→</span>
-            <div class="flow-box plan" onclick="showCmd('diff')">Config vs Reality</div>
-            <span class="arrow">→</span>
-            <div class="flow-box apply" onclick="showCmd('graph')">Build Action Graph</div>
-            <span class="arrow">→</span>
-            <div class="flow-box fmt" onclick="showCmd('display')">Display Plan</div>
-        </div>
-
-        <div class="section-title">6. CI/CD Pipeline Pattern</div>
-        <div class="ci-pipeline">
-            <div class="ci-step">git push</div>
-            <span class="arrow">→</span>
-            <div class="ci-step">terraform fmt -check</div>
-            <span class="arrow">→</span>
-            <div class="ci-step">terraform init -backend=false</div>
-            <span class="arrow">→</span>
-            <div class="ci-step">terraform validate</div>
-            <span class="arrow">→</span>
-            <div class="ci-step">terraform plan</div>
-            <span class="arrow">→</span>
-            <div class="ci-step">manual approve → apply</div>
-        </div>
-
-        <div class="section-title">7. Workflow Concepts</div>
-        <div class="concept-grid">
-            <div class="concept-card">
-                <h4>Execution Plan</h4>
-                <p>Terraform saves plan files with <code>-out=tfplan</code> for reviewed applies.</p>
+        <section id="concept" class="view active">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Core Model</div>
+                    <h2>The Terraform Operator Loop</h2>
+                </div>
             </div>
-            <div class="concept-card">
-                <h4>Targeted Operations</h4>
-                <p><code>-target=resource</code> limits scope — use sparingly, not in production.</p>
+<div class="concept-grid">
+                <article class="card">
+                    <div class="card-badge">Write</div>
+                    <p>Edit <code>*.tf</code> files describing desired infrastructure.</p>
+                </article>
+                <article class="card">
+                    <div class="card-badge">Format</div>
+                    <p><code>terraform fmt</code> normalizes HCL style — run before every commit.</p>
+                </article>
+                <article class="card">
+                    <div class="card-badge">Validate</div>
+                    <p><code>terraform validate</code> catches syntax and reference errors locally.</p>
+                </article>
+                <article class="card">
+                    <div class="card-badge">Plan</div>
+                    <p><code>terraform plan</code> shows create/update/destroy actions with diffs.</p>
+                </article>
+                <article class="card">
+                    <div class="card-badge">Review</div>
+                    <p>Human or CI approves the plan output before any cloud mutation.</p>
+                </article>
+                <article class="card">
+                    <div class="card-badge">Apply</div>
+                    <p><code>terraform apply</code> executes the approved graph.</p>
+                </article>
+                <article class="card">
+                    <div class="card-badge">Destroy</div>
+                    <p><code>terraform destroy</code> tears down all managed resources in the root module.</p>
+                </article>
             </div>
-            <div class="concept-card">
-                <h4>Auto-approve</h4>
-                <p><code>-auto-approve</code> skips prompt — OK in CI with gated plan artifacts.</p>
+        </section>
+        <section id="architecture" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Plan Graph</div>
+                    <h2>What Happens During Plan</h2>
+                </div>
             </div>
-            <div class="concept-card">
-                <h4>Refresh-only</h4>
-                <p><code>terraform apply -refresh-only</code> updates state without changing resources.</p>
+<div class="example-stack">
+            <div class="lab-callout"><strong>Repo lab files:</strong> <code>terraform/essentials/labs/lab03-plan-apply-destroy/</code></div>
+                <section class="example-card">
+                    <div class="section-kicker">Lab 03 directory</div>
+                    <pre><code>terraform/essentials/labs/lab03-plan-apply-destroy/
+├── main.tf
+├── variables.tf
+└── outputs.tf</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">Plan output anatomy</div>
+                    <pre><code># aws_instance.web will be created
+  + resource "aws_instance" "web" {
+      + ami           = "ami-0c55b159cbfafe1f0"
+      + instance_type = "t3.micro"
+    }
+
+Plan: 1 to add, 0 to change, 0 to destroy.</code></pre>
+                </section>
             </div>
-        </div>
-
-        <div class="example-scenario">
-            <h3>Common Mistakes</h3>
-            <p>❌ Running <code>apply</code> without reading the plan first</p>
-            <p>❌ Skipping <code>destroy</code> on paid AWS resources after labs</p>
-            <p>❌ Running <code>validate</code> before <code>init</code> (providers not installed)</p>
-            <p>✅ Always: init → validate → plan → apply → verify outputs → destroy</p>
-        </div>
-
-        <div class="section-title">8. Lab 04 — Sensitive Outputs</div>
-        <pre>output "formatted_example" {
-  value     = random_string.formatted_example.result
-  sensitive = true
-}
-
-# terraform apply still shows: (sensitive value)
-# terraform output -raw formatted_example  # reveals value locally</pre>
-
-        <p class="footer-note">
-            Terraform Essentials · Terraform 1.5+ · AWS provider ~&gt; 5.0<br>
-            <a href="variables.html">Next: Variables →</a> · <a href="../labmanuals/lab03-plan-apply-destroy.md">Lab 03 Manual</a>
-        </p>
+            <svg viewBox="0 0 950 320" style="width:100%;max-width:950px;margin:20px auto;display:block;">
+                <text x="475" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#1e293b">Plan → Apply Pipeline</text>
+                <rect x="40" y="70" width="150" height="60" rx="8" fill="#ede4f7" stroke="#7B42BC" stroke-width="2"/><text x="115" y="100" text-anchor="middle" font-size="12" font-weight="bold" fill="#1e293b">HCL Config</text><rect x="230" y="70" width="150" height="60" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/><text x="305" y="100" text-anchor="middle" font-size="12" font-weight="bold" fill="#1e293b">terraform plan</text><rect x="420" y="70" width="150" height="60" rx="8" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/><text x="495" y="100" text-anchor="middle" font-size="12" font-weight="bold" fill="#1e293b">Review</text><rect x="610" y="70" width="150" height="60" rx="8" fill="#dcfce7" stroke="#22c55e" stroke-width="2"/><text x="685" y="100" text-anchor="middle" font-size="12" font-weight="bold" fill="#1e293b">terraform apply</text><rect x="800" y="70" width="120" height="60" rx="8" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/><text x="860" y="100" text-anchor="middle" font-size="12" font-weight="bold" fill="#1e293b">AWS API</text>
+                
+            </svg>
+        </section>
+        <section id="flow" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Lab 03</div>
+                    <h2>Plan, Apply, Destroy Lifecycle</h2>
+                </div>
+            </div>
+<div class="flow-track">
+                <div class="flow-step">
+                    <div class="step-number">1</div>
+                    <h3>cd lab03</h3>
+                    <p><code>cd terraform/essentials/labs/lab03-plan-apply-destroy</code></p>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">2</div>
+                    <h3>init</h3>
+                    <p><code>terraform init</code> if not already initialized.</p>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">3</div>
+                    <h3>plan</h3>
+                    <p><code>terraform plan -out=tfplan</code> saves the plan to a file.</p>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">4</div>
+                    <h3>review</h3>
+                    <p>Read the plan: count adds/changes/destroys. Confirm instance type and AMI.</p>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">5</div>
+                    <h3>apply saved plan</h3>
+                    <p><code>terraform apply tfplan</code> — applies exactly what was planned.</p>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">6</div>
+                    <h3>verify</h3>
+                    <p><code>terraform show</code> or AWS console — confirm resource exists.</p>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">7</div>
+                    <h3>destroy</h3>
+                    <p><code>terraform destroy</code> — remove all resources when lab is done.</p>
+                </div>
+            </div>
+        </section>
+        <section id="setup" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Quality Gates</div>
+                    <h2>Fmt and Validate Before Plan</h2>
+                </div>
+            </div>
+<div class="example-stack">
+                <section class="example-card">
+                    <div class="section-kicker">Lab 04 — fmt and validate</div>
+                    <pre><code>cd terraform/essentials/labs/lab04-fmt-validate
+terraform fmt -recursive
+terraform validate</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">Check formatting diff</div>
+                    <pre><code>terraform fmt -check -recursive
+# non-zero exit if files need formatting</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">CI-style sequence</div>
+                    <pre><code>terraform init -input=false
+terraform fmt -check -recursive
+terraform validate
+terraform plan -input=false -out=tfplan</code></pre>
+                </section>
+            </div>
+        </section>
+        <section id="commands" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Quick Reference</div>
+                    <h2>Workflow Commands</h2>
+                </div>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Category</th><th>Command</th><th>Description</th></tr></thead>
+                    <tbody>
+                        <tr><td>Init</td><td><code>terraform init</code></td><td>Prepare working directory</td></tr>
+                        <tr><td>Fmt</td><td><code>terraform fmt -recursive</code></td><td>Format all HCL in tree</td></tr>
+                        <tr><td>Validate</td><td><code>terraform validate</code></td><td>Static configuration check</td></tr>
+                        <tr><td>Plan</td><td><code>terraform plan</code></td><td>Preview changes</td></tr>
+                        <tr><td>Plan file</td><td><code>terraform plan -out=tfplan</code></td><td>Save plan for apply</td></tr>
+                        <tr><td>Apply</td><td><code>terraform apply</code></td><td>Execute changes</td></tr>
+                        <tr><td>Apply file</td><td><code>terraform apply tfplan</code></td><td>Apply saved plan only</td></tr>
+                        <tr><td>Show</td><td><code>terraform show</code></td><td>Inspect current state/resources</td></tr>
+                        <tr><td>Destroy</td><td><code>terraform destroy</code></td><td>Remove all managed resources</td></tr>
+                        <tr><td>Graph</td><td><code>terraform graph</code></td><td>Dependency graph (DOT format)</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="section-note">Extended reference appendix — bookmark for exam prep and on-the-job lookup.</div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Topic</th><th>Command / Pattern</th><th>Notes</th></tr></thead>
+                    <tbody>
+                        <tr><td>Review</td><td>Re-read lab manual objectives</td><td>Terraform Workflow</td></tr>
+                        <tr><td>Validate</td><td>Run syntax-check or validate</td><td>Before apply</td></tr>
+                        <tr><td>Cleanup</td><td>Destroy or remove lab changes</td><td>End of session</td></tr>
+                        <tr><td>Docs</td><td>Cross-link markdown docs</td><td>../docs/</td></tr>
+                        <tr><td>Git</td><td>Commit only safe files</td><td>No secrets/state</td></tr>
+                        <tr><td>Pair</td><td>Walk through with teammate</td><td>Teaching reinforces</td></tr>
+                        <tr><td>Notes</td><td>Document failures and fixes</td><td>Personal runbook</td></tr>
+                        <tr><td>Next</td><td>Follow learning path order</td><td>curriculum/learning-paths.md</td></tr>
+                    </tbody>
+                </table>
+            </div>            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Terraform Workflow — reference drill 1</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Terraform Workflow — reference drill 2</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Terraform Workflow — reference drill 3</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+        </section>
+        <section id="examples" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Hands-On</div>
+                    <h2>Lab 03 Real Commands</h2>
+                </div>
+            </div>
+<div class="example-stack">
+            <div class="lab-callout"><strong>Repo lab files:</strong> labmanuals/lab03-plan-apply-destroy.md</div>
+                <section class="example-card">
+                    <div class="section-kicker">Enter lab</div>
+                    <pre><code>cd terraform/essentials/labs/lab03-plan-apply-destroy</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">Initialize</div>
+                    <pre><code>terraform init</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">Plan</div>
+                    <pre><code>terraform plan</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">Apply</div>
+                    <pre><code>terraform apply</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">Show state</div>
+                    <pre><code>terraform state list</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">Destroy</div>
+                    <pre><code>terraform destroy -auto-approve</code></pre>
+                </section>
+            </div><div class="example-stack">
+                <section class="example-card">
+                    <div class="section-kicker">Workflow drills — example 1</div>
+                    <pre><code>terraform plan -var='instance_type=t3.small'</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">Workflow drills — example 2</div>
+                    <pre><code>terraform apply -target=aws_instance.web</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">Workflow drills — example 3</div>
+                    <pre><code>terraform refresh</code></pre>
+                </section>
+            </div>
+            <div class="section-note">Extended reference appendix — bookmark for exam prep and on-the-job lookup.</div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Topic</th><th>Command / Pattern</th><th>Notes</th></tr></thead>
+                    <tbody>
+                        <tr><td>Review</td><td>Re-read lab manual objectives</td><td>Terraform Workflow</td></tr>
+                        <tr><td>Validate</td><td>Run syntax-check or validate</td><td>Before apply</td></tr>
+                        <tr><td>Cleanup</td><td>Destroy or remove lab changes</td><td>End of session</td></tr>
+                        <tr><td>Docs</td><td>Cross-link markdown docs</td><td>../docs/</td></tr>
+                        <tr><td>Git</td><td>Commit only safe files</td><td>No secrets/state</td></tr>
+                        <tr><td>Pair</td><td>Walk through with teammate</td><td>Teaching reinforces</td></tr>
+                        <tr><td>Notes</td><td>Document failures and fixes</td><td>Personal runbook</td></tr>
+                        <tr><td>Next</td><td>Follow learning path order</td><td>curriculum/learning-paths.md</td></tr>
+                    </tbody>
+                </table>
+            </div>            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Terraform Workflow — reference drill 1</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Terraform Workflow — reference drill 2</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Terraform Workflow — reference drill 3</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+        </section>
+        <section id="comparison" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Decision Guide</div>
+                    <h2>Plan Review Strategies</h2>
+                </div>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Approach</th><th>Pros</th><th>Cons</th><th>When</th></tr></thead>
+                    <tbody>
+                        <tr><td>Interactive apply</td><td>Simple for labs</td><td>No audit trail</td><td>Learning environments</td></tr>
+                        <tr><td>Saved plan file</td><td>Plan matches apply exactly</td><td>Extra step</td><td>CI/CD pipelines</td></tr>
+                        <tr><td>-auto-approve</td><td>Fast automation</td><td>Dangerous in prod</td><td>Ephemeral test envs only</td></tr>
+                        <tr><td>-target</td><td>Surgical changes</td><td>Can cause drift</td><td>Emergency fixes only</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        <section id="practice" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Use It Well</div>
+                    <h2>Workflow Practice Cards</h2>
+                </div>
+            </div>
+<div class="practice-grid">
+                <article class="card practice-card">
+                    <div class="card-badge">Lab 03</div>
+                    <p>Complete full plan/apply/destroy cycle. Save a plan file and apply it.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab03-plan-apply-destroy.md">Open lab manual →</a></p>
+                </article>
+                <article class="card practice-card">
+                    <div class="card-badge">Lab 04</div>
+                    <p>Run fmt -check in CI style. Fix formatting issues.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab04-fmt-validate.md">Open lab manual →</a></p>
+                </article>
+                <article class="card practice-card">
+                    <div class="card-badge">Plan literacy</div>
+                    <p>Identify every symbol (+ ~ -) in a plan before typing yes.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab03-plan-apply-destroy.md">Open lab manual →</a></p>
+                </article>
+                <article class="card practice-card">
+                    <div class="card-badge">Destroy discipline</div>
+                    <p>Never leave EC2 instances running overnight in shared accounts.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab03-plan-apply-destroy.md">Open lab manual →</a></p>
+                </article>
+                <article class="card practice-card">
+                    <div class="card-badge">Target caution</div>
+                    <p>Use -target only when you understand dependency side effects.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab03-plan-apply-destroy.md">Open lab manual →</a></p>
+                </article>
+                <article class="card practice-card">
+                    <div class="card-badge">Graph viz</div>
+                    <p>Pipe terraform graph to dot for visual dependency understanding.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab04-fmt-validate.md">Open lab manual →</a></p>
+                </article>
+            </div>
+            <div class="section-note">Extended reference appendix — bookmark for exam prep and on-the-job lookup.</div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Topic</th><th>Command / Pattern</th><th>Notes</th></tr></thead>
+                    <tbody>
+                        <tr><td>Review</td><td>Re-read lab manual objectives</td><td>Terraform Workflow</td></tr>
+                        <tr><td>Validate</td><td>Run syntax-check or validate</td><td>Before apply</td></tr>
+                        <tr><td>Cleanup</td><td>Destroy or remove lab changes</td><td>End of session</td></tr>
+                        <tr><td>Docs</td><td>Cross-link markdown docs</td><td>../docs/</td></tr>
+                        <tr><td>Git</td><td>Commit only safe files</td><td>No secrets/state</td></tr>
+                        <tr><td>Pair</td><td>Walk through with teammate</td><td>Teaching reinforces</td></tr>
+                        <tr><td>Notes</td><td>Document failures and fixes</td><td>Personal runbook</td></tr>
+                        <tr><td>Next</td><td>Follow learning path order</td><td>curriculum/learning-paths.md</td></tr>
+                    </tbody>
+                </table>
+            </div>            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Terraform Workflow — reference drill 1</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Terraform Workflow — reference drill 2</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Terraform Workflow — reference drill 3</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+        </section>
     </div>
 
     <script>
-        const cmdInfo = {
-            init: {
-                t: 'terraform init',
-                d: 'Prepares the working directory. Downloads provider plugins to .terraform/providers/, creates .terraform.lock.hcl on first run, and configures the backend. Run after git clone or when required_providers changes.'
-            },
-            plan: {
-                t: 'terraform plan',
-                d: 'Read-only preview. Refreshes state from the cloud, compares to configuration, and prints create/update/destroy actions. In Lab 03 you will see + random_string.example. Plans never modify infrastructure.'
-            },
-            apply: {
-                t: 'terraform apply',
-                d: 'Executes the plan after confirmation (type yes). Creates real resources and updates terraform.tfstate. Lab 03 creates random_string.example and prints generated_value output.'
-            },
-            destroy: {
-                t: 'terraform destroy',
-                d: 'Plans and executes deletion of all managed resources in the configuration. Mandatory cleanup step for AWS labs. Lab 03 returns to zero managed resources.'
-            },
-            fmt: {
-                t: 'terraform fmt',
-                d: 'Rewrites .tf files to canonical HCL formatting (2-space indent, aligned equals). Use -check in CI to fail on unformatted code. Lab 04 demonstrates fmt before validate.'
-            },
-            validate: {
-                t: 'terraform validate',
-                d: 'Checks configuration syntax and internal consistency. Requires init first. Does not call cloud APIs. Expect: Success! The configuration is valid.'
-            },
-            refresh: {
-                t: 'State Refresh',
-                d: 'During plan/apply, Terraform queries the provider for current resource attributes and updates state. Detects drift when someone changed resources outside Terraform.'
-            },
-            diff: {
-                t: 'Configuration Diff',
-                d: 'Terraform compares refreshed state against your .tf files. Differences become planned actions. Attribute-level changes show old -> new values.'
-            },
-            graph: {
-                t: 'Action Graph',
-                d: 'Planned changes are ordered by dependencies. Independent resources may run in parallel during apply.'
-            },
-            display: {
-                t: 'Plan Display',
-                d: 'Human-readable summary plus optional -json for automation tools like OpenPolicyAgent or Sentinel.'
-            }
-        };
-
-        function showCmd(key) {
-            const c = cmdInfo[key];
-            document.getElementById('cmd-detail').innerHTML =
-                '<h4>' + c.t + '</h4><p>' + c.d + '</p>';
-        }
-
-        function switchTab(name) {
-            document.querySelectorAll('.code-tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.code-content').forEach(c => c.classList.remove('active'));
-            event.target.classList.add('active');
-            document.getElementById('tab-' + name).classList.add('active');
-        }
+        const buttons = document.querySelectorAll('.btn');
+        const views = document.querySelectorAll('.view');
+        buttons.forEach((button) => {
+            button.addEventListener('click', () => {
+                const viewId = button.dataset.view;
+                buttons.forEach((b) => b.classList.remove('active'));
+                views.forEach((v) => v.classList.remove('active'));
+                button.classList.add('active');
+                document.getElementById(viewId).classList.add('active');
+            });
+        });
     </script>
 </body>
 </html>

@@ -1,345 +1,128 @@
-# Playbook Structure
+# Extended Playbook Structure
 
-Ansible playbooks are YAML files describing **what** should happen on **which** hosts in **what order**. Playbooks are the foundation of repeatable automation — ad hoc commands (Lab 01) are for exploration; playbooks are for production. This guide covers anatomy, conventions, and validation used throughout the extended track.
+## Objective (conceptual)
 
-## Learning objectives
+Production playbooks split work by **tier** (web, app), **role**, and **concern** (install vs deploy). A **site playbook** orchestrates multiple plays in one file—or imports smaller playbooks—so CI runs one entry point. Extended labs structure Node.js deployment as many small, named tasks with registers, handlers, and templates.
 
-- Read and write multi-play YAML playbooks
-- Apply FQCN module names consistently
-- Configure play-level `become`, `vars`, and `handlers`
-- Validate playbooks before execution
-- Understand idempotency expectations
+The mental model: essentials playbooks are **one room renovation**; extended playbooks are **whole-site construction** with electricians and plumbers scheduled in sequence.
 
-## Playbook vs ad hoc
+**Interactive reference:** [Loops and Conditionals](../../html/loops-conditionals.html)
 
-| Aspect | Ad hoc | Playbook |
-|--------|--------|----------|
-| Command | `ansible -m ...` | `ansible-playbook site.yml` |
-| Repeatability | Shell history | Version-controlled YAML |
-| Complexity | Single module | Tasks, handlers, roles |
-| Use case | Quick checks | Production automation |
-
-## Minimal playbook
+## Site playbook layout
 
 ```yaml
 ---
-- name: Install curl on webservers
-  hosts: webservers
-  become: true
-  tasks:
-    - name: Ensure curl is installed
-      ansible.builtin.apt:
-        name: curl
-        state: present
-```
-
-### Execution
-
-```bash
-ansible-playbook --syntax-check playbooks/example.yml
-ansible-playbook -i inventory/hosts.ini playbooks/example.yml
-```
-
-## Play anatomy
-
-```yaml
----
-- name: Human-readable play name          # Play 1
-  hosts: webservers                        # Target pattern
-  become: true                             # Privilege escalation
-  gather_facts: true                       # Default — setup module
-  vars:                                    # Play variables
-    package_name: nginx
-  tasks:                                   # Ordered task list
-    - name: Install package
-      ansible.builtin.apt:
-        name: "{{ package_name }}"
-        state: present
-  handlers:                                # Notified tasks (end of play)
-    - name: Restart service
-      ansible.builtin.service:
-        name: nginx
-        state: restarted
-```
-
-### Key elements
-
-| Key | Required | Purpose |
-|-----|----------|---------|
-| `hosts` | Yes | Inventory pattern: group, host, `all`, or pattern |
-| `tasks` | Yes* | List of modules to execute |
-| `name` | Recommended | Displayed in output for plays and tasks |
-| `become` | No | `true` for sudo/root tasks |
-| `vars` | No | Play-scoped variables |
-| `handlers` | No | Tasks triggered by `notify` |
-| `gather_facts` | No | Default `true` |
-| `serial` | No | Rolling update batch size |
-| `tags` | No | Selective execution |
-
-*Plays can use `roles` instead of explicit `tasks`.
-
-## Multi-play playbooks
-
-`labs/playbooks/site.yml` orchestrates multiple tiers:
-
-```yaml
----
-- name: Configure web tier
+# Site playbook — applies roles (Lesson 6 LEP)
+- name: Configure web tier with roles
   hosts: webservers
   become: true
   roles:
-    - common
-    - webserver
+    - role: common
+    - role: webserver
 
-- name: Configure app tier
+- name: Configure app tier with roles
   hosts: appservers
   become: true
   roles:
-    - common
-    - nodejs_app
+    - role: common
+    - role: nodejs_app
 ```
 
-Each play runs independently — facts re-gathered per play by default.
+Each play has its own `hosts`, `become`, and `roles` list—failures isolate to a tier.
 
-## FQCN modules (required convention)
+## Node.js playbook excerpt (multi-task)
 
-Ansible 2.10+ uses collections. Always specify fully qualified collection names:
-
-| Avoid | Use |
-|-------|-----|
-| `apt` | `ansible.builtin.apt` |
-| `service` | `ansible.builtin.service` |
-| `template` | `ansible.builtin.template` |
-| `copy` | `ansible.builtin.copy` |
-| `ping` | `ansible.builtin.ping` |
-| `yum` | `ansible.builtin.yum` or `ansible.builtin.dnf` |
-
-Benefits:
-- No ambiguity when multiple collections provide similar modules
-- Future-proof against deprecation warnings
-- Clear in code review which implementation runs
-
-## Task structure
+From `playbooks/nodejs.yml`:
 
 ```yaml
-- name: Descriptive task name
-  ansible.builtin.module_name:
-    param1: value
-    param2: "{{ variable }}"
-  when: condition | default(true)
-  notify: Handler name
-  tags:
-    - deploy
-  register: result_var
+---
+- name: Install Node.js and deploy lab application
+  hosts: appservers
+  become: true
+  tasks:
+    - name: Install prerequisite packages
+      ansible.builtin.apt:
+        name:
+          - ca-certificates
+          - curl
+          - gnupg
+        state: present
+        update_cache: true
+
+    - name: Verify Node.js version
+      ansible.builtin.command: node --version
+      register: node_version
+      changed_when: false
+
+    - name: Display Node.js version
+      ansible.builtin.debug:
+        msg: "Node.js installed: {{ node_version.stdout }}"
 ```
 
-### Naming tasks
+- `register` captures output for later tasks.
+- `changed_when: false` on read-only commands keeps reports accurate.
 
-Always provide `name:` — output shows task names during runs and failures:
+## Shared variables
 
-```text
-TASK [Ensure curl is installed] ************************
-ok: [web1]
-```
-
-Unnamed tasks show module name only — harder to debug.
-
-## Variables in playbooks
-
-### Play vars
+`group_vars/all.yml` supplies app-wide defaults:
 
 ```yaml
-vars:
-  nodejs_version: "20"
-  nodejs_app_port: 3000
+---
+lab_environment: extended
+nodejs_version: "20"
+nodejs_app_port: 3000
+nodejs_app_name: lab-app
 ```
 
-### Referencing variables
+Playbooks reference `{{ nodejs_version }}` in repository URLs and paths.
+
+## Handlers block at play bottom
 
 ```yaml
-- ansible.builtin.debug:
-    msg: "Port is {{ nodejs_app_port }}"
+  handlers:
+    - name: Reload systemd
+      ansible.builtin.systemd:
+        daemon_reload: true
+
+    - name: Restart nodejs app
+      ansible.builtin.systemd:
+        name: "{{ nodejs_app_name }}"
+        state: restarted
 ```
 
-### Inventory and group_vars
+Template tasks `notify` these handlers when app or unit files change.
 
-Variables in `group_vars/all.yml` merge with play vars. See [variables guide](variables-and-templates.md) for precedence.
+## Playbook organization options
 
-## Idempotency
+| Pattern | When |
+|---------|------|
+| Single `site.yml` | Small projects, labs |
+| `import_playbook` | Reuse plays across environments |
+| Role-only plays | Logic lives in roles; playbook is thin |
+| Tags | `--tags deploy` for partial runs |
 
-A well-written playbook produces **no changes** on second run when state is already correct.
+## Validation before apply
 
 ```bash
-ansible-playbook -i inventory/hosts.ini playbooks/nodejs.yml
-# First run: changed=15
-
-ansible-playbook -i inventory/hosts.ini playbooks/nodejs.yml
-# Second run: changed=0 (mostly ok)
+ansible-playbook playbooks/nodejs.yml --syntax-check
+ansible-playbook playbooks/site.yml --list-tasks
+ansible-playbook playbooks/site.yml --check
 ```
 
-Modules report:
-- `changed` — state was modified
-- `ok` — already in desired state
-- `failed` — error occurred
-- `skipped` — `when` condition false
-
-Design tasks for desired state: `state: present`, not `shell: apt install`.
-
-## Validation workflow
-
-### Syntax check
+## Operational commands (reference)
 
 ```bash
-ansible-playbook --syntax-check playbooks/nodejs.yml
+cd ansible/extended/labs
+ansible-playbook playbooks/site.yml --list-hosts
+ansible-playbook playbooks/nodejs.yml --step
+ansible-playbook playbooks/site.yml --limit appservers
 ```
-
-Catches YAML errors without connecting to hosts.
-
-### Check mode (dry run)
-
-```bash
-ansible-playbook -i inventory/hosts.ini playbooks/nodejs.yml --check
-```
-
-Simulates changes — not all modules support check mode fully.
-
-### Diff mode
-
-```bash
-ansible-playbook -i inventory/hosts.ini playbooks/handlers-nginx.yml --check --diff
-```
-
-Shows file differences for template/copy modules.
-
-### List tasks
-
-```bash
-ansible-playbook -i inventory/hosts.ini playbooks/site.yml --list-tasks
-ansible-playbook -i inventory/hosts.ini playbooks/site.yml --list-hosts
-```
-
-## Extended lab playbooks
-
-| File | Purpose | Lab |
-|------|---------|-----|
-| `nodejs.yml` | Node.js 20 + systemd app | 03 |
-| `loops-packages.yml` | loop over packages/users | 04 |
-| `conditionals-os.yml` | when with facts/groups | 05 |
-| `handlers-nginx.yml` | notify and handlers | 06 |
-| `site.yml` | Multi-role deployment | 08 |
-
-### nodejs.yml highlights
-
-- NodeSource repository with GPG keyring (no deprecated `apt_key`)
-- Jinja2 templates for app and systemd unit
-- Handlers restart application on file change
-- Targets `appservers` group
-
-## Common patterns
-
-### Ensure package installed
-
-```yaml
-- ansible.builtin.apt:
-    name: nginx
-    state: present
-    update_cache: true
-```
-
-### Deploy template
-
-```yaml
-- ansible.builtin.template:
-    src: nginx.conf.j2
-    dest: /etc/nginx/sites-available/lab.conf
-    mode: "0644"
-    validate: nginx -t -f %s
-  notify: Reload nginx
-```
-
-### Include role
-
-```yaml
-roles:
-  - role: webserver
-    vars:
-      webserver_port: 8080
-```
-
-## Error handling
-
-### Block/rescue (advanced)
-
-```yaml
-- block:
-    - ansible.builtin.command: /bin/false
-  rescue:
-    - ansible.builtin.debug:
-        msg: "Task failed but play continues"
-```
-
-### any_errors_fatal
-
-```yaml
-- hosts: all
-  any_errors_fatal: true
-```
-
-## ansible.cfg interaction
-
-`labs/ansible.cfg`:
-
-```ini
-[defaults]
-inventory = inventory/hosts.ini
-host_key_checking = False
-```
-
-Playbook path relative to `labs/` directory when executing from there.
-
-## Troubleshooting
-
-| Error | Cause | Fix |
-|-------|-------|-----|
-| `ERROR! Syntax Error` | YAML indent | Align with spaces, no tabs |
-| `couldn't resolve module` | Missing FQCN | Use `ansible.builtin.*` |
-| `template not found` | Wrong path | `src` relative to `templates/` |
-| `Permission denied` | Missing become | `become: true` |
-| `host not in inventory` | Wrong group | Check `ansible-inventory --graph` |
-
-## Best practices
-
-1. **One play per tier** — webservers, appservers, databases separately
-2. **FQCN always** — avoid deprecation warnings
-3. **Name every play and task** — operational clarity
-4. **Syntax-check in CI** — before any deploy
-5. **Idempotent modules** — prefer `apt` over `shell apt-get`
-6. **Version control** — playbooks in Git with review
-7. **Limit blast radius** — `--limit` for canary deploys
-
-## Related documentation
-
-- [Loops and Conditionals](loops-and-conditionals.md)
-- [Handlers and Notify](handlers-notify.md)
-- [Variables and Templates](variables-and-templates.md)
-- [Lab 03 — Node.js](../../labmanuals/lab03-nodejs-playbook.md)
-- [Lab 08 — Roles](../../labmanuals/lab08-roles-project.md)
-
-## Quick reference
-
-```bash
-cd ~/terraform-ansible-labs/ansible/extended/labs
-ansible-playbook --syntax-check playbooks/site.yml
-ansible-playbook -i inventory/hosts.ini playbooks/site.yml
-ansible-playbook -i inventory/hosts.ini playbooks/site.yml --check --diff
-ansible-playbook -i inventory/hosts.ini playbooks/site.yml --limit web1
-ansible-playbook -i inventory/hosts.ini playbooks/site.yml -e "var=value"
-```
-
-## Summary
-
-Playbooks structure automation as YAML plays containing tasks, variables, and handlers. Use FQCN modules, meaningful names, and `become` where root is required. Validate with `--syntax-check` and `--check` before production runs. Extended labs progress from simple playbooks (nodejs.yml) to multi-role site.yml.
 
 ---
 
-*Ansible Extended Track · Lesson 5 · Curriculum v2*
+## Hands-On Labs
+
+| Lab | Description |
+|-----|-------------|
+| [Lab 03: Node.js Playbook](../../labmanuals/lab03-nodejs-playbook.md) | Multi-stage app install and systemd deploy |
+| [Lab 08: Roles Project](../../labmanuals/lab08-roles-project.md) | Site playbook with common, webserver, nodejs_app roles |

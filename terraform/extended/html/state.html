@@ -3,414 +3,659 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Remote State &amp; Shared Ownership | Terraform Extended</title>
+    <title>Remote State — Interactive Guide</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
-            --purple: #6236a5; --purple-deep: #4a2780; --purple-sky: #ede4f7;
-            --ink: #21172d; --muted: #6b5b7a; --line: #e8ddf2;
-            --amber: #fef3c7; --mint: #dcfce7;
+            --brand: #6236a5;
+            --brand-deep: #4a2878;
+            --brand-sky: #ede4f7;
+            --ink: #1a1a2e;
+            --muted: #64748b;
+            --surface: #ffffff;
+            --panel: #ffffff;
+            --line: #dbe3f1;
+            --mint: #dcfce7;
+            --amber: #fef3c7;
+            --rose: #ffe4e6;
+            --blue: #2563eb;
+            --slate-900: #0f172a;
+            --slate-700: #334155;
+            --slate-500: #64748b;
+            --slate-200: #e2e8f0;
         }
         body {
             font-family: "Segoe UI", system-ui, sans-serif;
-            background: linear-gradient(180deg, #fcfaff 0%, #f3ebfa 100%);
-            padding: 20px; line-height: 1.6; color: var(--ink);
+            background: linear-gradient(180deg, #f8fbff 0%, #eef4fb 100%);
+            color: var(--ink);
+            line-height: 1.6;
+            padding: 20px;
         }
         .container { max-width: 1380px; margin: 0 auto; }
         .hero {
-            position: relative; text-align: center; background: white;
-            border-radius: 16px; padding: 34px 32px 28px;
-            box-shadow: 0 4px 18px rgba(98,54,165,0.1); margin-bottom: 20px;
-            border: 1px solid rgba(98,54,165,0.12);
+            position: relative;
+            text-align: center;
+            background: white;
+            border-radius: 16px;
+            padding: 34px 32px 28px;
+            box-shadow: 0 4px 18px rgba(15, 23, 42, 0.08);
+            margin-bottom: 26px;
+            border: 1px solid color-mix(in srgb, var(--brand) 10%, transparent);
         }
         .eyebrow {
-            display: inline-flex; padding: 6px 12px; border-radius: 999px;
-            background: var(--purple-sky); color: var(--purple-deep);
-            font-size: 0.82rem; font-weight: 700; margin-bottom: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: var(--brand-sky);
+            color: var(--brand-deep);
+            font-size: 0.82rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 14px;
         }
-        .hero h1 { color: var(--purple); font-size: clamp(1.8rem, 4vw, 2.5rem); }
-        .hero p { color: var(--muted); max-width: 760px; margin: 8px auto 0; }
-        .home-link {
-            position: absolute; top: 16px; right: 20px; color: var(--purple);
-            text-decoration: none; font-weight: 600; padding: 6px 14px;
-            border-radius: 8px; border: 1px solid rgba(98,54,165,0.18);
-            background: rgba(98,54,165,0.06);
+        h1 {
+            font-size: clamp(2rem, 4vw, 3rem);
+            color: var(--brand);
+            margin-bottom: 10px;
+            line-height: 1.1;
         }
-        .topnav {
-            display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
-            margin-bottom: 18px; padding: 12px; background: white;
-            border-radius: 12px; border: 1px solid var(--line);
+        .subtitle {
+            font-size: 1.03rem;
+            color: var(--muted);
+            max-width: 980px;
+            margin: 0 auto 18px;
         }
-        .topnav a {
-            color: var(--purple); text-decoration: none; font-weight: 600;
-            padding: 6px 14px; border-radius: 8px; font-size: 0.9rem;
+        .lead-panel {
+            background: linear-gradient(180deg, #f8fbff 0%, color-mix(in srgb, var(--brand-sky) 60%, white) 100%);
+            border: 1px solid color-mix(in srgb, var(--brand) 12%, transparent);
+            border-radius: 14px;
+            padding: 18px 20px;
+            max-width: 980px;
+            margin: 0 auto;
         }
-        .topnav a:hover { background: var(--purple-sky); }
-        .flow-section {
-            background: white; border-radius: 12px; padding: 18px;
-            border: 1px solid var(--line); margin-bottom: 16px;
+        .lead-panel p { color: #334155; font-size: 0.98rem; }
+        .controls {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 0 0 24px;
         }
-        .section-title {
-            font-size: 17px; font-weight: bold; color: #3d2f4d;
-            margin-bottom: 12px; padding: 8px 12px; background: var(--purple-sky);
-            border-left: 4px solid var(--purple); border-radius: 0 8px 8px 0;
+        .btn {
+            border: 2px solid var(--brand);
+            background: white;
+            color: var(--brand-deep);
+            padding: 11px 20px;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
         }
-        .flow-container {
-            display: flex; align-items: center; justify-content: center;
-            flex-wrap: wrap; gap: 10px; margin-bottom: 12px;
+        .btn:hover, .btn.active {
+            background: var(--brand);
+            color: white;
+            box-shadow: 0 4px 12px color-mix(in srgb, var(--brand) 30%, transparent);
+            transform: translateY(-2px);
         }
-        .flow-box {
-            background: linear-gradient(135deg, #7c4dbd, var(--purple));
-            color: white; padding: 12px 16px; border-radius: 8px; text-align: center;
-            font-weight: bold; font-size: 12px; cursor: pointer; min-width: 120px;
-            box-shadow: 0 4px 8px rgba(98,54,165,0.25); transition: transform 0.2s;
+        .view {
+            display: none;
+            background: var(--panel);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 30px;
+            margin-bottom: 26px;
+            border: 1px solid rgba(15,23,42,0.04);
         }
-        .flow-box:hover { transform: translateY(-2px); }
-        .flow-box.cli { background: linear-gradient(135deg, #a78bfa, #7c3aed); }
-        .flow-box.s3 { background: linear-gradient(135deg, #fbbf24, #d97706); }
-        .flow-box.lock { background: linear-gradient(135deg, #34d399, #059669); }
-        .flow-box.state { background: linear-gradient(135deg, #60a5fa, #2563eb); }
-        .arrow { font-size: 20px; color: var(--muted); }
-        .card-grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px;
+        .view.active { display: block; }
+        .section-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 18px;
+            align-items: end;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .section-head h2 { color: var(--ink); font-size: 1.45rem; }
+        .section-kicker {
+            color: var(--brand-deep);
+            text-transform: uppercase;
+            font-size: 0.76rem;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            margin-bottom: 10px;
+        }
+        .section-note {
+            border-left: 4px solid var(--brand);
+            background: color-mix(in srgb, var(--brand-sky) 50%, white);
+            color: var(--brand-deep);
+            padding: 14px 16px;
+            border-radius: 12px;
+            margin-top: 18px;
+        }
+        .concept-grid, .practice-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));
+            gap: 18px;
         }
         .card {
-            background: #faf7fd; border: 2px solid var(--line); border-radius: 10px;
-            padding: 14px; cursor: pointer; transition: all 0.2s;
+            background: linear-gradient(180deg, #ffffff, #f8fbff);
+            border: 1px solid var(--line);
+            border-top: 4px solid var(--brand);
+            border-radius: 16px;
+            padding: 20px;
+            min-height: 170px;
+            box-shadow: 0 6px 18px rgba(15,23,42,0.05);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
-        .card:hover, .card.active {
-            border-color: var(--purple); box-shadow: 0 4px 12px rgba(98,54,165,0.15);
+        .card:hover, .flow-step:hover, .example-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 24px rgba(15,23,42,0.1);
         }
-        .card h3 { font-size: 14px; color: var(--purple); margin-bottom: 6px; }
-        .card p { font-size: 12px; color: #3d2f4d; }
-        .code-tabs { display: flex; gap: 5px; margin-bottom: 8px; flex-wrap: wrap; }
-        .code-tab {
-            padding: 6px 12px; background: #f3edf8; border: none; border-radius: 6px 6px 0 0;
-            cursor: pointer; font-size: 12px; font-weight: bold; color: #3d2f4d;
+        .card-badge {
+            display: inline-flex;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: var(--brand-sky);
+            color: var(--brand-deep);
+            font-weight: 700;
+            margin-bottom: 14px;
         }
-        .code-tab.active { background: var(--purple); color: white; }
-        .code-content { display: none; }
-        .code-content.active { display: block; }
+        .practice-card .card-badge { background: var(--mint); color: #166534; }
+        .practice-card { border-top-color: #22c55e; }
+        .card p { color: #475569; }
+        .flow-track {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));
+            gap: 18px;
+        }
+        .flow-step {
+            position: relative;
+            border-radius: 16px;
+            padding: 22px 18px 18px;
+            border: 1px solid color-mix(in srgb, var(--brand) 18%, transparent);
+            background: linear-gradient(160deg, #ffffff 0%, color-mix(in srgb, var(--brand-sky) 40%, white) 100%);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .step-number {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            background: var(--brand);
+            color: white;
+            font-weight: 800;
+            margin-bottom: 14px;
+            box-shadow: 0 10px 20px color-mix(in srgb, var(--brand) 22%, transparent);
+        }
+        .flow-step h3 { font-size: 1rem; margin-bottom: 10px; color: #0f172a; }
+        .flow-step p { color: #475569; font-size: 0.95rem; }
+        .example-stack { display: grid; gap: 18px; }
+        .example-card {
+            border: 1px solid rgba(15,23,42,0.08);
+            border-radius: 16px;
+            padding: 18px;
+            background: linear-gradient(180deg, #ffffff, #f8fafc);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .lab-callout {
+            border: 1px dashed color-mix(in srgb, var(--brand) 35%, transparent);
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin: 14px 0;
+            background: color-mix(in srgb, var(--brand-sky) 35%, white);
+            color: #334155;
+            font-size: 0.92rem;
+        }
+        .lab-callout strong { color: var(--brand-deep); }
         pre {
-            background: #2d2438; color: #ede4f7; padding: 14px; border-radius: 8px;
-            overflow-x: auto; font-size: 11px; line-height: 1.55;
+            margin-top: 10px;
+            background: #0f172a;
+            color: #dbeafe;
+            border-radius: 16px;
+            padding: 18px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            overflow-x: hidden;
+            font-size: 0.88rem;
+            line-height: 1.55;
+            border: 1px solid rgba(148,163,184,0.18);
         }
-        .example-scenario {
-            background: var(--amber); border-left: 4px solid #f59e0b;
-            padding: 14px; border-radius: 8px; margin-bottom: 14px;
+        code { font-family: Consolas, 'Cascadia Code', monospace; }
+        .table-wrap {
+            overflow-x: auto;
+            border-radius: 16px;
+            border: 1px solid var(--line);
+            background: white;
         }
-        .example-scenario h3 { font-size: 14px; color: #92400e; margin-bottom: 6px; }
-        .example-scenario p { font-size: 12px; color: #78350f; margin-bottom: 4px; }
-        .repo-box {
-            background: var(--mint); border-left: 4px solid #22c55e;
-            padding: 14px 16px; border-radius: 8px; margin-bottom: 14px;
+        table { width: 100%; border-collapse: collapse; }
+        th, td {
+            padding: 14px 16px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+            vertical-align: top;
         }
-        .repo-box ul { margin: 8px 0 0 18px; font-size: 13px; }
-        .detail-panel {
-            background: var(--purple-sky); border-radius: 8px; padding: 12px 16px;
-            margin-top: 12px; font-size: 13px; color: var(--purple-deep); min-height: 44px;
+        th {
+            background: linear-gradient(180deg, var(--brand), var(--brand-deep));
+            color: white;
+            font-weight: 700;
         }
-        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-        @media (max-width: 768px) { .two-col { grid-template-columns: 1fr; } }
-        .footer-note { text-align: center; color: var(--muted); font-size: 0.9rem; margin-top: 18px; }
+        tbody tr:nth-child(even) { background: #f8fbff; }
+        .footer-note {
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.9rem;
+            margin-top: 18px;
+        }
+        .footer-note a { color: var(--brand); text-decoration: none; }
+        .footer-note a:hover { text-decoration: underline; }
+        @media (max-width: 900px) {
+            body { padding: 14px; }
+            .hero, .view { padding: 22px; }
+            .controls { justify-content: flex-start; }
+            .concept-grid, .practice-grid, .flow-track { grid-template-columns: 1fr; }
+        }
+        .home-link {
+            position: absolute;
+            top: 16px;
+            right: 20px;
+            color: var(--brand);
+            text-decoration: none;
+            font-size: 0.88rem;
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: 8px;
+            border: 1px solid color-mix(in srgb, var(--brand) 18%, transparent);
+            background: color-mix(in srgb, var(--brand) 6%, transparent);
+            transition: background 0.2s, color 0.2s;
+        }
+        .home-link:hover {
+            background: color-mix(in srgb, var(--brand) 13%, transparent);
+            color: var(--brand-deep);
+        }
     </style>
 </head>
 <body>
-<div class="container">
-    <header class="hero">
-        <a href="index.html" class="home-link">&#8962; Home</a>
-        <div class="eyebrow">Labs 07–11 · State Track</div>
-        <h1>Remote State &amp; Shared Ownership</h1>
-        <p>Terraform state maps configuration to real infrastructure. Store it remotely, lock concurrent writes, name keys deliberately, and consume outputs through narrow interfaces.</p>
-    </header>
-
-    <nav class="topnav">
-        <a href="index.html">Overview</a>
-        <a href="state.html">State</a>
-        <a href="provisioners.html">Provisioners</a>
-        <a href="functions.html">Functions</a>
-        <a href="projects.html">Projects</a>
-    </nav>
-
-    <div class="repo-box">
-        <strong>Repository lab paths:</strong>
-        <ul>
-            <li><code>terraform/extended/labs/lab07-s3-backend/</code> — S3 backend initialization</li>
-            <li><code>terraform/extended/labs/lab08-state-keys/</code> — State key naming conventions</li>
-            <li><code>terraform/extended/labs/lab09-state-locking/</code> — S3 native lockfiles</li>
-            <li><code>terraform/extended/labs/lab10-state-migration/</code> — Local-to-remote migration</li>
-            <li><code>terraform/extended/labs/lab11-remote-state-consumer/</code> — <code>terraform_remote_state</code> data source</li>
-        </ul>
-    </div>
-
-    <div class="flow-section">
-        <div class="section-title">1. Remote State Flow (S3 + Lockfile)</div>
-        <div class="flow-container">
-            <div class="flow-box cli" data-info="cli">Operator / CI</div>
-            <span class="arrow">→</span>
-            <div class="flow-box" data-info="init">terraform init</div>
-            <span class="arrow">→</span>
-            <div class="flow-box lock" data-info="lock">Acquire lock</div>
-            <span class="arrow">→</span>
-            <div class="flow-box state" data-info="plan">plan / apply</div>
-            <span class="arrow">→</span>
-            <div class="flow-box s3" data-info="s3">Write state to S3</div>
-            <span class="arrow">→</span>
-            <div class="flow-box lock" data-info="unlock">Release lock</div>
-        </div>
-        <div id="flow-detail" class="detail-panel">Click any box above to see what happens at that stage.</div>
-    </div>
-
-    <div class="example-scenario">
-        <h3>Example: Two engineers, one state file</h3>
-        <p><strong>Scenario:</strong> Alice runs <code>terraform apply</code> while Bob runs <code>terraform plan</code> on the same backend key.</p>
-        <p><strong>With locking:</strong> Bob's plan waits or fails fast with a lock error — state is not corrupted.</p>
-        <p><strong>Without locking:</strong> Last write wins; resources may be orphaned or re-created unpredictably.</p>
-    </div>
-
-    <div class="flow-section">
-        <div class="section-title">2. State Key Layout (Click a pattern)</div>
-        <div class="card-grid">
-            <div class="card" onclick="showKey('env')">
-                <h3>By environment</h3>
-                <p><code>extended/dev/network/terraform.tfstate</code></p>
+    <div class="container">
+        <header class="hero">
+            <a href="index.html" class="home-link">&#8962; Home</a>
+            <div class="eyebrow">Terraform Extended</div>
+            <h1>Remote State</h1>
+            <p class="subtitle">S3 backends, locking, workspaces, migration, and remote state consumers.</p>
+            <div class="lead-panel">
+                <p>Team Terraform requires <strong>remote state</strong> in shared storage with <strong>locking</strong>. Extended labs 06–11 walk through S3, workspaces, and consumption patterns.</p>
             </div>
-            <div class="card" onclick="showKey('component')">
-                <h3>By component</h3>
-                <p><code>extended/prod/eks/terraform.tfstate</code></p>
-            </div>
-            <div class="card" onclick="showKey('workspace')">
-                <h3>Workspace suffix</h3>
-                <p><code>env:/staging/network/terraform.tfstate</code></p>
-            </div>
-            <div class="card" onclick="showKey('account')">
-                <h3>By account</h3>
-                <p><code>acct-123456789012/network/terraform.tfstate</code></p>
-            </div>
-        </div>
-        <div id="key-detail" class="detail-panel">Each key is an ownership boundary. One root module, one state key.</div>
-    </div>
+        </header>
 
-    <div class="flow-section">
-        <div class="section-title">3. Backend Configuration (Code tabs)</div>
-        <div class="code-tabs">
-            <button class="code-tab active" onclick="showCode('backend')">main.tf backend block</button>
-            <button class="code-tab" onclick="showCode('hcl')">backend.hcl</button>
-            <button class="code-tab" onclick="showCode('init')">Init command</button>
-            <button class="code-tab" onclick="showCode('consumer')">Remote state consumer</button>
+        <div class="controls">
+            <button class="btn active" data-view="concept">Concept</button>
+            <button class="btn" data-view="architecture">Architecture</button>
+            <button class="btn" data-view="flow">Flow</button>
+            <button class="btn" data-view="setup">Setup</button>
+            <button class="btn" data-view="commands">Commands</button>
+            <button class="btn" data-view="examples">Examples</button>
+            <button class="btn" data-view="comparison">Compare</button>
+            <button class="btn" data-view="practice">Practice</button>
         </div>
-        <div id="backend-code" class="code-content active">
-<pre>terraform {
-  required_version = ">= 1.5.0"
-  backend "s3" {}
-  # Backend settings cannot use input variables.
-  # Pass them via -backend-config or a reviewed backend.hcl file.
-}
 
-resource "terraform_data" "state_owner" {
-  input = "shared-state"
-}</pre>
-        </div>
-        <div id="hcl-code" class="code-content">
-<pre>bucket       = "your-unique-terraform-state-bucket"
-key          = "extended/dev/network/terraform.tfstate"
+        <section id="concept" class="view active">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Core Model</div>
+                    <h2>Why Remote State</h2>
+                </div>
+            </div>
+<div class="concept-grid">
+                <article class="card">
+                    <div class="card-badge">Collaboration</div>
+                    <p>Multiple engineers and CI jobs share one state object.</p>
+                </article>
+                <article class="card">
+                    <div class="card-badge">S3 backend</div>
+                    <p>Store state in a versioned S3 bucket with encryption at rest.</p>
+                </article>
+                <article class="card">
+                    <div class="card-badge">Locking</div>
+                    <p>S3 native lockfile or DynamoDB prevents concurrent apply corruption.</p>
+                </article>
+                <article class="card">
+                    <div class="card-badge">Workspaces</div>
+                    <p>Multiple state files in one backend — env separation without duplicate code.</p>
+                </article>
+                <article class="card">
+                    <div class="card-badge">Migration</div>
+                    <p><code>terraform init -migrate-state</code> moves local state to remote.</p>
+                </article>
+                <article class="card">
+                    <div class="card-badge">Remote state data</div>
+                    <p><code>terraform_remote_state</code> reads outputs from another root module.</p>
+                </article>
+            </div>
+        </section>
+        <section id="architecture" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Backend</div>
+                    <h2>S3 Backend Topology</h2>
+                </div>
+            </div>
+<div class="example-stack">
+            <div class="lab-callout"><strong>Repo lab files:</strong> terraform/extended/labs/lab07-s3-backend/</div>
+                <section class="example-card">
+                    <div class="section-kicker">backend.hcl</div>
+                    <pre><code>bucket       = "my-tf-state-unique"
+key          = "extended/vpc/terraform.tfstate"
 region       = "us-east-1"
-encrypt      = true
-use_lockfile = true</pre>
-        </div>
-        <div id="init-code" class="code-content">
-<pre># Syntax check without touching remote state:
-terraform init -backend=false
-terraform validate
-
-# Connect to S3 backend:
-cp backend.hcl.example backend.hcl   # edit bucket/key first
+use_lockfile = true
+encrypt      = true</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">Partial config in main.tf</div>
+                    <pre><code>terraform {
+  backend "s3" {}
+}</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">Init with backend file</div>
+                    <pre><code>terraform init -backend-config=backend.hcl</code></pre>
+                </section>
+            </div>
+            <svg viewBox="0 0 950 320" style="width:100%;max-width:950px;margin:20px auto;display:block;">
+                <text x="475" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#1e293b">Remote State Flow</text>
+                <rect x="40" y="80" width="150" height="60" rx="8" fill="#ede4f7" stroke="#6236a5" stroke-width="2"/><text x="115" y="110" text-anchor="middle" font-size="12" font-weight="bold" fill="#1e293b">Terraform CLI</text><rect x="220" y="80" width="150" height="60" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/><text x="295" y="110" text-anchor="middle" font-size="12" font-weight="bold" fill="#1e293b">S3 State</text><rect x="400" y="80" width="150" height="60" rx="8" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/><text x="475" y="110" text-anchor="middle" font-size="12" font-weight="bold" fill="#1e293b">Lock</text><rect x="580" y="80" width="150" height="60" rx="8" fill="#dcfce7" stroke="#22c55e" stroke-width="2"/><text x="655" y="110" text-anchor="middle" font-size="12" font-weight="bold" fill="#1e293b">AWS APIs</text>
+                
+            </svg>
+        </section>
+        <section id="flow" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Labs 07–11</div>
+                    <h2>Remote State Learning Path</h2>
+                </div>
+            </div>
+<div class="flow-track">
+                <div class="flow-step">
+                    <div class="step-number">1</div>
+                    <h3>Lab 07 S3 backend</h3>
+                    <p>Configure S3 backend; init with backend.hcl.</p>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">2</div>
+                    <h3>Lab 08 state keys</h3>
+                    <p>Design key naming: project/env/component.tfstate.</p>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">3</div>
+                    <h3>Lab 09 locking</h3>
+                    <p>Prove two simultaneous applies — one waits on lock.</p>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">4</div>
+                    <h3>Lab 10 migration</h3>
+                    <p>Migrate local state to S3 with -migrate-state.</p>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">5</div>
+                    <h3>Lab 11 consumer</h3>
+                    <p>Read remote state outputs via data source.</p>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">6</div>
+                    <h3>Lab 06 workspaces</h3>
+                    <p>terraform workspace new dev; separate state per workspace.</p>
+                </div>
+            </div>
+        </section>
+        <section id="setup" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Bootstrap</div>
+                    <h2>Create State Bucket</h2>
+                </div>
+            </div>
+<div class="example-stack">
+                <section class="example-card">
+                    <div class="section-kicker">One-time bucket</div>
+                    <pre><code>aws s3 mb s3://my-unique-tf-state-bucket
+aws s3api put-bucket-versioning --bucket my-unique-tf-state-bucket --versioning-configuration Status=Enabled</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">Lab 07 init</div>
+                    <pre><code>cd terraform/extended/labs/lab07-s3-backend
+terraform init -backend-config=backend.hcl</code></pre>
+                </section>
+            </div>
+        </section>
+        <section id="commands" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Quick Reference</div>
+                    <h2>State Backend Commands</h2>
+                </div>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Category</th><th>Command</th><th>Description</th></tr></thead>
+                    <tbody>
+                        <tr><td>Workspace list</td><td><code>terraform workspace list</code></td><td>Show workspaces</td></tr>
+                        <tr><td>Workspace new</td><td><code>terraform workspace new dev</code></td><td>Create workspace</td></tr>
+                        <tr><td>State pull</td><td><code>terraform state pull</code></td><td>Download remote state JSON</td></tr>
+                        <tr><td>Migrate</td><td><code>terraform init -migrate-state</code></td><td>Move state to backend</td></tr>
+                        <tr><td>Force unlock</td><td><code>terraform force-unlock LOCK_ID</code></td><td>Emergency lock release</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="section-note">Extended reference appendix — bookmark for exam prep and on-the-job lookup.</div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Topic</th><th>Command / Pattern</th><th>Notes</th></tr></thead>
+                    <tbody>
+                        <tr><td>Backend init</td><td>terraform init -backend-config=backend.hcl</td><td>Lab 07</td></tr>
+                        <tr><td>Workspace select</td><td>terraform workspace select prod</td><td>Lab 06</td></tr>
+                        <tr><td>Remote state</td><td>data.terraform_remote_state.vpc</td><td>Lab 11</td></tr>
+                        <tr><td>Key design</td><td>team/project/env/terraform.tfstate</td><td>Lab 08</td></tr>
+                        <tr><td>Lock wait</td><td>Error acquiring state lock</td><td>Lab 09</td></tr>
+                    </tbody>
+                </table>
+            </div>            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Remote State — reference drill 1</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Remote State — reference drill 2</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Remote State — reference drill 3</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="section-note">Extended reference appendix — bookmark for exam prep and on-the-job lookup.</div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Topic</th><th>Command / Pattern</th><th>Notes</th></tr></thead>
+                    <tbody>
+                        <tr><td>Review</td><td>Re-read lab manual objectives</td><td>Remote State</td></tr>
+                        <tr><td>Validate</td><td>Run syntax-check or validate</td><td>Before apply</td></tr>
+                        <tr><td>Cleanup</td><td>Destroy or remove lab changes</td><td>End of session</td></tr>
+                        <tr><td>Docs</td><td>Cross-link markdown docs</td><td>../docs/</td></tr>
+                        <tr><td>Git</td><td>Commit only safe files</td><td>No secrets/state</td></tr>
+                        <tr><td>Pair</td><td>Walk through with teammate</td><td>Teaching reinforces</td></tr>
+                        <tr><td>Notes</td><td>Document failures and fixes</td><td>Personal runbook</td></tr>
+                        <tr><td>Next</td><td>Follow learning path order</td><td>curriculum/learning-paths.md</td></tr>
+                    </tbody>
+                </table>
+            </div>            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Remote State — reference drill 1</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Remote State — reference drill 2</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Remote State — reference drill 3</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+        </section>
+        <section id="examples" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Hands-On</div>
+                    <h2>Extended State Labs</h2>
+                </div>
+            </div>
+<div class="example-stack">
+            <div class="lab-callout"><strong>Repo lab files:</strong> lab07-s3-backend/ through lab11-remote-state-consumer/</div>
+                <section class="example-card">
+                    <div class="section-kicker">S3 backend lab</div>
+                    <pre><code>cd terraform/extended/labs/lab07-s3-backend
 terraform init -backend-config=backend.hcl
-
-# Migrate existing local state:
-terraform init -backend-config=backend.hcl -migrate-state</pre>
-        </div>
-        <div id="consumer-code" class="code-content">
-<pre>data "terraform_remote_state" "network" {
-  backend = "local"  # or "s3" in production
-  config = {
-    path = var.network_state_path
-  }
-}
-
-output "upstream_outputs" {
-  value = data.terraform_remote_state.network.outputs
-}</pre>
-        </div>
-    </div>
-
-    <div class="flow-section">
-        <div class="section-title">4. Migration Workflow</div>
-        <div class="flow-container">
-            <div class="flow-box cli" data-info="backup">Backup local state</div>
-            <span class="arrow">→</span>
-            <div class="flow-box" data-info="review">Review destination key</div>
-            <span class="arrow">→</span>
-            <div class="flow-box state" data-info="migrate">init -migrate-state</div>
-            <span class="arrow">→</span>
-            <div class="flow-box s3" data-info="verify">state list / plan</div>
-        </div>
-        <p style="font-size:13px;color:var(--muted);margin-top:8px;">
-            Never delete locks or edit <code>terraform.tfstate</code> by hand to resolve conflicts.
-            Identify the active operation first, then coordinate with the lock holder.
-        </p>
-    </div>
-
-    <div class="two-col">
-        <div class="flow-section">
-            <div class="section-title">Security controls</div>
-            <ul style="font-size:13px;padding-left:20px;color:#3d2f4d;">
-                <li>Enable S3 versioning for rollback</li>
-                <li>Encrypt at rest (<code>encrypt = true</code>)</li>
-                <li>Least-privilege IAM for state bucket</li>
-                <li>Block public access on the bucket</li>
-                <li>State may contain secrets — treat as sensitive</li>
-                <li>Never commit <code>backend.hcl</code> with secrets</li>
-            </ul>
-        </div>
-        <div class="flow-section">
-            <div class="section-title">Anti-patterns</div>
-            <ul style="font-size:13px;padding-left:20px;color:#3d2f4d;">
-                <li>Sharing one state key across unrelated stacks</li>
-                <li>Using remote state as a general inventory API</li>
-                <li>Disabling locking in team environments</li>
-                <li>Storing state in application artifact buckets</li>
-                <li>Manual JSON edits to fix drift</li>
-            </ul>
-        </div>
-    </div>
-
-    <div class="flow-section">
-        <div class="section-title">5. DynamoDB vs S3 Native Lockfile</div>
-        <div class="card-grid">
-            <div class="card">
-                <h3>S3 use_lockfile (Terraform 1.11+)</h3>
-                <p>Lock stored alongside state in S3. Simpler setup — no DynamoDB table. Used in these labs via <code>use_lockfile = true</code>.</p>
+terraform plan</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">Workspaces</div>
+                    <pre><code>terraform workspace new staging
+terraform workspace list</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">Migration</div>
+                    <pre><code>terraform init -migrate-state</code></pre>
+                </section>
             </div>
-            <div class="card">
-                <h3>DynamoDB table (legacy pattern)</h3>
-                <p>Separate lock table with <code>dynamodb_table</code> attribute. Still common in existing platforms. Choose one locking strategy per bucket.</p>
+            <div class="section-note">Extended reference appendix — bookmark for exam prep and on-the-job lookup.</div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Topic</th><th>Command / Pattern</th><th>Notes</th></tr></thead>
+                    <tbody>
+                        <tr><td>Review</td><td>Re-read lab manual objectives</td><td>Remote State</td></tr>
+                        <tr><td>Validate</td><td>Run syntax-check or validate</td><td>Before apply</td></tr>
+                        <tr><td>Cleanup</td><td>Destroy or remove lab changes</td><td>End of session</td></tr>
+                        <tr><td>Docs</td><td>Cross-link markdown docs</td><td>../docs/</td></tr>
+                        <tr><td>Git</td><td>Commit only safe files</td><td>No secrets/state</td></tr>
+                        <tr><td>Pair</td><td>Walk through with teammate</td><td>Teaching reinforces</td></tr>
+                        <tr><td>Notes</td><td>Document failures and fixes</td><td>Personal runbook</td></tr>
+                        <tr><td>Next</td><td>Follow learning path order</td><td>curriculum/learning-paths.md</td></tr>
+                    </tbody>
+                </table>
+            </div>            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Remote State — reference drill 1</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
             </div>
-        </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Remote State — reference drill 2</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Remote State — reference drill 3</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+        </section>
+        <section id="comparison" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Decision Guide</div>
+                    <h2>State Storage Options</h2>
+                </div>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Backend</th><th>Locking</th><th>Best for</th></tr></thead>
+                    <tbody>
+                        <tr><td>S3 + lockfile</td><td>Native S3</td><td>AWS teams — recommended in labs</td></tr>
+                        <tr><td>S3 + DynamoDB</td><td>DynamoDB table</td><td>Legacy pattern, still common</td></tr>
+                        <tr><td>Terraform Cloud</td><td>Managed</td><td>HashiCorp SaaS</td></tr>
+                        <tr><td>Local</td><td>None</td><td>Solo learning only</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        <section id="practice" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Use It Well</div>
+                    <h2>Remote State Practice</h2>
+                </div>
+            </div>
+<div class="practice-grid">
+                <article class="card practice-card">
+                    <div class="card-badge">Lab 07</div>
+                    <p>Configure and apply with S3 backend.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab07-s3-backend.md">Open lab manual →</a></p>
+                </article>
+                <article class="card practice-card">
+                    <div class="card-badge">Lab 09</div>
+                    <p>Demonstrate lock behavior with two terminals.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab09-state-locking.md">Open lab manual →</a></p>
+                </article>
+                <article class="card practice-card">
+                    <div class="card-badge">Lab 10</div>
+                    <p>Migrate state safely with backup first.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab10-state-migration.md">Open lab manual →</a></p>
+                </article>
+                <article class="card practice-card">
+                    <div class="card-badge">Lab 11</div>
+                    <p>Consume VPC outputs from remote state.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab11-remote-state-consumer.md">Open lab manual →</a></p>
+                </article>
+                <article class="card practice-card">
+                    <div class="card-badge">Key naming</div>
+                    <p>Document a key convention for your team.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab08-state-keys.md">Open lab manual →</a></p>
+                </article>
+                <article class="card practice-card">
+                    <div class="card-badge">Workspaces</div>
+                    <p>Create dev and prod workspaces; compare state paths.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab06-workspaces.md">Open lab manual →</a></p>
+                </article>
+            </div>
+            <div class="section-note">Extended reference appendix — bookmark for exam prep and on-the-job lookup.</div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Topic</th><th>Command / Pattern</th><th>Notes</th></tr></thead>
+                    <tbody>
+                        <tr><td>Review</td><td>Re-read lab manual objectives</td><td>Remote State</td></tr>
+                        <tr><td>Validate</td><td>Run syntax-check or validate</td><td>Before apply</td></tr>
+                        <tr><td>Cleanup</td><td>Destroy or remove lab changes</td><td>End of session</td></tr>
+                        <tr><td>Docs</td><td>Cross-link markdown docs</td><td>../docs/</td></tr>
+                        <tr><td>Git</td><td>Commit only safe files</td><td>No secrets/state</td></tr>
+                        <tr><td>Pair</td><td>Walk through with teammate</td><td>Teaching reinforces</td></tr>
+                        <tr><td>Notes</td><td>Document failures and fixes</td><td>Personal runbook</td></tr>
+                        <tr><td>Next</td><td>Follow learning path order</td><td>curriculum/learning-paths.md</td></tr>
+                    </tbody>
+                </table>
+            </div>            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Remote State — reference drill 1</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Remote State — reference drill 2</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Remote State — reference drill 3</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+        </section>
     </div>
 
-    
-    <div class="flow-section">
-        <div class="section-title">6. Lab walkthrough checklist</div>
-        <table style="width:100%;font-size:13px;border-collapse:collapse;">
-            <tr style="background:var(--purple-sky);"><th style="padding:8px;">Lab</th><th style="padding:8px;">Focus</th><th style="padding:8px;">Key command</th></tr>
-            <tr><td style="padding:8px;border-bottom:1px solid var(--line);">07</td><td style="padding:8px;border-bottom:1px solid var(--line);">S3 backend</td><td style="padding:8px;border-bottom:1px solid var(--line);"><code>init -backend-config=backend.hcl</code></td></tr>
-            <tr><td style="padding:8px;border-bottom:1px solid var(--line);">08</td><td style="padding:8px;border-bottom:1px solid var(--line);">State keys</td><td style="padding:8px;border-bottom:1px solid var(--line);"><code>terraform output recommended_state_key</code></td></tr>
-            <tr><td style="padding:8px;border-bottom:1px solid var(--line);">09</td><td style="padding:8px;border-bottom:1px solid var(--line);">Locking</td><td style="padding:8px;border-bottom:1px solid var(--line);">Concurrent apply test</td></tr>
-            <tr><td style="padding:8px;border-bottom:1px solid var(--line);">10</td><td style="padding:8px;border-bottom:1px solid var(--line);">Migration</td><td style="padding:8px;border-bottom:1px solid var(--line);"><code>init -migrate-state</code></td></tr>
-            <tr><td style="padding:8px;">11</td><td style="padding:8px;">Consumer</td><td style="padding:8px;"><code>data.terraform_remote_state</code></td></tr>
-        </table>
-    </div>
-    <div class="flow-section">
-        <div class="section-title">7. Glossary</div>
-        <div class="card-grid">
-            <div class="card"><h3>State</h3><p>JSON mapping of config to real resource IDs.</p></div>
-            <div class="card"><h3>Backend</h3><p>Where state is stored (local, S3, etc.).</p></div>
-            <div class="card"><h3>Lock</h3><p>Prevents concurrent writes to state.</p></div>
-            <div class="card"><h3>Key</h3><p>S3 object path for a state file.</p></div>
-            <div class="card"><h3>Lineage</h3><p>UUID identifying a state lineage.</p></div>
-            <div class="card"><h3>Serial</h3><p>Incremented on each state write.</p></div>
-        </div>
-    </div>
-    <div class="flow-section">
-        <div class="section-title">8. IAM policy sketch (training)</div>
-        <pre>{
-  "Version": "2012-10-17",
-  "Statement": [{
-    "Effect": "Allow",
-    "Action": ["s3:GetObject","s3:PutObject","s3:DeleteObject"],
-    "Resource": "arn:aws:s3:::YOUR-BUCKET/extended/*"
-  }]
-}</pre>
-    </div>
-
-    <div class="flow-section">
-        <div class="section-title">11. Backend prerequisites script</div>
-        <pre># Platform team typically pre-creates:
-# - S3 bucket with versioning + encryption
-# - Block public access
-# - IAM policy for operators
-
-aws s3api create-bucket --bucket YOUR-UNIQUE-STATE-BUCKET --region us-east-1
-aws s3api put-bucket-versioning --bucket YOUR-UNIQUE-STATE-BUCKET \
-  --versioning-configuration Status=Enabled
-aws s3api put-public-access-block --bucket YOUR-UNIQUE-STATE-BUCKET \
-  --public-access-block-configuration \
-  BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true</pre>
-        <p style="font-size:13px;color:var(--muted);margin-top:8px;">Training labs assume this bucket exists before <code>terraform init -backend-config</code>.</p>
-    </div>
-
-    <div class="flow-section">
-        <div class="section-title">12. State sensitivity examples</div>
-        <div class="card-grid">
-            <div class="card"><h3>May contain</h3><p>Private IPs, resource IDs, LB DNS names, database endpoints, TLS cert ARNs.</p></div>
-            <div class="card"><h3>Often redacted in CLI</h3><p>Passwords marked sensitive in provider schema — still may exist in state file.</p></div>
-            <div class="card"><h3>Never do</h3><p>Attach state bucket to public website hosting or log shipping without encryption.</p></div>
-        </div>
-    </div>
-
-    <div class="flow-section">
-        <div class="section-title">13. Practice scenarios</div>
-        <div class="example-scenario">
-            <h3>Scenario A: New team member clones the repo</h3>
-            <p>They run <code>terraform apply</code> without <code>init -backend-config</code> and use local state. Fix: follow Lab 07 two-phase init and migrate.</p>
-        </div>
-        <div class="example-scenario" style="background:#ede4f7;border-color:var(--purple);">
-            <h3 style="color:var(--purple-deep);">Scenario B: CI and laptop conflict</h3>
-            <p style="color:#3d2f4d;">Pipeline holds lock; developer sees lock error. Fix: wait for CI, or coordinate <code>force-unlock</code> after verifying job death.</p>
-        </div>
-    </div>
-
-    <p class="footer-note">Deep dive: <code>terraform/extended/docs/state/README.md</code> · Manuals: <code>lab07</code> through <code>lab11</code></p>
-</div>
-
-<script>
-const flowInfo = {
-    cli: 'An operator or CI job authenticates via AWS_PROFILE, OIDC, or an IAM role. Credentials never belong in .tf files.',
-    init: 'terraform init downloads providers and configures the backend. Backend settings are fixed at init time.',
-    lock: 'Before plan/apply, Terraform acquires a lock (S3 lockfile or DynamoDB). Prevents concurrent writes.',
-    plan: 'Terraform reads current state, compares to configuration, and proposes changes.',
-    s3: 'Updated state JSON is written to the S3 object at the configured key. Versioning allows recovery.',
-    unlock: 'Lock is released when the operation completes or fails cleanly. Stale locks need investigation.',
-    backup: 'Copy terraform.tfstate and terraform.tfstate.backup before any migration.',
-    review: 'Confirm bucket, region, and key match the intended environment and ownership boundary.',
-    migrate: 'terraform init -migrate-state copies local state to remote after explicit confirmation.',
-    verify: 'Run terraform state list and a no-change plan to confirm migration succeeded.'
-};
-document.querySelectorAll('[data-info]').forEach(el => {
-    el.addEventListener('click', () => {
-        document.getElementById('flow-detail').textContent = flowInfo[el.dataset.info] || '';
-    });
-});
-
-const keyInfo = {
-    env: 'Separate dev/staging/prod at the key prefix level. Each environment has isolated blast radius.',
-    component: 'Split network, compute, and data layers into distinct state files with narrow outputs.',
-    workspace: 'Terraform workspaces append env:/ prefix. Use only when configs are nearly identical.',
-    account: 'Multi-account landing zones often embed account ID in the key path for clarity and IAM scoping.'
-};
-function showKey(type) {
-    document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
-    event.currentTarget.classList.add('active');
-    document.getElementById('key-detail').textContent = keyInfo[type];
-}
-
-function showCode(type) {
-    document.querySelectorAll('.code-content').forEach(el => el.classList.remove('active'));
-    document.querySelectorAll('.code-tab').forEach(el => el.classList.remove('active'));
-    document.getElementById(type + '-code').classList.add('active');
-    event.target.classList.add('active');
-}
-</script>
+    <script>
+        const buttons = document.querySelectorAll('.btn');
+        const views = document.querySelectorAll('.view');
+        buttons.forEach((button) => {
+            button.addEventListener('click', () => {
+                const viewId = button.dataset.view;
+                buttons.forEach((b) => b.classList.remove('active'));
+                views.forEach((v) => v.classList.remove('active'));
+                button.classList.add('active');
+                document.getElementById(viewId).classList.add('active');
+            });
+        });
+    </script>
 </body>
 </html>

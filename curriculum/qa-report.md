@@ -1,6 +1,6 @@
 # QA Report — terraform-ansible-labs
 
-**Date:** 2026-07-17 (expanded curriculum pass)  
+**Date:** 2026-07-18 (k8sforbeginners HTML + docs alignment pass)  
 **Auditor:** Lead integration + Terraform/Ansible specialist QA  
 **Rubric:** [qa-rubric.md](qa-rubric.md)
 
@@ -16,7 +16,16 @@
 
 ---
 
-## Content expansion (this pass)
+## Content expansion (k8sforbeginners alignment)
+
+| Asset | Count | Format |
+|-------|-------|--------|
+| HTML interactive pages | 23 | helm-charts-overview style: hero + tab views + SVG diagrams (~635–723 lines/topic) |
+| HTML catalogs | 4 | k8s index.html style: search + categorized tables |
+| Concept docs | 29 | rollout_versions.md style: Objective, sections, Hands-On Labs table (~120–150 lines) |
+| Generator | 1 | `curriculum/build_k8s_style_html.py` — regenerate all HTML from topic definitions |
+
+## Content expansion (prior pass)
 
 | Asset | Count | Before | After |
 |-------|-------|--------|-------|

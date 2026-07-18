@@ -3,366 +3,650 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ansible Roles and Vault</title>
+    <title>Roles & Vault — Interactive Guide</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        :root { --red: #EE0000; --red-deep: #c40000; --red-light: #fff0f0; --ink: #1a1a2e; --muted: #64748b; --surface: #fff; --line: #e2e8f0; --vault: #fbbf24; }
-        body { font-family: "Segoe UI", system-ui, sans-serif; background: linear-gradient(180deg, #fafafa 0%, #f1f5f9 100%); padding: 20px; line-height: 1.6; color: var(--ink); }
+        :root {
+            --brand: #EE0000;
+            --brand-deep: #CC0000;
+            --brand-sky: #ffe4e6;
+            --ink: #1a1a2e;
+            --muted: #64748b;
+            --surface: #ffffff;
+            --panel: #ffffff;
+            --line: #dbe3f1;
+            --mint: #dcfce7;
+            --amber: #fef3c7;
+            --rose: #ffe4e6;
+            --blue: #2563eb;
+            --slate-900: #0f172a;
+            --slate-700: #334155;
+            --slate-500: #64748b;
+            --slate-200: #e2e8f0;
+        }
+        body {
+            font-family: "Segoe UI", system-ui, sans-serif;
+            background: linear-gradient(180deg, #f8fbff 0%, #eef4fb 100%);
+            color: var(--ink);
+            line-height: 1.6;
+            padding: 20px;
+        }
         .container { max-width: 1380px; margin: 0 auto; }
-        .hero { position: relative; text-align: center; background: var(--surface); border-radius: 16px; padding: 34px 32px 28px; box-shadow: 0 4px 18px rgba(0,0,0,0.08); margin-bottom: 26px; border: 1px solid rgba(238,0,0,0.1); }
-        .eyebrow { display: inline-flex; padding: 6px 12px; border-radius: 999px; background: var(--red-light); color: var(--red-deep); font-size: 0.82rem; font-weight: 700; margin-bottom: 12px; }
-        .hero h1 { color: var(--red); font-size: clamp(1.8rem, 4vw, 2.6rem); margin-bottom: 8px; }
-        .home-link { position: absolute; top: 16px; right: 20px; color: var(--red); text-decoration: none; font-weight: 600; padding: 6px 14px; border-radius: 8px; border: 1px solid rgba(238,0,0,0.18); background: rgba(238,0,0,0.06); }
-        .section-title { font-size: 17px; font-weight: bold; color: #334155; margin-bottom: 12px; padding: 8px 12px; background: #f1f5f9; border-left: 4px solid var(--red); border-radius: 0 6px 6px 0; }
-        .flow-section { margin-bottom: 22px; }
-        .repo-note { background: #dcfce7; border-left: 4px solid #22c55e; padding: 12px 16px; border-radius: 6px; margin-bottom: 20px; font-size: 0.9rem; }
-        .split { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        @media (max-width: 800px) { .split { grid-template-columns: 1fr; } }
-        .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px; }
-        .role-tree { font-family: ui-monospace, monospace; font-size: 0.82rem; line-height: 1.9; }
-        .tree-item { padding: 4px 8px; border-radius: 6px; cursor: pointer; transition: background 0.2s; }
-        .tree-item:hover, .tree-item.active { background: var(--red-light); }
-        .tree-item.dir { color: var(--red); font-weight: 600; }
-        .tree-item.file { color: #334155; padding-left: 24px; }
-        .tree-detail { background: #f8fafc; border: 1px solid var(--line); border-radius: 8px; padding: 12px; margin-top: 12px; font-size: 0.88rem; min-height: 60px; }
-        .vault-flow { padding: 16px 0; }
-        .flow-container { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
-        .flow-box { padding: 12px 16px; border-radius: 10px; text-align: center; font-weight: 600; font-size: 11px; cursor: pointer; transition: transform 0.2s; color: white; min-width: 110px; }
-        .flow-box.plain { background: linear-gradient(135deg, #64748b 0%, #475569 100%); }
-        .flow-box.encrypt { background: linear-gradient(135deg, var(--red) 0%, var(--red-deep) 100%); }
-        .flow-box.vault { background: linear-gradient(135deg, #b45309 0%, #92400e 100%); }
-        .flow-box.play { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); }
-        .flow-box:hover { transform: translateY(-2px); }
-        .flow-box.active { outline: 3px solid var(--vault); outline-offset: 2px; }
-        .arrow { font-size: 18px; color: var(--muted); font-weight: 700; }
-        .vault-preview { background: #1e293b; color: var(--vault); padding: 14px; border-radius: 8px; font-family: ui-monospace, monospace; font-size: 0.75rem; word-break: break-all; margin-top: 12px; }
-        .code-tabs { display: flex; gap: 5px; margin-bottom: 8px; flex-wrap: wrap; }
-        .code-tab { padding: 6px 14px; background: #e9ecef; border: none; border-radius: 6px 6px 0 0; cursor: pointer; font-size: 12px; font-weight: bold; }
-        .code-tab.active { background: var(--red); color: white; }
-        .code-content { display: none; }
-        .code-content.active { display: block; }
-        pre { background: #1e293b; color: #e2e8f0; padding: 14px; border-radius: 8px; font-size: 11px; line-height: 1.55; white-space: pre-wrap; }
-        .role-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-top: 12px; }
-        .role-card { background: #f8fafc; border: 1px solid var(--line); border-radius: 8px; padding: 12px; font-size: 0.85rem; }
-        .role-card strong { color: var(--red); display: block; margin-bottom: 4px; }
-        .security-note { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 12px 16px; border-radius: 6px; font-size: 0.88rem; margin-top: 16px; }
-        .footer-note { text-align: center; color: var(--muted); font-size: 0.88rem; margin-top: 24px; }
-        .footer-note a { color: var(--red); text-decoration: none; }
+        .hero {
+            position: relative;
+            text-align: center;
+            background: white;
+            border-radius: 16px;
+            padding: 34px 32px 28px;
+            box-shadow: 0 4px 18px rgba(15, 23, 42, 0.08);
+            margin-bottom: 26px;
+            border: 1px solid color-mix(in srgb, var(--brand) 10%, transparent);
+        }
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: var(--brand-sky);
+            color: var(--brand-deep);
+            font-size: 0.82rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 14px;
+        }
+        h1 {
+            font-size: clamp(2rem, 4vw, 3rem);
+            color: var(--brand);
+            margin-bottom: 10px;
+            line-height: 1.1;
+        }
+        .subtitle {
+            font-size: 1.03rem;
+            color: var(--muted);
+            max-width: 980px;
+            margin: 0 auto 18px;
+        }
+        .lead-panel {
+            background: linear-gradient(180deg, #f8fbff 0%, color-mix(in srgb, var(--brand-sky) 60%, white) 100%);
+            border: 1px solid color-mix(in srgb, var(--brand) 12%, transparent);
+            border-radius: 14px;
+            padding: 18px 20px;
+            max-width: 980px;
+            margin: 0 auto;
+        }
+        .lead-panel p { color: #334155; font-size: 0.98rem; }
+        .controls {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 0 0 24px;
+        }
+        .btn {
+            border: 2px solid var(--brand);
+            background: white;
+            color: var(--brand-deep);
+            padding: 11px 20px;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+        }
+        .btn:hover, .btn.active {
+            background: var(--brand);
+            color: white;
+            box-shadow: 0 4px 12px color-mix(in srgb, var(--brand) 30%, transparent);
+            transform: translateY(-2px);
+        }
+        .view {
+            display: none;
+            background: var(--panel);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 30px;
+            margin-bottom: 26px;
+            border: 1px solid rgba(15,23,42,0.04);
+        }
+        .view.active { display: block; }
+        .section-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 18px;
+            align-items: end;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .section-head h2 { color: var(--ink); font-size: 1.45rem; }
+        .section-kicker {
+            color: var(--brand-deep);
+            text-transform: uppercase;
+            font-size: 0.76rem;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            margin-bottom: 10px;
+        }
+        .section-note {
+            border-left: 4px solid var(--brand);
+            background: color-mix(in srgb, var(--brand-sky) 50%, white);
+            color: var(--brand-deep);
+            padding: 14px 16px;
+            border-radius: 12px;
+            margin-top: 18px;
+        }
+        .concept-grid, .practice-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));
+            gap: 18px;
+        }
+        .card {
+            background: linear-gradient(180deg, #ffffff, #f8fbff);
+            border: 1px solid var(--line);
+            border-top: 4px solid var(--brand);
+            border-radius: 16px;
+            padding: 20px;
+            min-height: 170px;
+            box-shadow: 0 6px 18px rgba(15,23,42,0.05);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .card:hover, .flow-step:hover, .example-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 24px rgba(15,23,42,0.1);
+        }
+        .card-badge {
+            display: inline-flex;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: var(--brand-sky);
+            color: var(--brand-deep);
+            font-weight: 700;
+            margin-bottom: 14px;
+        }
+        .practice-card .card-badge { background: var(--mint); color: #166534; }
+        .practice-card { border-top-color: #22c55e; }
+        .card p { color: #475569; }
+        .flow-track {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));
+            gap: 18px;
+        }
+        .flow-step {
+            position: relative;
+            border-radius: 16px;
+            padding: 22px 18px 18px;
+            border: 1px solid color-mix(in srgb, var(--brand) 18%, transparent);
+            background: linear-gradient(160deg, #ffffff 0%, color-mix(in srgb, var(--brand-sky) 40%, white) 100%);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .step-number {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            background: var(--brand);
+            color: white;
+            font-weight: 800;
+            margin-bottom: 14px;
+            box-shadow: 0 10px 20px color-mix(in srgb, var(--brand) 22%, transparent);
+        }
+        .flow-step h3 { font-size: 1rem; margin-bottom: 10px; color: #0f172a; }
+        .flow-step p { color: #475569; font-size: 0.95rem; }
+        .example-stack { display: grid; gap: 18px; }
+        .example-card {
+            border: 1px solid rgba(15,23,42,0.08);
+            border-radius: 16px;
+            padding: 18px;
+            background: linear-gradient(180deg, #ffffff, #f8fafc);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .lab-callout {
+            border: 1px dashed color-mix(in srgb, var(--brand) 35%, transparent);
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin: 14px 0;
+            background: color-mix(in srgb, var(--brand-sky) 35%, white);
+            color: #334155;
+            font-size: 0.92rem;
+        }
+        .lab-callout strong { color: var(--brand-deep); }
+        pre {
+            margin-top: 10px;
+            background: #0f172a;
+            color: #dbeafe;
+            border-radius: 16px;
+            padding: 18px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            overflow-x: hidden;
+            font-size: 0.88rem;
+            line-height: 1.55;
+            border: 1px solid rgba(148,163,184,0.18);
+        }
+        code { font-family: Consolas, 'Cascadia Code', monospace; }
+        .table-wrap {
+            overflow-x: auto;
+            border-radius: 16px;
+            border: 1px solid var(--line);
+            background: white;
+        }
+        table { width: 100%; border-collapse: collapse; }
+        th, td {
+            padding: 14px 16px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+            vertical-align: top;
+        }
+        th {
+            background: linear-gradient(180deg, var(--brand), var(--brand-deep));
+            color: white;
+            font-weight: 700;
+        }
+        tbody tr:nth-child(even) { background: #f8fbff; }
+        .footer-note {
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.9rem;
+            margin-top: 18px;
+        }
+        .footer-note a { color: var(--brand); text-decoration: none; }
+        .footer-note a:hover { text-decoration: underline; }
+        @media (max-width: 900px) {
+            body { padding: 14px; }
+            .hero, .view { padding: 22px; }
+            .controls { justify-content: flex-start; }
+            .concept-grid, .practice-grid, .flow-track { grid-template-columns: 1fr; }
+        }
+        .home-link {
+            position: absolute;
+            top: 16px;
+            right: 20px;
+            color: var(--brand);
+            text-decoration: none;
+            font-size: 0.88rem;
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: 8px;
+            border: 1px solid color-mix(in srgb, var(--brand) 18%, transparent);
+            background: color-mix(in srgb, var(--brand) 6%, transparent);
+            transition: background 0.2s, color 0.2s;
+        }
+        .home-link:hover {
+            background: color-mix(in srgb, var(--brand) 13%, transparent);
+            color: var(--brand-deep);
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <header class="hero">
             <a href="index.html" class="home-link">&#8962; Home</a>
-            <div class="eyebrow">Lessons 06–07 · Roles &amp; Vault</div>
-            <h1>Roles &amp; Ansible Vault</h1>
-            <p>Reusable automation packages + encrypted secrets at rest</p>
+            <div class="eyebrow">Ansible Essentials</div>
+            <h1>Roles & Vault</h1>
+            <p class="subtitle">Role directory layout, ansible-galaxy, and encrypting secrets with Ansible Vault.</p>
+            <div class="lead-panel">
+                <p>Roles package tasks, handlers, templates, and defaults. <strong>Ansible Vault</strong> encrypts sensitive files at rest in Git.</p>
+            </div>
         </header>
 
-        <div class="repo-note">
-            <strong>Repository files:</strong>
-            <code>roles/webserver/</code> · <code>playbooks/role-site.yml</code> ·
-            <code>vault/secrets.yml</code> · <code>playbooks/nodejs.yml</code>
+        <div class="controls">
+            <button class="btn active" data-view="concept">Concept</button>
+            <button class="btn" data-view="architecture">Architecture</button>
+            <button class="btn" data-view="flow">Flow</button>
+            <button class="btn" data-view="setup">Setup</button>
+            <button class="btn" data-view="commands">Commands</button>
+            <button class="btn" data-view="examples">Examples</button>
+            <button class="btn" data-view="comparison">Compare</button>
+            <button class="btn" data-view="practice">Practice</button>
         </div>
 
-        <div class="flow-section">
-            <div class="section-title">1. Role Directory Tree (click each item)</div>
-            <div class="split">
-                <div class="panel">
-                    <div class="role-tree">
-                        <div class="tree-item dir" onclick="showRole('root')">roles/webserver/</div>
-                        <div class="tree-item file" onclick="showRole('defaults')">├── defaults/main.yml</div>
-                        <div class="tree-item file" onclick="showRole('tasks')">├── tasks/main.yml</div>
-                        <div class="tree-item file" onclick="showRole('handlers')">├── handlers/main.yml</div>
-                        <div class="tree-item file" onclick="showRole('templates')">├── templates/ (optional)</div>
-                        <div class="tree-item file" onclick="showRole('files')">├── files/ (optional)</div>
-                        <div class="tree-item file" onclick="showRole('vars')">├── vars/main.yml (optional)</div>
-                        <div class="tree-item file" onclick="showRole('meta')">└── meta/main.yml (optional)</div>
-                    </div>
-                </div>
-                <div class="panel">
-                    <div id="role-detail" class="tree-detail">
-                        <strong>roles/webserver/</strong> — Self-contained unit invoked with <code>roles: [webserver]</code> in playbook. Ansible auto-loads tasks, handlers, defaults in order.
-                    </div>
-                    <div class="role-cards">
-                        <div class="role-card"><strong>defaults</strong>Low-precedence variables. Easy to override.</div>
-                        <div class="role-card"><strong>tasks</strong>Required. Main work happens here.</div>
-                        <div class="role-card"><strong>handlers</strong>Notified restarts and reloads.</div>
-                    </div>
+        <section id="concept" class="view active">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Core Model</div>
+                    <h2>Roles and Secrets</h2>
                 </div>
             </div>
-        </div>
-
-        <div class="flow-section">
-            <div class="section-title">2. Vault Encryption Flow (click each stage)</div>
-            <div class="panel vault-flow">
-                <div class="flow-container">
-                    <div class="flow-box plain" onclick="showVault('plain')">Plain YAML<br><small>api_token: secret</small></div>
-                    <span class="arrow">→</span>
-                    <div class="flow-box encrypt" onclick="showVault('encrypt')">ansible-vault<br><small>encrypt</small></div>
-                    <span class="arrow">→</span>
-                    <div class="flow-box vault" onclick="showVault('encrypted')">$ANSIBLE_VAULT<br><small>at rest in Git</small></div>
-                </div>
-                <div class="flow-container">
-                    <div class="flow-box play" onclick="showVault('playbook')">ansible-playbook<br><small>--vault-password-file</small></div>
-                    <span class="arrow">→</span>
-                    <div class="flow-box plain" onclick="showVault('decrypt')">Decrypt in memory<br><small>vars available</small></div>
-                    <span class="arrow">→</span>
-                    <div class="flow-box play" onclick="showVault('use')">Tasks use<br><small>{{ api_token }}</small></div>
-                </div>
-                <div id="vault-detail" class="tree-detail">
-                    <strong>Plain YAML:</strong> secrets.yml contains api_token and db_password in cleartext. Never commit production secrets unencrypted.
-                </div>
-                <div class="vault-preview">$ANSIBLE_VAULT;1.1;AES256<br>6638643965383664306438363034623030613530313665370a...</div>
+<div class="concept-grid">
+                <article class="card">
+                    <div class="card-badge">Role layout</div>
+                    <p>tasks/, handlers/, templates/, defaults/, vars/.</p>
+                </article>
+                <article class="card">
+                    <div class="card-badge">roles_path</div>
+                    <p>ansible.cfg roles_path or ./roles/</p>
+                </article>
+                <article class="card">
+                    <div class="card-badge">include_role</div>
+                    <p>Dynamic role inclusion in tasks.</p>
+                </article>
+                <article class="card">
+                    <div class="card-badge">Vault</div>
+                    <p>Encrypt files — ansible-vault encrypt secrets.yml.</p>
+                </article>
+                <article class="card">
+                    <div class="card-badge">Vault password</div>
+                    <p>File, prompt, or script — never commit password.</p>
+                </article>
+                <article class="card">
+                    <div class="card-badge">Capstone</div>
+                    <p>Lab 07 combines roles, vault, and Node.js deploy.</p>
+                </article>
             </div>
-            <div class="security-note">
-                <strong>Lab only:</strong> <code>~/.vault_pass</code> with plaintext password is for learning. Production: use CI secrets manager, HashiCorp Vault, or AWS Secrets Manager — never commit password files.
+        </section>
+        <section id="architecture" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Role Layout</div>
+                    <h2>Standard Role Tree</h2>
+                </div>
             </div>
-        </div>
-
-        <div class="flow-section">
-            <div class="section-title">3. Code Examples</div>
-            <div class="code-tabs">
-                <button class="code-tab active" onclick="showCode('role')">role-site.yml</button>
-                <button class="code-tab" onclick="showCode('tasks')">role tasks</button>
-                <button class="code-tab" onclick="showCode('vault')">vault commands</button>
-                <button class="code-tab" onclick="showCode('nodejs')">nodejs.yml</button>
-                <button class="code-tab" onclick="showCode('galaxy')">ansible-galaxy</button>
-            </div>
-            <div id="role-code" class="code-content active">
-                <pre># labs/playbooks/role-site.yml
----
-- name: Site with webserver role
-  hosts: webservers
-  become: true
+<div class="example-stack">
+            <div class="lab-callout"><strong>Repo lab files:</strong> ansible/essentials/labs/roles/</div>
+                <section class="example-card">
+                    <div class="section-kicker">Role tree</div>
+                    <pre><code>roles/webserver/
+├── tasks/main.yml
+├── handlers/main.yml
+├── templates/nginx.conf.j2
+├── defaults/main.yml
+└── vars/main.yml</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">site.yml</div>
+                    <pre><code>- hosts: webservers
   roles:
-    - webserver</pre>
+    - webserver</code></pre>
+                </section>
             </div>
-            <div id="tasks-code" class="code-content">
-                <pre># roles/webserver/tasks/main.yml
-- name: Install web package
-  ansible.builtin.apt:
-    name: "{{ web_package }}"
-    state: present
-    update_cache: true
-
-- name: Enable mod_rewrite
-  ansible.builtin.apache2_module:
-    name: rewrite
-    state: present
-  notify: Restart web service
-
-- name: Ensure web service running
-  ansible.builtin.service:
-    name: "{{ web_service }}"
-    state: started
-    enabled: true</pre>
+            <svg viewBox="0 0 950 320" style="width:100%;max-width:950px;margin:20px auto;display:block;">
+                <text x="475" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#1e293b">Vault Workflow</text>
+                <rect x="50" y="80" width="150" height="55" rx="8" fill="#ffe4e6" stroke="#EE0000" stroke-width="2"/><text x="125" y="107" text-anchor="middle" font-size="12" font-weight="bold" fill="#1e293b">plaintext secret</text><rect x="230" y="80" width="150" height="55" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/><text x="305" y="107" text-anchor="middle" font-size="12" font-weight="bold" fill="#1e293b">ansible-vault encrypt</text><rect x="410" y="80" width="150" height="55" rx="8" fill="#dcfce7" stroke="#22c55e" stroke-width="2"/><text x="485" y="107" text-anchor="middle" font-size="12" font-weight="bold" fill="#1e293b">vault file in Git</text><rect x="590" y="80" width="150" height="55" rx="8" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/><text x="665" y="107" text-anchor="middle" font-size="12" font-weight="bold" fill="#1e293b">playbook --ask-vault-pass</text>
+                
+            </svg>
+        </section>
+        <section id="flow" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Labs 06–07</div>
+                    <h2>Roles and Vault Path</h2>
+                </div>
             </div>
-            <div id="vault-code" class="code-content">
-                <pre># Create password file (lab only)
-echo 'lab-vault-password' > ~/.vault_pass && chmod 600 ~/.vault_pass
-
-# Encrypt
-ansible-vault encrypt vault/secrets.yml --vault-password-file ~/.vault_pass
-
-# View without decrypting to disk
-ansible-vault view vault/secrets.yml --vault-password-file ~/.vault_pass
-
-# Edit in place
-ansible-vault edit vault/secrets.yml --vault-password-file ~/.vault_pass
-
-# Encrypt single variable
-ansible-vault encrypt_string 'mysecret' --name api_token \
-  --vault-password-file ~/.vault_pass</pre>
+<div class="flow-track">
+                <div class="flow-step">
+                    <div class="step-number">1</div>
+                    <h3>Lab 06</h3>
+                    <p>Create role with tasks and handlers.</p>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">2</div>
+                    <h3>galaxy init</h3>
+                    <p>ansible-galaxy init myrole — scaffold structure.</p>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">3</div>
+                    <h3>Lab 07 vault</h3>
+                    <p>ansible-vault create group_vars/webservers/vault.yml</p>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">4</div>
+                    <h3>Run encrypted</h3>
+                    <p>ansible-playbook site.yml --ask-vault-pass</p>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">5</div>
+                    <h3>Capstone</h3>
+                    <p>Node.js role with vaulted DB password.</p>
+                </div>
             </div>
-            <div id="nodejs-code" class="code-content">
-                <pre># labs/playbooks/nodejs.yml — Vault + Node.js 20
----
-- name: Install Node.js 20.x
-  hosts: webservers
-  become: true
-  vars_files:
-    - ../vault/secrets.yml
-  tasks:
-    - name: Show token length (uses vault var)
-      ansible.builtin.debug:
-        msg: "api_token length is {{ api_token | length }}"
-
-# Run with vault password
-ansible-playbook -i inventory/hosts.ini.local playbooks/nodejs.yml \
-  --vault-password-file ~/.vault_pass</pre>
+        </section>
+        <section id="setup" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Vault</div>
+                    <h2>Vault Operations</h2>
+                </div>
             </div>
-            <div id="galaxy-code" class="code-content">
-                <pre># Create new role skeleton
-ansible-galaxy init webserver
-
-# Install role from Galaxy
-ansible-galaxy install geerlingguy.apache
-
-# requirements.yml for roles
----
-roles:
-  - name: geerlingguy.apache
-    version: 3.1.0</pre>
+<div class="example-stack">
+                <section class="example-card">
+                    <div class="section-kicker">Create</div>
+                    <pre><code>ansible-vault create secrets.yml</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">Edit</div>
+                    <pre><code>ansible-vault edit secrets.yml</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">Encrypt string</div>
+                    <pre><code>ansible-vault encrypt_string 'dbpass' --name 'db_password'</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">Vault ID file</div>
+                    <pre><code>echo 'mypass' &gt; ~/.vault_pass &amp;&amp; chmod 600 ~/.vault_pass</code></pre>
+                </section>
             </div>
-        </div>
-
-        <div class="flow-section">
-            <div class="section-title">4. Role vs Playbook — When to Extract</div>
-            <table style="width:100%;border-collapse:collapse;font-size:0.88rem;">
-                <thead><tr style="background:var(--red-light);"><th style="padding:10px;border:1px solid var(--line);">Situation</th><th style="padding:10px;border:1px solid var(--line);">Recommendation</th></tr></thead>
-                <tbody>
-                    <tr><td style="padding:8px;border:1px solid var(--line);">Single-purpose lab playbook</td><td style="padding:8px;border:1px solid var(--line);">Inline tasks OK (apache.yml)</td></tr>
-                    <tr><td style="padding:8px;border:1px solid var(--line);">Reused across playbooks</td><td style="padding:8px;border:1px solid var(--line);">Extract to role (webserver)</td></tr>
-                    <tr><td style="padding:8px;border:1px solid var(--line);">Sharing on Galaxy</td><td style="padding:8px;border:1px solid var(--line);">Role with meta/main.yml</td></tr>
-                    <tr><td style="padding:8px;border:1px solid var(--line);">Secrets in Git</td><td style="padding:8px;border:1px solid var(--line);">Vault encrypt + vars_files</td></tr>
-                </tbody>
-            </table>
-        </div>
-
-        <div class="flow-section">
-            <div class="section-title">5. Variable Precedence in Roles</div>
-            <div class="panel">
-                <pre style="background:#f8fafc;color:#334155;border:1px solid var(--line);font-size:0.82rem;">
-CLI extra vars (-e)           ← highest
-play vars / vars_files
-inventory group_vars / host_vars
-role vars (vars/main.yml)
-role defaults (defaults/main.yml)  ← lowest
-                </pre>
-                <p style="font-size:0.88rem;margin-top:12px;">Override <code>web_package</code> in <code>group_vars/webservers.yml</code> without editing <code>roles/webserver/tasks/main.yml</code>.</p>
+        </section>
+        <section id="commands" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Quick Reference</div>
+                    <h2>Role and Vault CLI</h2>
+                </div>
             </div>
-        </div>
-
-        <div class="flow-section">
-            <div class="section-title">6. Vault CLI Quick Reference</div>
-            <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
-                <thead><tr style="background:var(--red-light);"><th style="padding:10px;border:1px solid var(--line);">Operation</th><th style="padding:10px;border:1px solid var(--line);">Command</th></tr></thead>
-                <tbody>
-                    <tr><td style="padding:8px;border:1px solid var(--line);">Encrypt</td><td style="padding:8px;border:1px solid var(--line);"><code>ansible-vault encrypt vault/secrets.yml --vault-password-file ~/.vault_pass</code></td></tr>
-                    <tr><td style="padding:8px;border:1px solid var(--line);">View</td><td style="padding:8px;border:1px solid var(--line);"><code>ansible-vault view vault/secrets.yml --vault-password-file ~/.vault_pass</code></td></tr>
-                    <tr><td style="padding:8px;border:1px solid var(--line);">Edit</td><td style="padding:8px;border:1px solid var(--line);"><code>ansible-vault edit vault/secrets.yml --vault-password-file ~/.vault_pass</code></td></tr>
-                    <tr><td style="padding:8px;border:1px solid var(--line);">Rekey</td><td style="padding:8px;border:1px solid var(--line);"><code>ansible-vault rekey vault/secrets.yml --vault-password-file ~/.vault_pass</code></td></tr>
-                    <tr><td style="padding:8px;border:1px solid var(--line);">Run playbook</td><td style="padding:8px;border:1px solid var(--line);"><code>ansible-playbook playbooks/nodejs.yml --vault-password-file ~/.vault_pass</code></td></tr>
-                </tbody>
-            </table>
-        </div>
-
-        <div class="flow-section">
-            <div class="section-title">7. Troubleshooting</div>
-            <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
-                <thead><tr style="background:#fef3c7;"><th style="padding:10px;border:1px solid var(--line);">Symptom</th><th style="padding:10px;border:1px solid var(--line);">Fix</th></tr></thead>
-                <tbody>
-                    <tr><td style="padding:8px;border:1px solid var(--line);">Role not found</td><td style="padding:8px;border:1px solid var(--line);">Run from <code>labs/</code>; check <code>roles_path</code> in ansible.cfg</td></tr>
-                    <tr><td style="padding:8px;border:1px solid var(--line);">Handler never runs</td><td style="padding:8px;border:1px solid var(--line);">Match <code>notify</code> string to handler <code>name</code> exactly</td></tr>
-                    <tr><td style="padding:8px;border:1px solid var(--line);">Vault decrypt failed</td><td style="padding:8px;border:1px solid var(--line);">Wrong password file; try <code>--ask-vault-pass</code></td></tr>
-                    <tr><td style="padding:8px;border:1px solid var(--line);">api_token undefined</td><td style="padding:8px;border:1px solid var(--line);">Add <code>vars_files</code> and vault password at runtime</td></tr>
-                    <tr><td style="padding:8px;border:1px solid var(--line);">Node install fails</td><td style="padding:8px;border:1px solid var(--line);">Ubuntu 22.04 + HTTPS egress; use Node 20 repo in nodejs.yml</td></tr>
-                </tbody>
-            </table>
-        </div>
-
-        <div class="flow-section">
-            <div class="section-title">8. Capstone Checklist (Lab 07)</div>
-            <div class="repo-note">
-                <ol style="margin-left:18px;font-size:0.88rem;line-height:1.9;">
-                    <li>Create <code>~/.vault_pass</code> (chmod 600) — lab only</li>
-                    <li>Encrypt <code>vault/secrets.yml</code></li>
-                    <li>Run <code>playbooks/nodejs.yml</code> with vault password</li>
-                    <li>Verify <code>node --version</code> shows v20.x on webservers</li>
-                    <li>Confirm playbook fails without vault password</li>
-                </ol>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Category</th><th>Command</th><th>Description</th></tr></thead>
+                    <tbody>
+                        <tr><td>Galaxy init</td><td><code>ansible-galaxy init ROLE</code></td><td>Scaffold role</td></tr>
+                        <tr><td>Vault encrypt</td><td><code>ansible-vault encrypt FILE</code></td><td>Encrypt file</td></tr>
+                        <tr><td>Vault view</td><td><code>ansible-vault view FILE</code></td><td>Decrypt to stdout</td></tr>
+                        <tr><td>Playbook vault</td><td><code>--ask-vault-pass</code></td><td>Prompt for password</td></tr>
+                        <tr><td>Vault file</td><td><code>--vault-password-file ~/.vault_pass</code></td><td>Non-interactive</td></tr>
+                    </tbody>
+                </table>
             </div>
-        </div>
-
-        <div class="flow-section">
-            <div class="section-title">9. Galaxy and Sharing</div>
-            <pre style="background:#1e293b;color:#e2e8f0;padding:14px;border-radius:8px;font-size:11px;">ansible-galaxy init myrole
-ansible-galaxy install geerlingguy.apache
-
-# requirements.yml
-roles:
-  - name: geerlingguy.apache
-    version: 3.1.0</pre>
-        </div>
-
-        <div class="flow-section">
-            <div class="section-title">10. Node.js + Vault Runtime</div>
-            <pre style="background:#1e293b;color:#e2e8f0;padding:14px;border-radius:8px;font-size:11px;">ansible-playbook -i inventory/hosts.ini.local playbooks/nodejs.yml \
-  --vault-password-file ~/.vault_pass
-
-ansible webservers -i inventory/hosts.ini.local -m ansible.builtin.command -a "node --version"</pre>
-        </div>
-
-        <div class="flow-section">
-            <div class="section-title">5. Vault Troubleshooting</div>
-            <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
-                <thead><tr style="background:#fef3c7;"><th style="padding:8px;border:1px solid var(--line);">Symptom</th><th style="padding:8px;border:1px solid var(--line);">Fix</th></tr></thead>
-                <tbody>
-                    <tr><td style="padding:8px;border:1px solid var(--line);">Decryption failed</td><td style="padding:8px;border:1px solid var(--line);">Wrong password file; verify ~/.vault_pass contents</td></tr>
-                    <tr><td style="padding:8px;border:1px solid var(--line);">'api_token' undefined</td><td style="padding:8px;border:1px solid var(--line);">Missing vars_files or --vault-password-file</td></tr>
-                    <tr><td style="padding:8px;border:1px solid var(--line);">Vault file is unencrypted</td><td style="padding:8px;border:1px solid var(--line);">Run ansible-vault encrypt vault/secrets.yml</td></tr>
-                    <tr><td style="padding:8px;border:1px solid var(--line);">Role not found</td><td style="padding:8px;border:1px solid var(--line);">Run from labs/ dir; check roles_path in ansible.cfg</td></tr>
-                </tbody>
-            </table>
-        </div>
-
-        <div class="flow-section">
-            <div class="section-title">6. Capstone Flow (Lab 07)</div>
-            <div class="flow-container">
-                <div class="flow-box plain" style="background:linear-gradient(135deg,#64748b,#475569);">Encrypt secrets.yml</div>
-                <span class="arrow">→</span>
-                <div class="flow-box play">nodejs.yml vars_files</div>
-                <span class="arrow">→</span>
-                <div class="flow-box encrypt">NodeSource Node 20</div>
-                <span class="arrow">→</span>
-                <div class="flow-box play">node --version</div>
+            <div class="section-note">Extended reference appendix — bookmark for exam prep and on-the-job lookup.</div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Topic</th><th>Command / Pattern</th><th>Notes</th></tr></thead>
+                    <tbody>
+                        <tr><td>roles:</td><td>list in play</td><td>Lab 06</td></tr>
+                        <tr><td>defaults/</td><td>lowest precedence</td><td>Lab 06</td></tr>
+                        <tr><td>vault.yml</td><td>encrypted group_vars</td><td>Lab 07</td></tr>
+                        <tr><td>NODEJS</td><td>capstone playbook</td><td>Lab 07</td></tr>
+                        <tr><td>.gitignore</td><td>vault password file</td><td>Security</td></tr>
+                    </tbody>
+                </table>
+            </div>            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Roles/Vault — reference drill 1</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
             </div>
-            <p style="font-size:0.88rem;color:var(--muted);">Modern NodeSource setup: get_url for GPG key → apt_repository with signed-by → apt install nodejs. No deprecated apt_key.</p>
-        </div>
-
-        <p class="footer-note">
-            Deep dive: <a href="../docs/06-roles/ansible-roles.md">ansible-roles.md</a> ·
-            <a href="../docs/07-vault/ansible-vault.md">ansible-vault.md</a> ·
-            Labs: <a href="../labmanuals/lab06-roles-create.md">lab06</a> · <a href="../labmanuals/lab07-vault-and-nodejs-capstone.md">lab07</a>
-        </p>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Roles/Vault — reference drill 2</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Roles/Vault — reference drill 3</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="section-note">Extended reference appendix — bookmark for exam prep and on-the-job lookup.</div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Topic</th><th>Command / Pattern</th><th>Notes</th></tr></thead>
+                    <tbody>
+                        <tr><td>Review</td><td>Re-read lab manual objectives</td><td>Roles & Vault</td></tr>
+                        <tr><td>Validate</td><td>Run syntax-check or validate</td><td>Before apply</td></tr>
+                        <tr><td>Cleanup</td><td>Destroy or remove lab changes</td><td>End of session</td></tr>
+                        <tr><td>Docs</td><td>Cross-link markdown docs</td><td>../docs/</td></tr>
+                        <tr><td>Git</td><td>Commit only safe files</td><td>No secrets/state</td></tr>
+                        <tr><td>Pair</td><td>Walk through with teammate</td><td>Teaching reinforces</td></tr>
+                        <tr><td>Notes</td><td>Document failures and fixes</td><td>Personal runbook</td></tr>
+                        <tr><td>Next</td><td>Follow learning path order</td><td>curriculum/learning-paths.md</td></tr>
+                    </tbody>
+                </table>
+            </div>            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Roles & Vault — reference drill 1</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Roles & Vault — reference drill 2</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Roles & Vault — reference drill 3</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+        </section>
+        <section id="examples" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Hands-On</div>
+                    <h2>Labs 06–07</h2>
+                </div>
+            </div>
+<div class="example-stack">
+            <div class="lab-callout"><strong>Repo lab files:</strong> labs/playbooks/nodejs.yml</div>
+                <section class="example-card">
+                    <div class="section-kicker">Role lab</div>
+                    <pre><code>cd ansible/essentials/labs
+ansible-playbook -i inventory/hosts.ini.local playbooks/role-site.yml</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">Vault capstone</div>
+                    <pre><code>ansible-playbook -i inventory/hosts.ini.local playbooks/nodejs.yml --ask-vault-pass</code></pre>
+                </section>
+            </div>
+            <div class="section-note">Extended reference appendix — bookmark for exam prep and on-the-job lookup.</div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Topic</th><th>Command / Pattern</th><th>Notes</th></tr></thead>
+                    <tbody>
+                        <tr><td>Review</td><td>Re-read lab manual objectives</td><td>Roles & Vault</td></tr>
+                        <tr><td>Validate</td><td>Run syntax-check or validate</td><td>Before apply</td></tr>
+                        <tr><td>Cleanup</td><td>Destroy or remove lab changes</td><td>End of session</td></tr>
+                        <tr><td>Docs</td><td>Cross-link markdown docs</td><td>../docs/</td></tr>
+                        <tr><td>Git</td><td>Commit only safe files</td><td>No secrets/state</td></tr>
+                        <tr><td>Pair</td><td>Walk through with teammate</td><td>Teaching reinforces</td></tr>
+                        <tr><td>Notes</td><td>Document failures and fixes</td><td>Personal runbook</td></tr>
+                        <tr><td>Next</td><td>Follow learning path order</td><td>curriculum/learning-paths.md</td></tr>
+                    </tbody>
+                </table>
+            </div>            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Roles & Vault — reference drill 1</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Roles & Vault — reference drill 2</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Roles & Vault — reference drill 3</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+        </section>
+        <section id="comparison" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Decision Guide</div>
+                    <h2>Roles vs Plain Playbooks</h2>
+                </div>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th></th><th>Plain playbook</th><th>Role</th></tr></thead>
+                    <tbody>
+                        <tr><td>Reuse</td><td>Copy-paste</td><td>Importable</td></tr>
+                        <tr><td>Galaxy share</td><td>No</td><td>Yes</td></tr>
+                        <tr><td>Lab 06+</td><td>Early learning</td><td>Standard pattern</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        <section id="practice" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Use It Well</div>
+                    <h2>Roles & Vault Practice</h2>
+                </div>
+            </div>
+<div class="practice-grid">
+                <article class="card practice-card">
+                    <div class="card-badge">Lab 06</div>
+                    <p>Build and apply custom role.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab06-roles-create.md">Open lab manual →</a></p>
+                </article>
+                <article class="card practice-card">
+                    <div class="card-badge">Lab 07</div>
+                    <p>Vault secrets and Node.js capstone.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab07-vault-and-nodejs-capstone.md">Open lab manual →</a></p>
+                </article>
+                <article class="card practice-card">
+                    <div class="card-badge">galaxy init</div>
+                    <p>Scaffold role; compare to hand-built.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab06-roles-create.md">Open lab manual →</a></p>
+                </article>
+                <article class="card practice-card">
+                    <div class="card-badge">encrypt_string</div>
+                    <p>Embed vaulted inline variable.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab07-vault-and-nodejs-capstone.md">Open lab manual →</a></p>
+                </article>
+                <article class="card practice-card">
+                    <div class="card-badge">Rotate secret</div>
+                    <p>vault edit — change password safely.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab07-vault-and-nodejs-capstone.md">Open lab manual →</a></p>
+                </article>
+                <article class="card practice-card">
+                    <div class="card-badge">Never commit</div>
+                    <p>Confirm .gitignore for vault pass.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab07-vault-and-nodejs-capstone.md">Open lab manual →</a></p>
+                </article>
+            </div>
+            <div class="section-note">Extended reference appendix — bookmark for exam prep and on-the-job lookup.</div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Topic</th><th>Command / Pattern</th><th>Notes</th></tr></thead>
+                    <tbody>
+                        <tr><td>Review</td><td>Re-read lab manual objectives</td><td>Roles & Vault</td></tr>
+                        <tr><td>Validate</td><td>Run syntax-check or validate</td><td>Before apply</td></tr>
+                        <tr><td>Cleanup</td><td>Destroy or remove lab changes</td><td>End of session</td></tr>
+                        <tr><td>Docs</td><td>Cross-link markdown docs</td><td>../docs/</td></tr>
+                        <tr><td>Git</td><td>Commit only safe files</td><td>No secrets/state</td></tr>
+                        <tr><td>Pair</td><td>Walk through with teammate</td><td>Teaching reinforces</td></tr>
+                        <tr><td>Notes</td><td>Document failures and fixes</td><td>Personal runbook</td></tr>
+                        <tr><td>Next</td><td>Follow learning path order</td><td>curriculum/learning-paths.md</td></tr>
+                    </tbody>
+                </table>
+            </div>            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Roles & Vault — reference drill 1</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Roles & Vault — reference drill 2</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Roles & Vault — reference drill 3</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+        </section>
     </div>
 
     <script>
-        const roleInfo = {
-            root: '<strong>roles/webserver/</strong> — Standard layout. Ansible loads defaults → tasks → handlers automatically when role is listed.',
-            defaults: '<strong>defaults/main.yml</strong> — web_package: apache2, web_service: apache2. Lowest precedence; override in group_vars or -e.',
-            tasks: '<strong>tasks/main.yml</strong> — Install package, enable module, ensure service. Main automation logic.',
-            handlers: '<strong>handlers/main.yml</strong> — Restart web service when config changes. Runs at end of play if notified.',
-            templates: '<strong>templates/</strong> — Jinja2 files deployed via template module. Optional for this role.',
-            files: '<strong>files/</strong> — Static files copied via copy module. No Jinja processing.',
-            vars: '<strong>vars/main.yml</strong> — Higher precedence than defaults. Use for role-internal constants.',
-            meta: '<strong>meta/main.yml</strong> — Role dependencies, Galaxy metadata, supported platforms.'
-        };
-        const vaultInfo = {
-            plain: '<strong>Plain YAML:</strong> vault/secrets.yml with api_token and db_password. Readable by anyone with file access.',
-            encrypt: '<strong>ansible-vault encrypt:</strong> Prompts for password, rewrites file with AES256 envelope. Original content destroyed on disk.',
-            encrypted: '<strong>At rest:</strong> File starts with $ANSIBLE_VAULT;1.1;AES256. Safe to commit to Git (not the password!).',
-            playbook: '<strong>Runtime decrypt:</strong> --vault-password-file or --ask-vault-pass supplies key. Ansible decrypts in memory only.',
-            decrypt: '<strong>In memory:</strong> Variables from vars_files available to tasks as {{ api_token }}. Never written cleartext to target.',
-            use: '<strong>In tasks:</strong> nodejs.yml uses api_token in debug (shows length only — good practice).'
-        };
-        function showRole(key) {
-            document.querySelectorAll('.tree-item').forEach(el => el.classList.remove('active'));
-            event.currentTarget.classList.add('active');
-            document.getElementById('role-detail').innerHTML = roleInfo[key] || '';
-        }
-        function showVault(key) {
-            document.querySelectorAll('.flow-box').forEach(el => el.classList.remove('active'));
-            event.currentTarget.classList.add('active');
-            document.getElementById('vault-detail').innerHTML = vaultInfo[key] || '';
-        }
-        function showCode(type) {
-            document.querySelectorAll('.code-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.code-tab').forEach(el => el.classList.remove('active'));
-            document.getElementById(type + '-code').classList.add('active');
-            event.target.classList.add('active');
-        }
+        const buttons = document.querySelectorAll('.btn');
+        const views = document.querySelectorAll('.view');
+        buttons.forEach((button) => {
+            button.addEventListener('click', () => {
+                const viewId = button.dataset.view;
+                buttons.forEach((b) => b.classList.remove('active'));
+                views.forEach((v) => v.classList.remove('active'));
+                button.classList.add('active');
+                document.getElementById(viewId).classList.add('active');
+            });
+        });
     </script>
 </body>
 </html>

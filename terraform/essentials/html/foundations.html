@@ -3,361 +3,721 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Terraform Foundations — Providers, Resources & HCL</title>
+    <title>Terraform Foundations — Interactive Guide</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
-            --purple: #7B42BC; --purple-deep: #5c2d94; --purple-sky: #ede4f7;
-            --ink: #261a33; --muted: #665b70; --line: #e8ddf2;
-            --amber: #fef3c7; --mint: #dcfce7; --slate-700: #334155;
+            --brand: #7B42BC;
+            --brand-deep: #5c2d94;
+            --brand-sky: #ede4f7;
+            --ink: #1a1a2e;
+            --muted: #64748b;
+            --surface: #ffffff;
+            --panel: #ffffff;
+            --line: #dbe3f1;
+            --mint: #dcfce7;
+            --amber: #fef3c7;
+            --rose: #ffe4e6;
+            --blue: #2563eb;
+            --slate-900: #0f172a;
+            --slate-700: #334155;
+            --slate-500: #64748b;
+            --slate-200: #e2e8f0;
         }
         body {
             font-family: "Segoe UI", system-ui, sans-serif;
-            background: linear-gradient(180deg, #fcfaff 0%, #f3ebfa 100%);
-            color: var(--ink); line-height: 1.6; padding: 20px;
+            background: linear-gradient(180deg, #f8fbff 0%, #eef4fb 100%);
+            color: var(--ink);
+            line-height: 1.6;
+            padding: 20px;
         }
-        .container { max-width: 1200px; margin: 0 auto; }
+        .container { max-width: 1380px; margin: 0 auto; }
         .hero {
-            position: relative; text-align: center; background: white;
-            border-radius: 16px; padding: 34px 32px 28px;
-            box-shadow: 0 4px 18px rgba(123, 66, 188, 0.12);
-            margin-bottom: 26px; border: 1px solid rgba(123, 66, 188, 0.15);
+            position: relative;
+            text-align: center;
+            background: white;
+            border-radius: 16px;
+            padding: 34px 32px 28px;
+            box-shadow: 0 4px 18px rgba(15, 23, 42, 0.08);
+            margin-bottom: 26px;
+            border: 1px solid color-mix(in srgb, var(--brand) 10%, transparent);
         }
         .eyebrow {
-            display: inline-flex; padding: 6px 14px; border-radius: 999px;
-            background: var(--purple-sky); color: var(--purple-deep);
-            font-size: 0.82rem; font-weight: 700; margin-bottom: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: var(--brand-sky);
+            color: var(--brand-deep);
+            font-size: 0.82rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 14px;
         }
-        .hero h1 { color: var(--purple); font-size: clamp(1.8rem, 4vw, 2.6rem); }
-        .hero .subtitle { color: var(--muted); max-width: 700px; margin: 8px auto 0; }
-        .home-link {
-            position: absolute; top: 16px; right: 20px; color: var(--purple);
-            text-decoration: none; font-weight: 600; padding: 6px 14px;
-            border-radius: 8px; border: 1px solid rgba(123,66,188,0.2);
-            background: rgba(123,66,188,0.06);
+        h1 {
+            font-size: clamp(2rem, 4vw, 3rem);
+            color: var(--brand);
+            margin-bottom: 10px;
+            line-height: 1.1;
         }
-        .nav-bar {
-            display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
-            margin-bottom: 20px; padding: 10px; background: white;
-            border-radius: 10px; border: 1px solid var(--line);
+        .subtitle {
+            font-size: 1.03rem;
+            color: var(--muted);
+            max-width: 980px;
+            margin: 0 auto 18px;
         }
-        .nav-bar a { color: var(--purple); font-weight: 600; text-decoration: none; padding: 6px 12px; border-radius: 6px; font-size: 0.88rem; }
-        .nav-bar a:hover, .nav-bar a.active { background: var(--purple-sky); }
-        .section-title {
-            font-size: 18px; font-weight: bold; color: var(--slate-700);
-            margin: 22px 0 10px; padding: 8px 12px;
-            background: #f4eef9; border-left: 4px solid var(--purple);
+        .lead-panel {
+            background: linear-gradient(180deg, #f8fbff 0%, color-mix(in srgb, var(--brand-sky) 60%, white) 100%);
+            border: 1px solid color-mix(in srgb, var(--brand) 12%, transparent);
+            border-radius: 14px;
+            padding: 18px 20px;
+            max-width: 980px;
+            margin: 0 auto;
         }
-        .flow-container {
-            display: flex; align-items: center; justify-content: center;
-            flex-wrap: wrap; gap: 10px; margin-bottom: 14px;
+        .lead-panel p { color: #334155; font-size: 0.98rem; }
+        .controls {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 0 0 24px;
         }
-        .flow-box {
-            background: linear-gradient(135deg, #7B42BC 0%, #9b59d0 100%);
-            color: white; padding: 12px 18px; border-radius: 8px;
-            font-weight: bold; font-size: 13px; cursor: pointer;
-            transition: all 0.3s; box-shadow: 0 4px 8px rgba(123,66,188,0.25); min-width: 130px; text-align: center;
+        .btn {
+            border: 2px solid var(--brand);
+            background: white;
+            color: var(--brand-deep);
+            padding: 11px 20px;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
         }
-        .flow-box:hover { transform: translateY(-3px); }
-        .flow-box.config { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .flow-box.graph { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: #1a3a2e; }
-        .flow-box.api { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
-        .flow-box.state { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: #4a3728; }
-        .arrow { font-size: 22px; color: var(--muted); }
-        .concept-grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 14px; margin-bottom: 18px;
+        .btn:hover, .btn.active {
+            background: var(--brand);
+            color: white;
+            box-shadow: 0 4px 12px color-mix(in srgb, var(--brand) 30%, transparent);
+            transform: translateY(-2px);
         }
-        .concept-card {
-            background: white; border: 2px solid var(--line); border-radius: 10px;
-            padding: 16px; cursor: pointer; transition: all 0.3s;
+        .view {
+            display: none;
+            background: var(--panel);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 30px;
+            margin-bottom: 26px;
+            border: 1px solid rgba(15,23,42,0.04);
         }
-        .concept-card:hover { border-color: var(--purple); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(123,66,188,0.15); }
-        .concept-card.active { border-color: var(--purple); background: #faf5ff; }
-        .concept-card h4 { color: var(--purple); margin-bottom: 6px; }
-        .concept-card p { font-size: 0.88rem; color: var(--muted); }
-        .example-scenario {
-            background: var(--amber); border-left: 4px solid #f59e0b;
-            padding: 14px; border-radius: 8px; margin: 16px 0;
+        .view.active { display: block; }
+        .section-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 18px;
+            align-items: end;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid #e2e8f0;
         }
-        .example-scenario h3 { font-size: 14px; color: #92400e; margin-bottom: 6px; }
-        .example-scenario p { font-size: 13px; color: #78350f; }
-        .repo-callout {
-            background: var(--mint); border-left: 4px solid #22c55e;
-            padding: 14px 18px; border-radius: 8px; margin: 16px 0;
+        .section-head h2 { color: var(--ink); font-size: 1.45rem; }
+        .section-kicker {
+            color: var(--brand-deep);
+            text-transform: uppercase;
+            font-size: 0.76rem;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            margin-bottom: 10px;
         }
-        .repo-callout ul { margin: 8px 0 0 18px; font-size: 0.9rem; }
-        .repo-callout code { background: rgba(255,255,255,0.7); padding: 2px 5px; border-radius: 3px; }
-        .code-tabs { display: flex; gap: 5px; }
-        .code-tab {
-            padding: 7px 14px; background: #e9ecef; border: none;
-            border-radius: 6px 6px 0 0; cursor: pointer; font-size: 12px; font-weight: bold;
+        .section-note {
+            border-left: 4px solid var(--brand);
+            background: color-mix(in srgb, var(--brand-sky) 50%, white);
+            color: var(--brand-deep);
+            padding: 14px 16px;
+            border-radius: 12px;
+            margin-top: 18px;
         }
-        .code-tab.active { background: var(--purple); color: white; }
-        .code-content { display: none; }
-        .code-content.active { display: block; }
+        .concept-grid, .practice-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));
+            gap: 18px;
+        }
+        .card {
+            background: linear-gradient(180deg, #ffffff, #f8fbff);
+            border: 1px solid var(--line);
+            border-top: 4px solid var(--brand);
+            border-radius: 16px;
+            padding: 20px;
+            min-height: 170px;
+            box-shadow: 0 6px 18px rgba(15,23,42,0.05);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .card:hover, .flow-step:hover, .example-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 24px rgba(15,23,42,0.1);
+        }
+        .card-badge {
+            display: inline-flex;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: var(--brand-sky);
+            color: var(--brand-deep);
+            font-weight: 700;
+            margin-bottom: 14px;
+        }
+        .practice-card .card-badge { background: var(--mint); color: #166534; }
+        .practice-card { border-top-color: #22c55e; }
+        .card p { color: #475569; }
+        .flow-track {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));
+            gap: 18px;
+        }
+        .flow-step {
+            position: relative;
+            border-radius: 16px;
+            padding: 22px 18px 18px;
+            border: 1px solid color-mix(in srgb, var(--brand) 18%, transparent);
+            background: linear-gradient(160deg, #ffffff 0%, color-mix(in srgb, var(--brand-sky) 40%, white) 100%);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .step-number {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            background: var(--brand);
+            color: white;
+            font-weight: 800;
+            margin-bottom: 14px;
+            box-shadow: 0 10px 20px color-mix(in srgb, var(--brand) 22%, transparent);
+        }
+        .flow-step h3 { font-size: 1rem; margin-bottom: 10px; color: #0f172a; }
+        .flow-step p { color: #475569; font-size: 0.95rem; }
+        .example-stack { display: grid; gap: 18px; }
+        .example-card {
+            border: 1px solid rgba(15,23,42,0.08);
+            border-radius: 16px;
+            padding: 18px;
+            background: linear-gradient(180deg, #ffffff, #f8fafc);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .lab-callout {
+            border: 1px dashed color-mix(in srgb, var(--brand) 35%, transparent);
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin: 14px 0;
+            background: color-mix(in srgb, var(--brand-sky) 35%, white);
+            color: #334155;
+            font-size: 0.92rem;
+        }
+        .lab-callout strong { color: var(--brand-deep); }
         pre {
-            background: #1e293b; color: #e2e8f0; padding: 14px;
-            border-radius: 0 8px 8px 8px; font-size: 12px; line-height: 1.55; overflow-x: auto;
+            margin-top: 10px;
+            background: #0f172a;
+            color: #dbeafe;
+            border-radius: 16px;
+            padding: 18px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            overflow-x: hidden;
+            font-size: 0.88rem;
+            line-height: 1.55;
+            border: 1px solid rgba(148,163,184,0.18);
         }
-        .detail-panel {
-            background: white; border: 1px solid var(--line); border-radius: 10px;
-            padding: 16px; margin: 12px 0; min-height: 70px;
+        code { font-family: Consolas, 'Cascadia Code', monospace; }
+        .table-wrap {
+            overflow-x: auto;
+            border-radius: 16px;
+            border: 1px solid var(--line);
+            background: white;
         }
-        .detail-panel h4 { color: var(--purple); margin-bottom: 6px; }
-        .hierarchy {
-            display: flex; justify-content: space-around; flex-wrap: wrap; gap: 12px; margin: 16px 0;
+        table { width: 100%; border-collapse: collapse; }
+        th, td {
+            padding: 14px 16px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+            vertical-align: top;
         }
-        .hierarchy-item { text-align: center; flex: 1; min-width: 140px; }
-        .hierarchy-box {
-            background: var(--purple); color: white; padding: 12px;
-            border-radius: 8px; font-weight: bold; font-size: 13px; margin-bottom: 6px;
+        th {
+            background: linear-gradient(180deg, var(--brand), var(--brand-deep));
+            color: white;
+            font-weight: 700;
         }
-        .hierarchy-box.provider { background: #3498db; }
-        .hierarchy-box.resource { background: #27ae60; }
-        .hierarchy-box.data { background: #e67e22; }
-        .hierarchy-list { font-size: 11px; color: var(--muted); text-align: left; padding-left: 12px; }
-        .footer-note { text-align: center; color: var(--muted); font-size: 0.9rem; margin-top: 24px; padding-top: 14px; border-top: 1px solid var(--line); }
-        .footer-note a { color: var(--purple); text-decoration: none; }
+        tbody tr:nth-child(even) { background: #f8fbff; }
+        .footer-note {
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.9rem;
+            margin-top: 18px;
+        }
+        .footer-note a { color: var(--brand); text-decoration: none; }
+        .footer-note a:hover { text-decoration: underline; }
+        @media (max-width: 900px) {
+            body { padding: 14px; }
+            .hero, .view { padding: 22px; }
+            .controls { justify-content: flex-start; }
+            .concept-grid, .practice-grid, .flow-track { grid-template-columns: 1fr; }
+        }
+        .home-link {
+            position: absolute;
+            top: 16px;
+            right: 20px;
+            color: var(--brand);
+            text-decoration: none;
+            font-size: 0.88rem;
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: 8px;
+            border: 1px solid color-mix(in srgb, var(--brand) 18%, transparent);
+            background: color-mix(in srgb, var(--brand) 6%, transparent);
+            transition: background 0.2s, color 0.2s;
+        }
+        .home-link:hover {
+            background: color-mix(in srgb, var(--brand) 13%, transparent);
+            color: var(--brand-deep);
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <header class="hero">
             <a href="index.html" class="home-link">&#8962; Home</a>
-            <div class="eyebrow">Chapter 01 · Foundations</div>
+            <div class="eyebrow">Terraform Essentials</div>
             <h1>Terraform Foundations</h1>
-            <p class="subtitle">Declarative infrastructure-as-code: you describe the desired end state in HCL, Terraform builds a dependency graph, and providers create real cloud objects.</p>
+            <p class="subtitle">Providers, resources, HCL syntax, and the init workflow that every lab depends on.</p>
+            <div class="lead-panel">
+                <p>Terraform is a declarative infrastructure-as-code tool. You describe <strong>desired state</strong> in HCL files; Terraform compares that to <strong>current state</strong> and proposes a plan of API calls to converge reality.</p>
+            </div>
         </header>
 
-        <nav class="nav-bar">
-            <a href="index.html">Overview</a>
-            <a href="foundations.html" class="active">Foundations</a>
-            <a href="workflow.html">Workflow</a>
-            <a href="variables.html">Variables</a>
-            <a href="state.html">State</a>
-            <a href="modules.html">Modules</a>
-        </nav>
-
-        <div class="repo-callout">
-            <strong>Lab files in this repo:</strong>
-            <ul>
-                <li><code>terraform/essentials/labs/lab01-providers-init/main.tf</code> — AWS + Random providers, version constraints, random_pet output</li>
-                <li><code>terraform/essentials/labs/lab02-ec2/main.tf</code> — EC2 instance with AMI data source and tagged resources</li>
-                <li><code>terraform/essentials/labs/lab02-ec2/variables.tf</code> — region, instance type, and name tag variables</li>
-            </ul>
+        <div class="controls">
+            <button class="btn active" data-view="concept">Concept</button>
+            <button class="btn" data-view="architecture">Architecture</button>
+            <button class="btn" data-view="flow">Flow</button>
+            <button class="btn" data-view="setup">Setup</button>
+            <button class="btn" data-view="commands">Commands</button>
+            <button class="btn" data-view="examples">Examples</button>
+            <button class="btn" data-view="comparison">Compare</button>
+            <button class="btn" data-view="practice">Practice</button>
         </div>
 
-        <div class="section-title">1. How Terraform Works (Click Each Step)</div>
-        <div class="flow-container">
-            <div class="flow-box config" onclick="showFlow('config')">📝 .tf Config</div>
-            <span class="arrow">→</span>
-            <div class="flow-box graph" onclick="showFlow('graph')">🔗 Dependency Graph</div>
-            <span class="arrow">→</span>
-            <div class="flow-box api" onclick="showFlow('api')">☁️ Provider API</div>
-            <span class="arrow">→</span>
-            <div class="flow-box state" onclick="showFlow('state')">💾 State File</div>
-        </div>
-        <div class="detail-panel" id="flow-detail">
-            <h4>Configuration drives everything</h4>
-            <p>Your <code>.tf</code> files declare providers, resources, and outputs. Terraform parses them into an internal graph where edges represent dependencies (e.g., a subnet depends on its VPC).</p>
-        </div>
-
-        <div class="example-scenario">
-            <h3>Example: Lab 02 EC2 Deployment</h3>
-            <p><strong>Goal:</strong> A single Ubuntu EC2 instance tagged <code>terraform-essentials-web</code> in <code>us-east-1</code>.</p>
-            <p><strong>Flow:</strong> <code>data.aws_ami.ubuntu</code> resolves the latest AMI → <code>aws_instance.web</code> references that ID → apply calls EC2 API → state stores <code>i-0abc...</code>.</p>
-            <p><strong>Auth:</strong> Provider uses <code>AWS_PROFILE</code> — never hard-code access keys.</p>
-        </div>
-
-        <div class="section-title">2. Building Blocks (Click a Card)</div>
-        <div class="concept-grid">
-            <div class="concept-card" onclick="showConcept('terraform')">
-                <h4>terraform {} block</h4>
-                <p>Core settings: required_version, required_providers, backend</p>
+        <section id="concept" class="view active">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Core Model</div>
+                    <h2>What Is Terraform?</h2>
+                </div>
             </div>
-            <div class="concept-card" onclick="showConcept('provider')">
-                <h4>provider {} block</h4>
-                <p>Configures a plugin (region, aliases) — not credentials</p>
+<div class="concept-grid">
+                <article class="card">
+                    <div class="card-badge">Declarative IaC</div>
+                    <p>You write <code>resource "aws_instance" "web"</code> blocks describing what should exist. Terraform figures out create, update, or destroy operations.</p>
+                </article>
+                <article class="card">
+                    <div class="card-badge">Providers</div>
+                    <p>Plugins such as <code>hashicorp/aws</code> translate HCL into cloud API calls. Version constraints live in <code>required_providers</code>.</p>
+                </article>
+                <article class="card">
+                    <div class="card-badge">State</div>
+                    <p>Terraform stores a mapping between configuration addresses and real resource IDs in a state file. Without state, plans are unreliable.</p>
+                </article>
+                <article class="card">
+                    <div class="card-badge">Root module</div>
+                    <p>Every lab directory is a root module — a folder with <code>main.tf</code> (and friends) that Terraform runs as one unit.</p>
+                </article>
+                <article class="card">
+                    <div class="card-badge">Lock file</div>
+                    <p><code>.terraform.lock.hcl</code> pins exact provider versions after <code>terraform init</code>. Commit it in team projects.</p>
+                </article>
+                <article class="card">
+                    <div class="card-badge">Credential chain</div>
+                    <p>Never put access keys in provider blocks. Use <code>AWS_PROFILE</code>, environment variables, or IAM roles.</p>
+                </article>
             </div>
-            <div class="concept-card" onclick="showConcept('resource')">
-                <h4>resource {} block</h4>
-                <p>Creates and manages a cloud object Terraform owns</p>
+            <div class="section-note">Terraform Essentials Lab 01 uses only the Random provider for apply — AWS provider is declared for credential-chain practice.</div>
+        </section>
+        <section id="architecture" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Execution Model</div>
+                    <h2>How Terraform Talks to Cloud APIs</h2>
+                </div>
             </div>
-            <div class="concept-card" onclick="showConcept('data')">
-                <h4>data {} block</h4>
-                <p>Read-only lookup of existing values (AMIs, VPCs)</p>
-            </div>
-            <div class="concept-card" onclick="showConcept('output')">
-                <h4>output {} block</h4>
-                <p>Exports values after apply (IDs, IPs, ARNs)</p>
-            </div>
-            <div class="concept-card" onclick="showConcept('version')">
-                <h4>Version constraints</h4>
-                <p><code>~&gt; 5.0</code> allows 5.x patches, blocks 6.0</p>
-            </div>
-        </div>
-
-        <div class="section-title">3. Resource vs Data Source Hierarchy</div>
-        <div class="hierarchy">
-            <div class="hierarchy-item">
-                <div class="hierarchy-box provider">Provider</div>
-                <div class="hierarchy-list">aws, random, azurerm<br>Installed by init</div>
-            </div>
-            <div class="hierarchy-item">
-                <div class="hierarchy-box resource">Resource</div>
-                <div class="hierarchy-list">aws_instance<br>aws_vpc<br>random_pet</div>
-            </div>
-            <div class="hierarchy-item">
-                <div class="hierarchy-box data">Data Source</div>
-                <div class="hierarchy-list">aws_ami<br>aws_caller_identity<br>Read-only</div>
-            </div>
-        </div>
-
-        <div class="section-title">4. HCL Examples from the Labs</div>
-        <div class="code-tabs">
-            <button class="code-tab active" onclick="switchTab('lab01')">Lab 01 — Providers</button>
-            <button class="code-tab" onclick="switchTab('lab02')">Lab 02 — EC2</button>
-            <button class="code-tab" onclick="switchTab('ami')">AMI Data Source</button>
-        </div>
-        <div class="code-content active" id="tab-lab01">
-<pre>terraform {
-  required_version = ">= 1.5.0"
+<div class="example-stack">
+            <div class="lab-callout"><strong>Repo lab files:</strong> <code>terraform/essentials/labs/lab01-providers-init/main.tf</code></div>
+                <section class="example-card">
+                    <div class="section-kicker">Lab directory layout</div>
+                    <pre><code>terraform/essentials/labs/lab01-providers-init/
+├── main.tf              # required_providers, provider, resources
+├── .terraform/          # created by init (gitignored)
+└── .terraform.lock.hcl  # provider version pins</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">required_providers block</div>
+                    <pre><code>terraform {
+  required_version = "&gt;= 1.5.0"
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.0"
+      version = "~&gt; 5.0"
     }
     random = {
       source  = "hashicorp/random"
-      version = "~> 3.0"
+      version = "~&gt; 3.0"
     }
   }
-}
-
-provider "aws" {
-  region = "us-east-1"
-}
-
-resource "random_pet" "lab_id" {
-  length = 2
-}
-
-output "lab_id" {
-  value = random_pet.lab_id.id
-}</pre>
-        </div>
-        <div class="code-content" id="tab-lab02">
-<pre>provider "aws" {
+}</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">Provider block (no secrets)</div>
+                    <pre><code>provider "aws" {
   region = var.aws_region
-}
-
-resource "aws_instance" "web" {
-  ami           = data.aws_ami.ubuntu.id
-  instance_type = var.instance_type
-
-  tags = {
-    Name      = var.instance_name
-    ManagedBy = "Terraform"
-    Lab       = "terraform-essentials-lab02"
-  }
-}
-
-output "instance_id" {
-  value = aws_instance.web.id
-}
-
-output "public_ip" {
-  value = aws_instance.web.public_ip
-}</pre>
-        </div>
-        <div class="code-content" id="tab-ami">
-<pre>data "aws_ami" "ubuntu" {
-  most_recent = true
-  owners      = ["099720109477"]  # Canonical
-
-  filter {
-    name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
-  }
-
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
-}</pre>
-        </div>
-
-        <div class="section-title">5. Provider Version Locking</div>
-        <p style="margin-bottom:10px;font-size:0.92rem;">After <code>terraform init</code>, Terraform writes <code>.terraform.lock.hcl</code> with exact provider checksums. Commit this file in team projects so everyone downloads the same binaries.</p>
-        <div class="flow-container">
-            <div class="flow-box" onclick="showFlow('init')">terraform init</div>
-            <span class="arrow">→</span>
-            <div class="flow-box config" onclick="showFlow('lock')">.terraform.lock.hcl</div>
-            <span class="arrow">→</span>
-            <div class="flow-box graph" onclick="showFlow('providers')">.terraform/providers/</div>
-        </div>
-
-        <div class="example-scenario">
-            <h3>Common Beginner Mistakes</h3>
-            <p>❌ Putting <code>access_key</code> / <code>secret_key</code> in a provider block</p>
-            <p>❌ Skipping <code>terraform init</code> after adding a new provider</p>
-            <p>❌ Editing <code>terraform.tfstate</code> by hand</p>
-            <p>✅ Use <code>export AWS_PROFILE=...</code> and run <code>aws sts get-caller-identity</code> first</p>
-        </div>
-
-        <div class="section-title">6. Address Syntax</div>
-        <p style="font-size:0.92rem;margin-bottom:10px;">Every object has a unique address used in plans, state, and references:</p>
-        <pre>resource "aws_instance" "web" { ... }
-# Address: aws_instance.web
-# Attributes: aws_instance.web.id, aws_instance.web.public_ip
-
-data "aws_ami" "ubuntu" { ... }
-# Address: data.aws_ami.ubuntu.id</pre>
-
-        <p class="footer-note">
-            Terraform Essentials · Terraform 1.5+ · AWS provider ~&gt; 5.0<br>
-            <a href="workflow.html">Next: Workflow →</a> · <a href="../docs/01-getting-started/README.md">Docs: Getting Started</a>
-        </p>
+  # Credentials from AWS_PROFILE / env / IAM role — never here
+}</code></pre>
+                </section>
+            </div>
+            <svg viewBox="0 0 950 380" style="width:100%;max-width:950px;margin:20px auto;display:block;">
+                <text x="475" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#1e293b">Terraform Core Execution Model</text>
+                <rect x="40" y="60" width="180" height="70" rx="8" fill="#ede4f7" stroke="#7B42BC" stroke-width="2"/>
+                <text x="130" y="88" text-anchor="middle" font-size="13" font-weight="bold" fill="#5c2d94">Configuration</text>
+                <text x="130" y="108" text-anchor="middle" font-size="10" fill="#5c2d94" font-family="monospace">*.tf, *.tfvars</text>
+                <line x1="220" y1="95" x2="280" y2="95" stroke="#7B42BC" stroke-width="2" marker-end="url(#tf1)"/>
+                <rect x="280" y="55" width="160" height="80" rx="10" fill="#f8fafc" stroke="#7B42BC" stroke-width="3"/>
+                <text x="360" y="85" text-anchor="middle" font-size="14" font-weight="bold" fill="#5c2d94">Terraform CLI</text>
+                <text x="360" y="105" text-anchor="middle" font-size="10" fill="#64748b">init · plan · apply</text>
+                <line x1="440" y1="95" x2="500" y2="95" stroke="#7B42BC" stroke-width="2" marker-end="url(#tf1)"/>
+                <rect x="500" y="55" width="180" height="80" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+                <text x="590" y="85" text-anchor="middle" font-size="13" font-weight="bold" fill="#1e40af">Providers</text>
+                <text x="590" y="105" text-anchor="middle" font-size="10" fill="#1e3a8a" font-family="monospace">aws, random, ...</text>
+                <line x1="680" y1="95" x2="740" y2="95" stroke="#3b82f6" stroke-width="2" marker-end="url(#tf2)"/>
+                <rect x="740" y="55" width="170" height="80" rx="8" fill="#dcfce7" stroke="#22c55e" stroke-width="2"/>
+                <text x="825" y="85" text-anchor="middle" font-size="13" font-weight="bold" fill="#166534">Cloud APIs</text>
+                <text x="825" y="105" text-anchor="middle" font-size="10" fill="#14532d">EC2, VPC, IAM...</text>
+                <rect x="280" y="180" width="200" height="70" rx="8" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+                <text x="380" y="210" text-anchor="middle" font-size="13" font-weight="bold" fill="#92400e">State File</text>
+                <text x="380" y="230" text-anchor="middle" font-size="10" fill="#78350f" font-family="monospace">terraform.tfstate</text>
+                <line x1="380" y1="135" x2="380" y2="180" stroke="#f59e0b" stroke-width="2" marker-end="url(#tf3)"/>
+                <rect x="40" y="280" width="870" height="80" rx="8" fill="#faf5ff" stroke="#a855f7" stroke-width="2"/>
+                <text x="475" y="310" text-anchor="middle" font-size="13" font-weight="bold" fill="#7e22ce">Lab 01 — terraform/essentials/labs/lab01-providers-init/</text>
+                <text x="475" y="335" text-anchor="middle" font-size="11" fill="#6b21a8">terraform init → terraform validate → (optional) terraform apply</text>
+                <defs>
+                    <marker id="tf1" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#7B42BC"/></marker>
+                    <marker id="tf2" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#3b82f6"/></marker>
+                    <marker id="tf3" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#f59e0b"/></marker>
+                </defs>
+            </svg>
+        </section>
+        <section id="flow" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">First Run</div>
+                    <h2>Lab 01 Initialization Workflow</h2>
+                </div>
+            </div>
+<div class="flow-track">
+                <div class="flow-step">
+                    <div class="step-number">1</div>
+                    <h3>Verify toolchain</h3>
+                    <p><code>terraform version</code> — confirm Terraform 1.5+ before working with lab files.</p>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">2</div>
+                    <h3>Change to lab directory</h3>
+                    <p><code>cd terraform/essentials/labs/lab01-providers-init</code> — each lab is an isolated root module.</p>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">3</div>
+                    <h3>Inspect configuration</h3>
+                    <p>Read <code>main.tf</code> — note <code>required_providers</code> and the <code>random_pet</code> resource.</p>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">4</div>
+                    <h3>Initialize</h3>
+                    <p><code>terraform init</code> downloads providers and writes <code>.terraform.lock.hcl</code>.</p>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">5</div>
+                    <h3>List providers</h3>
+                    <p><code>terraform providers</code> shows resolved provider sources and versions.</p>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">6</div>
+                    <h3>Validate</h3>
+                    <p><code>terraform validate</code> checks syntax and internal references — no cloud calls.</p>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">7</div>
+                    <h3>Optional apply</h3>
+                    <p><code>terraform apply</code> creates the random pet; <code>terraform destroy</code> cleans up.</p>
+                </div>
+            </div>
+            <div class="section-note">See <a href="../labmanuals/lab01-providers-init.md">lab01-providers-init.md</a> for step-by-step validation criteria.</div>
+        </section>
+        <section id="setup" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Install</div>
+                    <h2>Installing Terraform on Your Workstation</h2>
+                </div>
+            </div>
+<div class="example-stack">
+                <section class="example-card">
+                    <div class="section-kicker">macOS — Homebrew</div>
+                    <pre><code>brew tap hashicorp/tap
+brew install hashicorp/tap/terraform
+terraform version</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">Linux — HashiCorp apt repo</div>
+                    <pre><code>wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+sudo apt update &amp;&amp; sudo apt install terraform
+terraform version</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">Verify in lab directory</div>
+                    <pre><code>cd terraform/essentials/labs/lab01-providers-init
+terraform init
+terraform validate</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">AWS credential check (optional)</div>
+                    <pre><code>export AWS_PROFILE=your-lab-profile
+aws sts get-caller-identity</code></pre>
+                </section>
+            </div>
+        </section>
+        <section id="commands" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Quick Reference</div>
+                    <h2>Essential Terraform Commands (Essentials Track)</h2>
+                </div>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Category</th><th>Command</th><th>Description</th></tr></thead>
+                    <tbody>
+                        <tr><td>Toolchain</td><td><code>terraform version</code></td><td>Print CLI and core version</td></tr>
+                        <tr><td>Init</td><td><code>terraform init</code></td><td>Download providers, init backend</td></tr>
+                        <tr><td>Init</td><td><code>terraform providers</code></td><td>List configured providers</td></tr>
+                        <tr><td>Quality</td><td><code>terraform fmt</code></td><td>Format HCL files recursively</td></tr>
+                        <tr><td>Quality</td><td><code>terraform validate</code></td><td>Validate configuration syntax</td></tr>
+                        <tr><td>Plan</td><td><code>terraform plan</code></td><td>Preview changes without applying</td></tr>
+                        <tr><td>Apply</td><td><code>terraform apply</code></td><td>Execute proposed changes</td></tr>
+                        <tr><td>Apply</td><td><code>terraform apply -auto-approve</code></td><td>Apply without interactive prompt</td></tr>
+                        <tr><td>Destroy</td><td><code>terraform destroy</code></td><td>Remove all managed resources</td></tr>
+                        <tr><td>State</td><td><code>terraform state list</code></td><td>List resources in state</td></tr>
+                        <tr><td>Output</td><td><code>terraform output</code></td><td>Show output values</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="section-note">Extended reference appendix — bookmark for exam prep and on-the-job lookup.</div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Topic</th><th>Command / Pattern</th><th>Notes</th></tr></thead>
+                    <tbody>
+                        <tr><td>Review</td><td>Re-read lab manual objectives</td><td>Terraform Foundations</td></tr>
+                        <tr><td>Validate</td><td>Run syntax-check or validate</td><td>Before apply</td></tr>
+                        <tr><td>Cleanup</td><td>Destroy or remove lab changes</td><td>End of session</td></tr>
+                        <tr><td>Docs</td><td>Cross-link markdown docs</td><td>../docs/</td></tr>
+                        <tr><td>Git</td><td>Commit only safe files</td><td>No secrets/state</td></tr>
+                        <tr><td>Pair</td><td>Walk through with teammate</td><td>Teaching reinforces</td></tr>
+                        <tr><td>Notes</td><td>Document failures and fixes</td><td>Personal runbook</td></tr>
+                        <tr><td>Next</td><td>Follow learning path order</td><td>curriculum/learning-paths.md</td></tr>
+                    </tbody>
+                </table>
+            </div>            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Terraform Foundations — reference drill 1</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Terraform Foundations — reference drill 2</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Terraform Foundations — reference drill 3</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+        </section>
+        <section id="examples" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Hands-On</div>
+                    <h2>Real Commands from Lab 01</h2>
+                </div>
+            </div>
+<div class="example-stack">
+            <div class="lab-callout"><strong>Repo lab files:</strong> <code>terraform/essentials/labs/lab01-providers-init/</code> · manual: <code>labmanuals/lab01-providers-init.md</code></div>
+                <section class="example-card">
+                    <div class="section-kicker">Step 1.1 — Version check</div>
+                    <pre><code>terraform version</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">Step 1.2 — Enter lab directory</div>
+                    <pre><code>cd terraform/essentials/labs/lab01-providers-init
+pwd</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">Step 3.1 — Initialize providers</div>
+                    <pre><code>terraform init</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">Step 3.2 — Inspect lock file</div>
+                    <pre><code>cat .terraform.lock.hcl | head -20</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">Step 3.3 — List providers</div>
+                    <pre><code>terraform providers</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">Step 4.1 — Validate</div>
+                    <pre><code>terraform validate</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">Step 5.1 — Optional apply</div>
+                    <pre><code>terraform apply
+# type yes when prompted</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">Step 5.2 — Optional destroy</div>
+                    <pre><code>terraform destroy</code></pre>
+                </section>
+            </div>
+            <div class="section-note">Extended reference appendix — bookmark for exam prep and on-the-job lookup.</div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Topic</th><th>Command / Pattern</th><th>Notes</th></tr></thead>
+                    <tbody>
+                        <tr><td>Review</td><td>Re-read lab manual objectives</td><td>Terraform Foundations</td></tr>
+                        <tr><td>Validate</td><td>Run syntax-check or validate</td><td>Before apply</td></tr>
+                        <tr><td>Cleanup</td><td>Destroy or remove lab changes</td><td>End of session</td></tr>
+                        <tr><td>Docs</td><td>Cross-link markdown docs</td><td>../docs/</td></tr>
+                        <tr><td>Git</td><td>Commit only safe files</td><td>No secrets/state</td></tr>
+                        <tr><td>Pair</td><td>Walk through with teammate</td><td>Teaching reinforces</td></tr>
+                        <tr><td>Notes</td><td>Document failures and fixes</td><td>Personal runbook</td></tr>
+                        <tr><td>Next</td><td>Follow learning path order</td><td>curriculum/learning-paths.md</td></tr>
+                    </tbody>
+                </table>
+            </div>            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Terraform Foundations — reference drill 1</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Terraform Foundations — reference drill 2</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Terraform Foundations — reference drill 3</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+        </section>
+        <section id="comparison" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Decision Guide</div>
+                    <h2>Terraform vs Other IaC Approaches</h2>
+                </div>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Aspect</th><th>Terraform</th><th>CloudFormation</th><th>Ansible</th></tr></thead>
+                    <tbody>
+                        <tr><td>Paradigm</td><td>Declarative graph</td><td>Declarative AWS-only</td><td>Procedural tasks</td></tr>
+                        <tr><td>State</td><td>Explicit state file</td><td>AWS-managed stacks</td><td>None (by default)</td></tr>
+                        <tr><td>Multi-cloud</td><td>Yes — provider ecosystem</td><td>AWS only</td><td>Yes — agentless SSH/API</td></tr>
+                        <tr><td>Drift detection</td><td><code>terraform plan</code></td><td>Stack drift detection</td><td>Ad hoc / check mode</td></tr>
+                        <tr><td>Learning curve</td><td>Medium — HCL + state</td><td>Medium — YAML/JSON</td><td>Medium — YAML playbooks</td></tr>
+                        <tr><td>Best fit</td><td>Infrastructure provisioning</td><td>AWS-native teams</td><td>Configuration management</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="section-note">This repository teaches both Terraform (provision) and Ansible (configure) — they complement each other in real pipelines.</div>
+        </section>
+        <section id="practice" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Use It Well</div>
+                    <h2>Practice and Lab Links</h2>
+                </div>
+            </div>
+<div class="practice-grid">
+                <article class="card practice-card">
+                    <div class="card-badge">Lab 01 — Providers</div>
+                    <p>Complete init and validate in <code>lab01-providers-init</code>. Identify every block type in <code>main.tf</code>.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab01-providers-init.md">Open lab manual →</a></p>
+                </article>
+                <article class="card practice-card">
+                    <div class="card-badge">Lab 02 — EC2</div>
+                    <p>Apply a real AWS EC2 instance. Observe how provider credentials flow from the environment.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab02-ec2.md">Open lab manual →</a></p>
+                </article>
+                <article class="card practice-card">
+                    <div class="card-badge">Fmt discipline</div>
+                    <p>Run <code>terraform fmt -recursive</code> before every commit in team projects.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab04-fmt-validate.md">Open lab manual →</a></p>
+                </article>
+                <article class="card practice-card">
+                    <div class="card-badge">Lock file hygiene</div>
+                    <p>Delete <code>.terraform/</code> and re-run init. Confirm lock file pins the same versions.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab01-providers-init.md">Open lab manual →</a></p>
+                </article>
+                <article class="card practice-card">
+                    <div class="card-badge">Validate before plan</div>
+                    <p>Break syntax intentionally, run validate, fix, and compare error messages.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab04-fmt-validate.md">Open lab manual →</a></p>
+                </article>
+                <article class="card practice-card">
+                    <div class="card-badge">Destroy cleanup</div>
+                    <p>Always destroy lab resources when finished to avoid AWS charges.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab03-plan-apply-destroy.md">Open lab manual →</a></p>
+                </article>
+            </div>
+            <div class="section-note">Extended reference appendix — bookmark for exam prep and on-the-job lookup.</div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Topic</th><th>Command / Pattern</th><th>Notes</th></tr></thead>
+                    <tbody>
+                        <tr><td>Review</td><td>Re-read lab manual objectives</td><td>Terraform Foundations</td></tr>
+                        <tr><td>Validate</td><td>Run syntax-check or validate</td><td>Before apply</td></tr>
+                        <tr><td>Cleanup</td><td>Destroy or remove lab changes</td><td>End of session</td></tr>
+                        <tr><td>Docs</td><td>Cross-link markdown docs</td><td>../docs/</td></tr>
+                        <tr><td>Git</td><td>Commit only safe files</td><td>No secrets/state</td></tr>
+                        <tr><td>Pair</td><td>Walk through with teammate</td><td>Teaching reinforces</td></tr>
+                        <tr><td>Notes</td><td>Document failures and fixes</td><td>Personal runbook</td></tr>
+                        <tr><td>Next</td><td>Follow learning path order</td><td>curriculum/learning-paths.md</td></tr>
+                    </tbody>
+                </table>
+            </div>            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Terraform Foundations — reference drill 1</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Terraform Foundations — reference drill 2</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Terraform Foundations — reference drill 3</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+        </section>
     </div>
 
     <script>
-        const flowInfo = {
-            config: { t: 'Configuration (.tf files)', d: 'HCL files in your working directory. Terraform loads all .tf and .tf.json files, building one combined configuration.' },
-            graph: { t: 'Dependency Graph', d: 'Terraform orders resources so dependencies are created first. Implicit references (using another resource attribute) and explicit depends_on both affect ordering.' },
-            api: { t: 'Provider API Calls', d: 'During apply, providers translate resource changes into cloud API requests. The AWS provider calls EC2, VPC, IAM APIs on your behalf.' },
-            state: { t: 'State Persistence', d: 'After each successful apply, Terraform updates terraform.tfstate with real resource IDs, IP addresses, and metadata.' },
-            init: { t: 'terraform init', d: 'Downloads provider plugins, configures backend, and creates .terraform/ directory. Required after cloning a repo or changing providers.' },
-            lock: { t: 'Lock File', d: '.terraform.lock.hcl records exact provider versions and hashes. Run terraform providers lock for cross-platform checksums.' },
-            providers: { t: 'Provider Cache', d: 'Binaries live under .terraform/providers/. Safe to delete — init recreates them. Do not commit .terraform/ to git.' }
-        };
-
-        function showFlow(key) {
-            const f = flowInfo[key];
-            document.getElementById('flow-detail').innerHTML = '<h4>' + f.t + '</h4><p>' + f.d + '</p>';
-        }
-
-        const concepts = {
-            terraform: 'The top-level terraform block sets Terraform version requirements, declares providers, and optionally configures remote state backends.',
-            provider: 'Providers are plugins. The aws provider block sets region and optional aliases. Authentication uses the AWS SDK credential chain — AWS_PROFILE, env vars, or IAM roles.',
-            resource: 'Resources are managed objects. Terraform creates, updates, and destroys them to match configuration. Example: aws_instance.web in lab02.',
-            data: 'Data sources fetch read-only information. Lab02 uses data.aws_ami.ubuntu to find the latest Ubuntu 22.04 AMI without hard-coding an AMI ID.',
-            output: 'Outputs expose values after apply. Useful for scripts, CI pipelines, and terraform output -json automation.',
-            version: 'Version constraints prevent surprise upgrades. >= 1.5.0 requires Terraform 1.5+. ~> 5.0 allows 5.0 through 5.x but not 6.0.'
-        };
-
-        function showConcept(key) {
-            document.querySelectorAll('.concept-card').forEach(c => c.classList.remove('active'));
-            event.currentTarget.classList.add('active');
-            document.getElementById('flow-detail').innerHTML = '<h4>' + key + '</h4><p>' + concepts[key] + '</p>';
-        }
-
-        function switchTab(name) {
-            document.querySelectorAll('.code-tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.code-content').forEach(c => c.classList.remove('active'));
-            event.target.classList.add('active');
-            document.getElementById('tab-' + name).classList.add('active');
-        }
+        const buttons = document.querySelectorAll('.btn');
+        const views = document.querySelectorAll('.view');
+        buttons.forEach((button) => {
+            button.addEventListener('click', () => {
+                const viewId = button.dataset.view;
+                buttons.forEach((b) => b.classList.remove('active'));
+                views.forEach((v) => v.classList.remove('active'));
+                button.classList.add('active');
+                document.getElementById(viewId).classList.add('active');
+            });
+        });
     </script>
 </body>
 </html>

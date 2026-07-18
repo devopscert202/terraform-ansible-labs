@@ -1,48 +1,23 @@
-# 07 — State
+# Terraform State and Drift
 
-## Overview
+## Objective (conceptual)
 
-Terraform state is a JSON document that maps each resource in your configuration to its real-world identity. Without state, Terraform would not know that `aws_instance.web` in your `.tf` file corresponds to `i-0abc123` in AWS. State also caches attributes for planning and tracks metadata like dependencies.
+**State** is Terraform's memory of which real-world objects match which configuration addresses. On each plan, Terraform refreshes state from provider APIs and computes a diff. Without state, Terraform would not know whether to create a second VPC or update the existing one.
 
-Lab 06 uses **local state** (default `terraform.tfstate` file). Production teams use **remote backends** with locking. This chapter teaches inspection, drift, and safe handling — beginners who treat state casually often cause orphan resources or data loss.
+**Drift** occurs when someone changes infrastructure outside Terraform (console, CLI, another tool). The next `plan` shows differences between configuration, state, and reality. Local state (`terraform.tfstate` in the working directory) is fine for solo labs; teams move to remote backends in the extended track.
 
-### Why this matters for beginners
+**Interactive reference:** [State and Drift](../../html/state.html)
 
-Deleting `terraform.tfstate` while EC2 instances still run leaves **unmanaged** resources that continue billing. Committing state to a public git repo may expose **sensitive values**. Understanding state is as important as understanding HCL.
+## What state stores
 
----
+- Resource type, name, and provider-assigned ID
+- Last known attribute values (metadata varies by provider)
+- Dependencies and lineage for destroy ordering
+- Sensitive values unless redacted by provider
 
-## Key concepts
+Lab 06 creates state with a single `random_pet`—inspect the file after `apply` to see the JSON structure.
 
-| Concept | Description |
-|---------|-------------|
-| `terraform.tfstate` | Default local state file |
-| Resource address | Key in state: `random_pet.first` |
-| Serial | Incremented on each state write |
-| Lineage | UUID for state history |
-| Refresh | Update state from live APIs during plan |
-| Drift | Real infra differs from config |
-| Backend | Where state is stored (local, S3, etc.) |
-| State locking | Prevents concurrent applies |
-
----
-
-## State mapping diagram
-
-```
- Configuration                    State                         Cloud
-┌──────────────────┐         ┌──────────────────┐         ┌─────────────┐
-│ random_pet.first │ ◀─────▶ │ "name": "first"  │ ◀─────▶ │ (provider)  │
-│ prefix, length   │         │ "id": "state-lab │         │ random pet  │
-└──────────────────┘         │  -valid-moth"    │         └─────────────┘
-                             └──────────────────┘
-```
-
----
-
-## Lab 06 configuration
-
-`labs/lab06-local-state/main.tf`:
+## Lab 06: local backend default
 
 ```hcl
 terraform {
@@ -66,215 +41,81 @@ output "first_resource" {
 }
 ```
 
----
+Absence of a `backend` block means **local state** beside your configuration.
 
-## Step-by-step inspection
+## Refresh and plan
+
+- `terraform plan` refreshes by default (unless `-refresh=false`).
+- Refresh updates state attributes from the API without applying config changes.
+- If the console deleted a resource, plan may show **recreate** to match config.
+
+## Drift scenarios
+
+| Scenario | Plan behavior |
+|----------|---------------|
+| Tag added in AWS console | Update in place to match `.tf` |
+| Instance terminated manually | Create replacement |
+| Config changed, cloud unchanged | Update or replace per diff |
+
+## State safety rules
+
+- Do not hand-edit `terraform.tfstate` unless following HashiCorp migration docs.
+- Back up state before risky operations (`terraform state mv`, provider upgrades).
+- Add `terraform.tfstate` and `*.tfstate.backup` to `.gitignore` for real secrets; labs may commit empty examples only.
+- Use `terraform state list` and `terraform state show ADDRESS` for inspection.
+
+## When state moves to remote (preview)
+
+Extended track covers S3 backends, locking with DynamoDB, state keys, and `terraform state pull/push`. Essentials establishes the mental model locally first.
+
+## Isolated lab directories
+
+Each `labs/lab0X-*` folder owns its own state file. Never run commands from the parent `labs/` directory—paths would collide.
+
+## Inspecting state safely
+
+After apply, open `terraform.tfstate` in an editor once to see the JSON shape—then prefer CLI tools for routine work:
+
+```bash
+terraform state list
+terraform state show random_pet.first
+terraform show -json | jq '.values.root_module.resources'
+```
+
+Never commit state containing secrets from real environments. Training labs using `random_pet` only are low risk but still teach the habit.
+
+## Replace and taint (concept)
+
+- **Taint** (`terraform taint ADDRESS`) — force recreate on next apply (legacy; prefer `-replace` in Terraform 0.15+).
+- **Replace** (`terraform apply -replace=ADDRESS`) — targeted recreation without editing configuration.
+
+Use when a resource is corrupted in the cloud but configuration looks correct.
+
+## State backup before risky changes
+
+```bash
+cp terraform.tfstate terraform.tfstate.$(date +%Y%m%d).backup
+```
+
+Take a copy before provider major upgrades or manual `state mv` operations.
+
+## Operational commands (reference)
 
 ```bash
 cd terraform/essentials/labs/lab06-local-state
 terraform init
 terraform apply
-```
-
-Note output like `first_resource = "state-lab-valid-moth"`.
-
-### List resources in state
-
-```bash
 terraform state list
-```
-
-Expected:
-
-```
-random_pet.first
-```
-
-### Show one resource
-
-```bash
 terraform state show random_pet.first
-```
-
-Expected attributes include `id`, `length = 2`, `prefix = "state-lab"`.
-
-### Pull raw JSON
-
-```bash
-terraform state pull | head -20
-```
-
-Shows `version`, `serial`, `lineage`, `resources` array.
-
-### Destroy
-
-```bash
+terraform plan    # no changes if config matches
 terraform destroy
 ```
 
 ---
 
-## State file structure (simplified)
+## Hands-On Labs
 
-```json
-{
-  "version": 4,
-  "terraform_version": "1.5.0",
-  "serial": 1,
-  "lineage": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-  "outputs": {
-    "first_resource": {
-      "value": "state-lab-valid-moth",
-      "type": "string"
-    }
-  },
-  "resources": [
-    {
-      "mode": "managed",
-      "type": "random_pet",
-      "name": "first",
-      "provider": "provider[\"registry.terraform.io/hashicorp/random\"]",
-      "instances": [
-        {
-          "attributes": {
-            "id": "state-lab-valid-moth",
-            "length": 2,
-            "prefix": "state-lab"
-          }
-        }
-      ]
-    }
-  ]
-}
-```
-
----
-
-## State subcommands
-
-| Command | Purpose |
-|---------|---------|
-| `terraform state list` | All resource addresses |
-| `terraform state show ADDR` | One resource detail |
-| `terraform state pull` | Print state JSON to stdout |
-| `terraform state push` | Upload state (dangerous) |
-| `terraform state rm ADDR` | Remove from state without destroy |
-| `terraform state mv SRC DST` | Rename address in state |
-
-### state rm warning
-
-```bash
-terraform state rm random_pet.first
-```
-
-Terraform **stops managing** the resource. The random pet (or EC2 instance) may still exist but Terraform forgets it.
-
-### state mv for refactoring
-
-```bash
-terraform state mv random_pet.first random_pet.primary
-```
-
-Updates state only — no cloud API calls.
-
----
-
-## Drift detection
-
-```
-1. Engineer changes EC2 tag in AWS Console
-2. terraform plan refreshes state from API
-3. Plan shows: ~ tags (configuration differs)
-4. terraform apply reconciles back to .tf
-```
-
----
-
-## Local vs remote backend
-
-| Feature | Local (Lab 06) | Remote (S3 + DynamoDB) |
-|---------|----------------|------------------------|
-| Storage | `terraform.tfstate` on disk | S3 bucket |
-| Locking | None | DynamoDB table |
-| Team use | Solo labs only | Production standard |
-| Encryption | Your responsibility | SSE-KMS on bucket |
-
-### Remote backend example (reference)
-
-```hcl
-terraform {
-  backend "s3" {
-    bucket         = "my-org-terraform-state"
-    key            = "essentials/lab06/terraform.tfstate"
-    region         = "us-east-1"
-    dynamodb_table = "terraform-locks"
-    encrypt        = true
-  }
-}
-```
-
-Migrate with:
-
-```bash
-terraform init -migrate-state
-```
-
----
-
-## .gitignore recommendations
-
-```
-.terraform/
-*.tfstate
-*.tfstate.*
-.terraform.tfstate.backup
-terraform.tfvars
-```
-
-**Do commit:** `.terraform.lock.hcl`
-
----
-
-## Common mistakes
-
-| Mistake | Impact | Fix |
-|---------|--------|-----|
-| Commit tfstate to git | Secrets exposed; merge conflicts | .gitignore state files |
-| Manual JSON edits | Corrupt state | Use state subcommands |
-| Concurrent apply (no lock) | Corrupted state | Remote backend + locking |
-| Delete state with resources running | Orphans | destroy first, then delete state |
-| `state rm` thinking it deletes cloud | Orphan resources | Use `terraform destroy` |
-| Assuming sensitive not in state | Leak via state file | Encrypt backend |
-
----
-
-## Links
-
-| Resource | Path |
-|----------|------|
-| Lab 06 | [labmanuals/lab06-local-state.md](../../labmanuals/lab06-local-state.md) |
-| HTML: State | [html/state.html](../../html/state.html) |
-| Previous | [06-variables/README.md](../06-variables/README.md) |
-| Next | [08-modules/README.md](../08-modules/README.md) |
-
----
-
-## Hands-on lab
-
-**[Lab 06 — Local State](../../labmanuals/lab06-local-state.md)** — No AWS required.
-
----
-
-## Key takeaways
-
-1. State links **configuration addresses** to **real resource IDs**.
-2. **Never commit** state files; they may contain sensitive data.
-3. Use `state list` and `state show` to inspect without opening JSON manually.
-4. **Drift** is detected during plan refresh.
-5. Teams need **remote backends with locking**.
-
----
-
-## Next steps
-
-Read [08 — Modules](../08-modules/README.md) for reusable infrastructure composition.
+| Lab | Description |
+|-----|-------------|
+| [Lab 06: Local State](../../labmanuals/lab06-local-state.md) | Create and inspect `terraform.tfstate`, refresh behavior |
+| [Extended Lab 07: S3 Backend](../../../extended/labmanuals/lab07-s3-backend.md) | Remote state storage (next step for teams) |

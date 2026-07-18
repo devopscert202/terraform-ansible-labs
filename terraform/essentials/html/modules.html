@@ -3,359 +3,655 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Terraform Modules — Composition & Reuse</title>
+    <title>Terraform Modules — Interactive Guide</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
-            --purple: #7B42BC; --purple-deep: #5c2d94; --purple-sky: #ede4f7;
-            --ink: #261a33; --muted: #665b70; --line: #e8ddf2;
-            --amber: #fef3c7; --mint: #dcfce7; --slate-700: #334155;
+            --brand: #7B42BC;
+            --brand-deep: #5c2d94;
+            --brand-sky: #ede4f7;
+            --ink: #1a1a2e;
+            --muted: #64748b;
+            --surface: #ffffff;
+            --panel: #ffffff;
+            --line: #dbe3f1;
+            --mint: #dcfce7;
+            --amber: #fef3c7;
+            --rose: #ffe4e6;
+            --blue: #2563eb;
+            --slate-900: #0f172a;
+            --slate-700: #334155;
+            --slate-500: #64748b;
+            --slate-200: #e2e8f0;
         }
         body {
             font-family: "Segoe UI", system-ui, sans-serif;
-            background: linear-gradient(180deg, #fcfaff 0%, #f3ebfa 100%);
-            color: var(--ink); line-height: 1.6; padding: 20px;
+            background: linear-gradient(180deg, #f8fbff 0%, #eef4fb 100%);
+            color: var(--ink);
+            line-height: 1.6;
+            padding: 20px;
         }
-        .container { max-width: 1200px; margin: 0 auto; }
+        .container { max-width: 1380px; margin: 0 auto; }
         .hero {
-            position: relative; text-align: center; background: white;
-            border-radius: 16px; padding: 34px 32px 28px;
-            box-shadow: 0 4px 18px rgba(123, 66, 188, 0.12);
-            margin-bottom: 26px; border: 1px solid rgba(123, 66, 188, 0.15);
+            position: relative;
+            text-align: center;
+            background: white;
+            border-radius: 16px;
+            padding: 34px 32px 28px;
+            box-shadow: 0 4px 18px rgba(15, 23, 42, 0.08);
+            margin-bottom: 26px;
+            border: 1px solid color-mix(in srgb, var(--brand) 10%, transparent);
         }
         .eyebrow {
-            display: inline-flex; padding: 6px 14px; border-radius: 999px;
-            background: var(--purple-sky); color: var(--purple-deep);
-            font-size: 0.82rem; font-weight: 700; margin-bottom: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: var(--brand-sky);
+            color: var(--brand-deep);
+            font-size: 0.82rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 14px;
         }
-        .hero h1 { color: var(--purple); font-size: clamp(1.8rem, 4vw, 2.6rem); }
-        .hero .subtitle { color: var(--muted); max-width: 720px; margin: 8px auto 0; }
-        .home-link {
-            position: absolute; top: 16px; right: 20px; color: var(--purple);
-            text-decoration: none; font-weight: 600; padding: 6px 14px;
-            border-radius: 8px; border: 1px solid rgba(123,66,188,0.2);
-            background: rgba(123,66,188,0.06);
+        h1 {
+            font-size: clamp(2rem, 4vw, 3rem);
+            color: var(--brand);
+            margin-bottom: 10px;
+            line-height: 1.1;
         }
-        .nav-bar {
-            display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
-            margin-bottom: 20px; padding: 10px; background: white;
-            border-radius: 10px; border: 1px solid var(--line);
+        .subtitle {
+            font-size: 1.03rem;
+            color: var(--muted);
+            max-width: 980px;
+            margin: 0 auto 18px;
         }
-        .nav-bar a { color: var(--purple); font-weight: 600; text-decoration: none; padding: 6px 12px; border-radius: 6px; font-size: 0.88rem; }
-        .nav-bar a:hover, .nav-bar a.active { background: var(--purple-sky); }
-        .section-title {
-            font-size: 18px; font-weight: bold; color: var(--slate-700);
-            margin: 22px 0 10px; padding: 8px 12px;
-            background: #f4eef9; border-left: 4px solid var(--purple);
+        .lead-panel {
+            background: linear-gradient(180deg, #f8fbff 0%, color-mix(in srgb, var(--brand-sky) 60%, white) 100%);
+            border: 1px solid color-mix(in srgb, var(--brand) 12%, transparent);
+            border-radius: 14px;
+            padding: 18px 20px;
+            max-width: 980px;
+            margin: 0 auto;
         }
-        .lifecycle-flow {
-            display: flex; align-items: center; justify-content: center;
-            flex-wrap: wrap; gap: 8px; margin: 20px 0; padding: 20px;
-            background: white; border-radius: 12px; border: 1px solid var(--line);
+        .lead-panel p { color: #334155; font-size: 0.98rem; }
+        .controls {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 0 0 24px;
         }
-        .flow-box {
-            background: linear-gradient(135deg, #7B42BC 0%, #9b59d0 100%);
-            color: white; padding: 16px 22px; border-radius: 10px;
-            font-weight: bold; font-size: 14px; cursor: pointer;
-            transition: all 0.3s; box-shadow: 0 4px 10px rgba(123,66,188,0.3);
-            min-width: 90px; text-align: center;
+        .btn {
+            border: 2px solid var(--brand);
+            background: white;
+            color: var(--brand-deep);
+            padding: 11px 20px;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
         }
-        .flow-box:hover { transform: translateY(-4px) scale(1.02); }
-        .flow-box.root { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .flow-box.child { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
-        .flow-box.in { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: #1a3a2e; }
-        .flow-box.out { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: #4a3728; }
-        .arrow { font-size: 26px; color: var(--muted); font-weight: bold; }
-        .detail-panel {
-            background: white; border: 2px solid var(--purple); border-radius: 10px;
-            padding: 18px; margin: 14px 0; min-height: 90px;
+        .btn:hover, .btn.active {
+            background: var(--brand);
+            color: white;
+            box-shadow: 0 4px 12px color-mix(in srgb, var(--brand) 30%, transparent);
+            transform: translateY(-2px);
         }
-        .detail-panel h4 { color: var(--purple); margin-bottom: 8px; font-size: 1.1rem; }
-        .detail-panel p { font-size: 0.92rem; }
-        .detail-panel code { background: var(--purple-sky); padding: 2px 6px; border-radius: 4px; font-size: 0.88rem; }
-        .repo-callout {
-            background: var(--mint); border-left: 4px solid #22c55e;
-            padding: 14px 18px; border-radius: 8px; margin: 16px 0;
+        .view {
+            display: none;
+            background: var(--panel);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 30px;
+            margin-bottom: 26px;
+            border: 1px solid rgba(15,23,42,0.04);
         }
-        .repo-callout ul { margin: 8px 0 0 18px; font-size: 0.9rem; }
-        .concept-grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 12px; margin: 16px 0;
+        .view.active { display: block; }
+        .section-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 18px;
+            align-items: end;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid #e2e8f0;
         }
-        .concept-card {
-            background: white; border: 1px solid var(--line); border-radius: 10px; padding: 14px;
-            cursor: pointer; transition: box-shadow 0.2s;
+        .section-head h2 { color: var(--ink); font-size: 1.45rem; }
+        .section-kicker {
+            color: var(--brand-deep);
+            text-transform: uppercase;
+            font-size: 0.76rem;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            margin-bottom: 10px;
         }
-        .concept-card:hover { box-shadow: 0 4px 12px rgba(123,66,188,0.15); }
-        .concept-card h4 { color: var(--purple); font-size: 0.95rem; margin-bottom: 4px; }
-        .concept-card p { font-size: 0.82rem; color: var(--muted); }
-        .code-tabs { display: flex; gap: 5px; flex-wrap: wrap; }
-        .code-tab {
-            padding: 7px 14px; background: #e9ecef; border: none;
-            border-radius: 6px 6px 0 0; cursor: pointer; font-size: 12px; font-weight: bold;
+        .section-note {
+            border-left: 4px solid var(--brand);
+            background: color-mix(in srgb, var(--brand-sky) 50%, white);
+            color: var(--brand-deep);
+            padding: 14px 16px;
+            border-radius: 12px;
+            margin-top: 18px;
         }
-        .code-tab.active { background: var(--purple); color: white; }
-        .code-content { display: none; }
-        .code-content.active { display: block; }
+        .concept-grid, .practice-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));
+            gap: 18px;
+        }
+        .card {
+            background: linear-gradient(180deg, #ffffff, #f8fbff);
+            border: 1px solid var(--line);
+            border-top: 4px solid var(--brand);
+            border-radius: 16px;
+            padding: 20px;
+            min-height: 170px;
+            box-shadow: 0 6px 18px rgba(15,23,42,0.05);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .card:hover, .flow-step:hover, .example-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 24px rgba(15,23,42,0.1);
+        }
+        .card-badge {
+            display: inline-flex;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: var(--brand-sky);
+            color: var(--brand-deep);
+            font-weight: 700;
+            margin-bottom: 14px;
+        }
+        .practice-card .card-badge { background: var(--mint); color: #166534; }
+        .practice-card { border-top-color: #22c55e; }
+        .card p { color: #475569; }
+        .flow-track {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));
+            gap: 18px;
+        }
+        .flow-step {
+            position: relative;
+            border-radius: 16px;
+            padding: 22px 18px 18px;
+            border: 1px solid color-mix(in srgb, var(--brand) 18%, transparent);
+            background: linear-gradient(160deg, #ffffff 0%, color-mix(in srgb, var(--brand-sky) 40%, white) 100%);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .step-number {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            background: var(--brand);
+            color: white;
+            font-weight: 800;
+            margin-bottom: 14px;
+            box-shadow: 0 10px 20px color-mix(in srgb, var(--brand) 22%, transparent);
+        }
+        .flow-step h3 { font-size: 1rem; margin-bottom: 10px; color: #0f172a; }
+        .flow-step p { color: #475569; font-size: 0.95rem; }
+        .example-stack { display: grid; gap: 18px; }
+        .example-card {
+            border: 1px solid rgba(15,23,42,0.08);
+            border-radius: 16px;
+            padding: 18px;
+            background: linear-gradient(180deg, #ffffff, #f8fafc);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .lab-callout {
+            border: 1px dashed color-mix(in srgb, var(--brand) 35%, transparent);
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin: 14px 0;
+            background: color-mix(in srgb, var(--brand-sky) 35%, white);
+            color: #334155;
+            font-size: 0.92rem;
+        }
+        .lab-callout strong { color: var(--brand-deep); }
         pre {
-            background: #1e293b; color: #e2e8f0; padding: 14px;
-            border-radius: 0 8px 8px 8px; font-size: 12px; line-height: 1.55; overflow-x: auto;
+            margin-top: 10px;
+            background: #0f172a;
+            color: #dbeafe;
+            border-radius: 16px;
+            padding: 18px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            overflow-x: hidden;
+            font-size: 0.88rem;
+            line-height: 1.55;
+            border: 1px solid rgba(148,163,184,0.18);
         }
-        .module-tree {
-            background: white; border: 1px solid var(--line); border-radius: 12px;
-            padding: 20px; font-family: monospace; font-size: 13px; line-height: 1.7;
-            margin: 16px 0;
+        code { font-family: Consolas, 'Cascadia Code', monospace; }
+        .table-wrap {
+            overflow-x: auto;
+            border-radius: 16px;
+            border: 1px solid var(--line);
+            background: white;
         }
-        .example-scenario {
-            background: var(--amber); border-left: 4px solid #f59e0b;
-            padding: 14px; border-radius: 8px; margin: 16px 0;
+        table { width: 100%; border-collapse: collapse; }
+        th, td {
+            padding: 14px 16px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+            vertical-align: top;
         }
-        .example-scenario h3 { font-size: 14px; color: #92400e; margin-bottom: 6px; }
-        .example-scenario p { font-size: 13px; color: #78350f; }
-        .footer-note { text-align: center; color: var(--muted); font-size: 0.9rem; margin-top: 24px; padding-top: 14px; border-top: 1px solid var(--line); }
-        .footer-note a { color: var(--purple); text-decoration: none; }
+        th {
+            background: linear-gradient(180deg, var(--brand), var(--brand-deep));
+            color: white;
+            font-weight: 700;
+        }
+        tbody tr:nth-child(even) { background: #f8fbff; }
+        .footer-note {
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.9rem;
+            margin-top: 18px;
+        }
+        .footer-note a { color: var(--brand); text-decoration: none; }
+        .footer-note a:hover { text-decoration: underline; }
+        @media (max-width: 900px) {
+            body { padding: 14px; }
+            .hero, .view { padding: 22px; }
+            .controls { justify-content: flex-start; }
+            .concept-grid, .practice-grid, .flow-track { grid-template-columns: 1fr; }
+        }
+        .home-link {
+            position: absolute;
+            top: 16px;
+            right: 20px;
+            color: var(--brand);
+            text-decoration: none;
+            font-size: 0.88rem;
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: 8px;
+            border: 1px solid color-mix(in srgb, var(--brand) 18%, transparent);
+            background: color-mix(in srgb, var(--brand) 6%, transparent);
+            transition: background 0.2s, color 0.2s;
+        }
+        .home-link:hover {
+            background: color-mix(in srgb, var(--brand) 13%, transparent);
+            color: var(--brand-deep);
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <header class="hero">
             <a href="index.html" class="home-link">&#8962; Home</a>
-            <div class="eyebrow">Chapter 05 · Modules</div>
-            <h1>Terraform Modules</h1>
-            <p class="subtitle">Modules package resources behind a clear interface. Lab 07 calls a local <code>network</code> module that creates a VPC and subnet — click below to trace inputs, resources, and outputs.</p>
+            <div class="eyebrow">Terraform Essentials</div>
+            <h1>Modules</h1>
+            <p class="subtitle">Reusable modules, source paths, versioning, and the Lab 07 simple module pattern.</p>
+            <div class="lead-panel">
+                <p>Modules are containers for resources. A <strong>root module</strong> calls <strong>child modules</strong> via <code>module</code> blocks — enabling reuse without copy-paste.</p>
+            </div>
         </header>
 
-        <nav class="nav-bar">
-            <a href="index.html">Overview</a>
-            <a href="foundations.html">Foundations</a>
-            <a href="workflow.html">Workflow</a>
-            <a href="variables.html">Variables</a>
-            <a href="state.html">State</a>
-            <a href="modules.html" class="active">Modules</a>
-        </nav>
-
-        <div class="repo-callout">
-            <strong>Lab files in this repo:</strong>
-            <ul>
-                <li><code>terraform/essentials/labs/lab07-simple-module/main.tf</code> — module call</li>
-                <li><code>terraform/essentials/labs/lab07-simple-module/modules/network/</code> — VPC + subnet child module</li>
-            </ul>
+        <div class="controls">
+            <button class="btn active" data-view="concept">Concept</button>
+            <button class="btn" data-view="architecture">Architecture</button>
+            <button class="btn" data-view="flow">Flow</button>
+            <button class="btn" data-view="setup">Setup</button>
+            <button class="btn" data-view="commands">Commands</button>
+            <button class="btn" data-view="examples">Examples</button>
+            <button class="btn" data-view="comparison">Compare</button>
+            <button class="btn" data-view="practice">Practice</button>
         </div>
 
-        <div class="section-title">1. Module Composition — Click Each Layer</div>
-        <div class="lifecycle-flow">
-            <div class="flow-box root" onclick="showCmd('root')">Root Module</div>
-            <span class="arrow">→</span>
-            <div class="flow-box in" onclick="showCmd('inputs')">Inputs</div>
-            <span class="arrow">→</span>
-            <div class="flow-box child" onclick="showCmd('child')">Child Module</div>
-            <span class="arrow">→</span>
-            <div class="flow-box out" onclick="showCmd('outputs')">Outputs</div>
-        </div>
-        <div class="detail-panel" id="cmd-detail">
-            <h4>Root → Child → Outputs</h4>
-            <p>Click any layer to see how Lab 07's <code>module "network"</code> passes <code>name</code>, <code>vpc_cidr</code>, and <code>subnet_cidr</code> into <code>./modules/network</code>.</p>
-        </div>
-
-        <div class="section-title">2. Lab 07 Directory Tree</div>
-        <div class="module-tree">lab07-simple-module/
-├── main.tf              # provider, module "network", outputs
-├── variables.tf         # aws_region, name, vpc_cidr, subnet_cidr
-└── modules/network/
-    ├── main.tf          # aws_vpc.this, aws_subnet.this
-    ├── variables.tf     # name, vpc_cidr, subnet_cidr
-    └── outputs.tf       # vpc_id, subnet_id</div>
-
-        <div class="section-title">3. Code Reference — Click Tabs</div>
-        <div class="code-tabs">
-            <button class="code-tab active" onclick="switchTab(event,'call')">module block</button>
-            <button class="code-tab" onclick="switchTab(event,'child')">child resources</button>
-            <button class="code-tab" onclick="switchTab(event,'out')">outputs</button>
-            <button class="code-tab" onclick="switchTab(event,'state')">state list</button>
-        </div>
-        <div class="code-content active" id="tab-call">
-<pre>module "network" {
-  source      = "./modules/network"
-  name        = var.name
-  vpc_cidr    = var.vpc_cidr
-  subnet_cidr = var.subnet_cidr
-}
-
-output "vpc_id" {
-  value = module.network.vpc_id
-}</pre>
-        </div>
-        <div class="code-content" id="tab-child">
-<pre>resource "aws_vpc" "this" {
-  cidr_block           = var.vpc_cidr
-  enable_dns_hostnames = true
-  tags = { Name = "${var.name}-vpc" }
-}
-
-resource "aws_subnet" "this" {
-  vpc_id     = aws_vpc.this.id
-  cidr_block = var.subnet_cidr
-  tags = { Name = "${var.name}-subnet" }
-}</pre>
-        </div>
-        <div class="code-content" id="tab-out">
-<pre>output "vpc_id" {
-  value = aws_vpc.this.id
-}
-
-output "subnet_id" {
-  value = aws_subnet.this.id
-}</pre>
-        </div>
-        <div class="code-content" id="tab-state">
-<pre>terraform state list
-
-module.network.aws_subnet.this
-module.network.aws_vpc.this</pre>
-        </div>
-
-        <div class="section-title">4. Module Concepts — Click Cards</div>
-        <div class="concept-grid">
-            <div class="concept-card" onclick="showCmd('source')">
-                <h4>source</h4>
-                <p>Local path, registry, or Git URL</p>
+        <section id="concept" class="view active">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Core Model</div>
+                    <h2>Module Basics</h2>
+                </div>
             </div>
-            <div class="concept-card" onclick="showCmd('interface')">
-                <h4>Interface</h4>
-                <p>Variables in, outputs out — hide internals</p>
+<div class="concept-grid">
+                <article class="card">
+                    <div class="card-badge">Root module</div>
+                    <p>The directory where you run terraform — can call child modules.</p>
+                </article>
+                <article class="card">
+                    <div class="card-badge">Child module</div>
+                    <p>Reusable package in <code>modules/</code> or a registry source.</p>
+                </article>
+                <article class="card">
+                    <div class="card-badge">module block</div>
+                    <p><code>module "vpc" { source = "./modules/vpc" }</code></p>
+                </article>
+                <article class="card">
+                    <div class="card-badge">Inputs</div>
+                    <p>Pass variables into modules; modules expose outputs upward.</p>
+                </article>
+                <article class="card">
+                    <div class="card-badge">Registry</div>
+                    <p>Public modules at registry.terraform.io — pin versions with <code>version =</code>.</p>
+                </article>
+                <article class="card">
+                    <div class="card-badge">Composition</div>
+                    <p>Small focused modules composed in root — not one giant module.</p>
+                </article>
             </div>
-            <div class="concept-card" onclick="showCmd('provider')">
-                <h4>Provider inheritance</h4>
-                <p>Child uses root's AWS provider config</p>
+        </section>
+        <section id="architecture" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Layout</div>
+                    <h2>Lab 07 Module Structure</h2>
+                </div>
             </div>
-            <div class="concept-card" onclick="showCmd('registry')">
-                <h4>Public registry</h4>
-                <p>terraform-aws-modules/vpc/aws</p>
+<div class="example-stack">
+            <div class="lab-callout"><strong>Repo lab files:</strong> terraform/essentials/labs/lab07-simple-module/</div>
+                <section class="example-card">
+                    <div class="section-kicker">Directory tree</div>
+                    <pre><code>lab07-simple-module/
+├── main.tf          # calls module
+├── variables.tf
+└── modules/
+    └── web/
+        ├── main.tf
+        ├── variables.tf
+        └── outputs.tf</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">Root calls child</div>
+                    <pre><code>module "web" {
+  source        = "./modules/web"
+  instance_type = var.instance_type
+}</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">Child output</div>
+                    <pre><code>output "instance_id" {
+  value = aws_instance.this.id
+}</code></pre>
+                </section>
             </div>
-        </div>
-
-        <div class="section-title">5. Module Data Flow</div>
-        <div class="lifecycle-flow">
-            <div class="flow-box in" onclick="showCmd('var')">var.vpc_cidr</div>
-            <span class="arrow">→</span>
-            <div class="flow-box child" onclick="showCmd('res')">aws_vpc.this</div>
-            <span class="arrow">→</span>
-            <div class="flow-box out" onclick="showCmd('modout')">module.network.vpc_id</div>
-            <span class="arrow">→</span>
-            <div class="flow-box root" onclick="showCmd('rootout')">output vpc_id</div>
-        </div>
-
-        <div class="example-scenario">
-            <h3>Apply Checklist (Lab 07)</h3>
-            <p><strong>export AWS_PROFILE=training</strong> — credentials via chain, not HCL keys</p>
-            <p><strong>terraform plan</strong> — expect 2 resources under module.network</p>
-            <p><strong>terraform apply</strong> — read vpc_id and subnet_id outputs</p>
-            <p><strong>terraform destroy</strong> — mandatory VPC cleanup</p>
-        </div>
-
-        <div class="section-title">6. Module Sources Compared</div>
-        <pre>| Source type   | Example                              | Lab     |
-|---------------|--------------------------------------|---------|
-| Local path    | source = "./modules/network"         | Lab 07  |
-| Registry      | source = "terraform-aws-modules/..." | Extended|
-| Git           | source = "git::https://..."          | Teams   |</pre>
-
-        <div class="example-scenario">
-            <h3>Common Mistakes</h3>
-            <p>❌ Putting provider credentials in child modules</p>
-            <p>❌ Expecting separate state file per child module</p>
-            <p>❌ Exporting too many outputs — tight coupling</p>
-            <p>✅ Narrow interface: vpc_id, subnet_id only</p>
-        </div>
-
-        <div class="section-title">7. When to Extract a Module</div>
-        <pre>Signals:
-  • Same VPC pattern repeated in 3+ stacks
-  • Blast radius too large in one root module
-  • Platform team owns networking; app teams consume outputs
-
-Lab 07 is minimal on purpose — production modules add IGW, routes, NACLs.</pre>
-
-        <div class="section-title">8. Registry Module Example</div>
-        <pre>module "vpc" {
+            <svg viewBox="0 0 950 320" style="width:100%;max-width:950px;margin:20px auto;display:block;">
+                <text x="475" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#1e293b">Module Call Graph</text>
+                <rect x="80" y="80" width="180" height="60" rx="8" fill="#ede4f7" stroke="#7B42BC" stroke-width="2"/><text x="170" y="110" text-anchor="middle" font-size="12" font-weight="bold" fill="#1e293b">Root Module</text><rect x="320" y="80" width="180" height="60" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/><text x="410" y="110" text-anchor="middle" font-size="12" font-weight="bold" fill="#1e293b">module.web</text><rect x="560" y="80" width="180" height="60" rx="8" fill="#dcfce7" stroke="#22c55e" stroke-width="2"/><text x="650" y="110" text-anchor="middle" font-size="12" font-weight="bold" fill="#1e293b">aws_instance</text><rect x="320" y="180" width="180" height="60" rx="8" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/><text x="410" y="210" text-anchor="middle" font-size="12" font-weight="bold" fill="#1e293b">outputs up</text>
+                
+            </svg>
+        </section>
+        <section id="flow" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Lab 07</div>
+                    <h2>Module Apply Workflow</h2>
+                </div>
+            </div>
+<div class="flow-track">
+                <div class="flow-step">
+                    <div class="step-number">1</div>
+                    <h3>cd lab07</h3>
+                    <p>cd terraform/essentials/labs/lab07-simple-module</p>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">2</div>
+                    <h3>init</h3>
+                    <p>terraform init — downloads modules and providers</p>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">3</div>
+                    <h3>plan</h3>
+                    <p>terraform plan — shows resources inside child module</p>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">4</div>
+                    <h3>apply</h3>
+                    <p>terraform apply</p>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">5</div>
+                    <h3>output</h3>
+                    <p>terraform output — values from child module outputs</p>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">6</div>
+                    <h3>edit child</h3>
+                    <p>Change instance_type in modules/web/variables.tf defaults</p>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">7</div>
+                    <h3>re-plan</h3>
+                    <p>terraform plan — observe module input change propagation</p>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">8</div>
+                    <h3>destroy</h3>
+                    <p>terraform destroy</p>
+                </div>
+            </div>
+        </section>
+        <section id="setup" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Sources</div>
+                    <h2>Module Source Types</h2>
+                </div>
+            </div>
+<div class="example-stack">
+                <section class="example-card">
+                    <div class="section-kicker">Local path</div>
+                    <pre><code>module "web" { source = "./modules/web" }</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">Registry</div>
+                    <pre><code>module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
-  version = "5.1.0"
-
-  name = "my-vpc"
-  cidr = "10.0.0.0/16"
-
-  azs             = ["us-east-1a", "us-east-1b"]
-  public_subnets  = ["10.0.1.0/24", "10.0.2.0/24"]
-}
-
-# Pin version; read UPGRADE guide before bumping</pre>
-
-        <div class="section-title">9. Module Versioning & Testing</div>
-        <div class="concept-grid">
-            <div class="concept-card" onclick="showCmd('version')">
-                <h4>version pin</h4>
-                <p>Registry modules require version argument</p>
+  version = "~&gt; 5.0"
+}</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">Git</div>
+                    <pre><code>module "app" { source = "git::https://github.com/org/repo.git//modules/app?ref=v1.2.0" }</code></pre>
+                </section>
             </div>
-            <div class="concept-card" onclick="showCmd('test')">
-                <h4>terraform test</h4>
-                <p>Run module tests before publishing</p>
+        </section>
+        <section id="commands" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Quick Reference</div>
+                    <h2>Module-Related Commands</h2>
+                </div>
             </div>
-            <div class="concept-card" onclick="showCmd('mono')">
-                <h4>Monorepo layout</h4>
-                <p>modules/ directory per domain</p>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Category</th><th>Command</th><th>Description</th></tr></thead>
+                    <tbody>
+                        <tr><td>Init</td><td><code>terraform init</code></td><td>Install module sources</td></tr>
+                        <tr><td>Get</td><td><code>terraform get -update</code></td><td>Refresh modules</td></tr>
+                        <tr><td>Providers</td><td><code>terraform providers</code></td><td>Show module provider tree</td></tr>
+                        <tr><td>Graph</td><td><code>terraform graph | dot -Tpng > graph.png</code></td><td>Visualize modules</td></tr>
+                    </tbody>
+                </table>
             </div>
-            <div class="concept-card" onclick="showCmd('cap')">
-                <h4>Capstone</h4>
-                <p>Extended Lab 15 composes full VPC root</p>
+            <div class="section-note">Extended reference appendix — bookmark for exam prep and on-the-job lookup.</div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Topic</th><th>Command / Pattern</th><th>Notes</th></tr></thead>
+                    <tbody>
+                        <tr><td>Review</td><td>Re-read lab manual objectives</td><td>Modules</td></tr>
+                        <tr><td>Validate</td><td>Run syntax-check or validate</td><td>Before apply</td></tr>
+                        <tr><td>Cleanup</td><td>Destroy or remove lab changes</td><td>End of session</td></tr>
+                        <tr><td>Docs</td><td>Cross-link markdown docs</td><td>../docs/</td></tr>
+                        <tr><td>Git</td><td>Commit only safe files</td><td>No secrets/state</td></tr>
+                        <tr><td>Pair</td><td>Walk through with teammate</td><td>Teaching reinforces</td></tr>
+                        <tr><td>Notes</td><td>Document failures and fixes</td><td>Personal runbook</td></tr>
+                        <tr><td>Next</td><td>Follow learning path order</td><td>curriculum/learning-paths.md</td></tr>
+                    </tbody>
+                </table>
+            </div>            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Modules — reference drill 1</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
             </div>
-        </div>
-
-        <div class="example-scenario">
-            <h3>Destroy Reminder</h3>
-            <p>Lab 07 creates billable-adjacent VPC resources (no hourly charge for empty VPC, but clutter and limits matter).</p>
-            <p><code>terraform destroy</code> removes <code>module.network.aws_subnet.this</code> then <code>module.network.aws_vpc.this</code>.</p>
-        </div>
-
-        <p class="footer-note">
-            Terraform Essentials · AWS provider ~&gt; 5.0<br>
-            <a href="../labmanuals/lab07-simple-module.md">Lab 07 Manual</a> ·
-            <a href="../docs/08-modules/README.md">Modules Doc</a> ·
-            <a href="../../extended/docs/projects/README.md">Extended Projects</a>
-        </p>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Modules — reference drill 2</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Modules — reference drill 3</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+        </section>
+        <section id="examples" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Hands-On</div>
+                    <h2>Lab 07 Commands</h2>
+                </div>
+            </div>
+<div class="example-stack">
+            <div class="lab-callout"><strong>Repo lab files:</strong> lab07-simple-module/</div>
+                <section class="example-card">
+                    <div class="section-kicker">Full cycle</div>
+                    <pre><code>cd terraform/essentials/labs/lab07-simple-module
+terraform init
+terraform plan
+terraform apply</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">Module providers tree</div>
+                    <pre><code>terraform providers</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">Outputs</div>
+                    <pre><code>terraform output</code></pre>
+                </section>
+            </div>
+            <div class="section-note">Extended reference appendix — bookmark for exam prep and on-the-job lookup.</div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Topic</th><th>Command / Pattern</th><th>Notes</th></tr></thead>
+                    <tbody>
+                        <tr><td>Review</td><td>Re-read lab manual objectives</td><td>Modules</td></tr>
+                        <tr><td>Validate</td><td>Run syntax-check or validate</td><td>Before apply</td></tr>
+                        <tr><td>Cleanup</td><td>Destroy or remove lab changes</td><td>End of session</td></tr>
+                        <tr><td>Docs</td><td>Cross-link markdown docs</td><td>../docs/</td></tr>
+                        <tr><td>Git</td><td>Commit only safe files</td><td>No secrets/state</td></tr>
+                        <tr><td>Pair</td><td>Walk through with teammate</td><td>Teaching reinforces</td></tr>
+                        <tr><td>Notes</td><td>Document failures and fixes</td><td>Personal runbook</td></tr>
+                        <tr><td>Next</td><td>Follow learning path order</td><td>curriculum/learning-paths.md</td></tr>
+                    </tbody>
+                </table>
+            </div>            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Modules — reference drill 1</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Modules — reference drill 2</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Modules — reference drill 3</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+        </section>
+        <section id="comparison" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Decision Guide</div>
+                    <h2>When to Extract a Module</h2>
+                </div>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Signal</th><th>Keep inline</th><th>Extract module</th></tr></thead>
+                    <tbody>
+                        <tr><td>Used once</td><td>Yes</td><td>No</td></tr>
+                        <tr><td>Copy-paste across envs</td><td>No</td><td>Yes</td></tr>
+                        <tr><td>Team ownership boundary</td><td>No</td><td>Yes</td></tr>
+                        <tr><td>Registry candidate</td><td>No</td><td>Yes — publish</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        <section id="practice" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Use It Well</div>
+                    <h2>Module Practice</h2>
+                </div>
+            </div>
+<div class="practice-grid">
+                <article class="card practice-card">
+                    <div class="card-badge">Lab 07</div>
+                    <p>Complete module lab; trace variables from root to child.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab07-simple-module.md">Open lab manual →</a></p>
+                </article>
+                <article class="card practice-card">
+                    <div class="card-badge">Add output</div>
+                    <p>Expose a new output from child; reference in root.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab07-simple-module.md">Open lab manual →</a></p>
+                </article>
+                <article class="card practice-card">
+                    <div class="card-badge">Registry browse</div>
+                    <p>Find terraform-aws-modules/vpc on registry.terraform.io.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab07-simple-module.md">Open lab manual →</a></p>
+                </article>
+                <article class="card practice-card">
+                    <div class="card-badge">Version pin</div>
+                    <p>Add version constraint to a registry module call.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab07-simple-module.md">Open lab manual →</a></p>
+                </article>
+                <article class="card practice-card">
+                    <div class="card-badge">Refactor</div>
+                    <p>Move inline resource into new ./modules/ folder.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab07-simple-module.md">Open lab manual →</a></p>
+                </article>
+                <article class="card practice-card">
+                    <div class="card-badge">Destroy</div>
+                    <p>terraform destroy when module lab complete.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab07-simple-module.md">Open lab manual →</a></p>
+                </article>
+            </div>
+            <div class="section-note">Extended reference appendix — bookmark for exam prep and on-the-job lookup.</div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Topic</th><th>Command / Pattern</th><th>Notes</th></tr></thead>
+                    <tbody>
+                        <tr><td>Review</td><td>Re-read lab manual objectives</td><td>Modules</td></tr>
+                        <tr><td>Validate</td><td>Run syntax-check or validate</td><td>Before apply</td></tr>
+                        <tr><td>Cleanup</td><td>Destroy or remove lab changes</td><td>End of session</td></tr>
+                        <tr><td>Docs</td><td>Cross-link markdown docs</td><td>../docs/</td></tr>
+                        <tr><td>Git</td><td>Commit only safe files</td><td>No secrets/state</td></tr>
+                        <tr><td>Pair</td><td>Walk through with teammate</td><td>Teaching reinforces</td></tr>
+                        <tr><td>Notes</td><td>Document failures and fixes</td><td>Personal runbook</td></tr>
+                        <tr><td>Next</td><td>Follow learning path order</td><td>curriculum/learning-paths.md</td></tr>
+                    </tbody>
+                </table>
+            </div>            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Modules — reference drill 1</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Modules — reference drill 2</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Modules — reference drill 3</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+        </section>
     </div>
 
     <script>
-        const cmdInfo = {
-            root: { t: 'Root Module', d: 'The directory where you run terraform commands. Lab 07 root calls module network and re-exports outputs. One state file holds all module resources.' },
-            inputs: { t: 'Module Inputs', d: 'Arguments on the module block map to variable blocks in the child. Lab 07 passes name, vpc_cidr, subnet_cidr from root variables.' },
-            child: { t: 'Child Module', d: './modules/network contains aws_vpc.this and aws_subnet.this. Hidden from root except through declared outputs.' },
-            outputs: { t: 'Module Outputs', d: 'Root reads module.network.vpc_id — the supported API between modules. Do not reference child internal resources from root.' },
-            source: { t: 'Module Source', d: 'Lab 07 uses local path ./modules/network. Registry modules add version = "x.y.z" for reproducibility.' },
-            interface: { t: 'Module Interface', d: 'Inputs (variables) and outputs define the contract. Internal resources can change without breaking callers if outputs stay stable.' },
-            provider: { t: 'Provider Inheritance', d: 'Child modules inherit default provider from root. Configure AWS region once in root provider block — never access_key in HCL.' },
-            registry: { t: 'Public Registry', d: 'terraform-aws-modules/vpc/aws is a popular community module. Pin versions and read upgrade guides.' },
-            var: { t: 'Root Variable', d: 'var.vpc_cidr default 10.42.0.0/16 in variables.tf flows into module argument.' },
-            res: { t: 'Child Resource', d: 'aws_vpc.this created inside child module. Address in state: module.network.aws_vpc.this.' },
-            modout: { t: 'Child Output', d: 'outputs.tf in child exposes vpc_id = aws_vpc.this.id.' },
-            rootout: { t: 'Root Output', d: 'Root output vpc_id = module.network.vpc_id for operators and remote state consumers.' },
-            version: { t: 'Module Version Pin', d: 'Public registry modules require version = "x.y.z". Upgrades are explicit PRs with plan review.' },
-            test: { t: 'Module Testing', d: 'terraform test (1.6+) runs mock apply scenarios. Platform teams test modules before publishing to internal registry.' },
-            mono: { t: 'Monorepo Modules', d: 'Lab 07 uses ./modules/network. Teams colocate modules/ beside environments/dev, environments/prod root modules.' },
-            cap: { t: 'Capstone Project', d: 'Extended Lab 15 builds a fuller VPC root module with variables, outputs, and tagging policy.' }
-        };
-
-        function showCmd(key) {
-            const c = cmdInfo[key];
-            document.getElementById('cmd-detail').innerHTML =
-                '<h4>' + c.t + '</h4><p>' + c.d + '</p>';
-        }
-
-        function switchTab(ev, name) {
-            document.querySelectorAll('.code-tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.code-content').forEach(c => c.classList.remove('active'));
-            ev.target.classList.add('active');
-            document.getElementById('tab-' + name).classList.add('active');
-        }
+        const buttons = document.querySelectorAll('.btn');
+        const views = document.querySelectorAll('.view');
+        buttons.forEach((button) => {
+            button.addEventListener('click', () => {
+                const viewId = button.dataset.view;
+                buttons.forEach((b) => b.classList.remove('active'));
+                views.forEach((v) => v.classList.remove('active'));
+                button.classList.add('active');
+                document.getElementById(viewId).classList.add('active');
+            });
+        });
     </script>
 </body>
 </html>

@@ -1,13 +1,24 @@
 # Ansible Essentials — HTML Catalog
 
-Six self-contained pages (embedded CSS, Ansible red `#EE0000`, no CDN). Open in any browser offline.
+Offline interactive pages (embedded CSS, no CDN). Open `index.html` in any browser.
 
-| Page | Topic | Doc |
-|------|-------|-----|
-| [index.html](index.html) | Catalog | — |
-| [ansible-architecture.html](ansible-architecture.html) | Control vs managed nodes | [01-getting-started](../docs/01-getting-started/ansible-architecture.md) |
-| [inventory-flow.html](inventory-flow.html) | Inventory & group_vars | [02-inventory](../docs/02-inventory/inventory-ini-and-yaml.md) |
-| [adhoc-vs-playbook.html](adhoc-vs-playbook.html) | Ad hoc vs playbook | [03-adhoc](../docs/03-adhoc/adhoc-commands.md) |
-| [playbook-handlers.html](playbook-handlers.html) | Handlers & notify | [04-playbooks](../docs/04-playbooks/playbook-and-yaml-basics.md) |
-| [variables-templates.html](variables-templates.html) | Variables & Jinja | [05-variables](../docs/05-variables/ansible-variables.md) |
-| [roles-and-vault.html](roles-and-vault.html) | Roles & Vault | [06-roles](../docs/06-roles/ansible-roles.md), [07-vault](../docs/07-vault/ansible-vault.md) |
+```bash
+open ansible/essentials/html/index.html
+```
+
+## Pages (7 total including index)
+
+| File | Topic |
+|------|-------|
+| [index.html](index.html) | Catalog |
+| [adhoc-vs-playbook.html](adhoc-vs-playbook.html) | Adhoc Vs Playbook |
+| [ansible-architecture.html](ansible-architecture.html) | Ansible Architecture |
+| [inventory-flow.html](inventory-flow.html) | Inventory Flow |
+| [playbook-handlers.html](playbook-handlers.html) | Playbook Handlers |
+| [roles-and-vault.html](roles-and-vault.html) | Roles And Vault |
+| [variables-templates.html](variables-templates.html) | Variables Templates |
+
+## Related
+
+- Lab manuals: `../labmanuals/`
+- Docs: `../docs/`

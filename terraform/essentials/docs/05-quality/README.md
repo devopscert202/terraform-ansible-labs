@@ -1,63 +1,47 @@
-# 05 — Quality
+# Terraform Quality: Format, Validate, and Review
 
-## Overview
+## Objective (conceptual)
 
-Infrastructure code deserves the same quality discipline as application code. Terraform provides built-in commands — `fmt` and `validate` — that catch formatting inconsistencies and configuration errors before you touch a cloud API. In mature teams, these checks run in CI on every pull request.
+Quality gates catch mistakes **before** `apply` touches production. `terraform fmt` enforces consistent HCL so diffs stay readable in code review. `terraform validate` checks that blocks, references, and types are internally consistent—without calling cloud APIs. Together they form the minimum bar every commit should pass.
 
-This chapter extends Lab 04 with CI integration patterns, sensitive output handling, and pre-apply checklists. Quality gates are cheap insurance: `validate` runs in seconds and prevents embarrassing plan failures in shared pipelines.
+The mental model: **fmt** is style; **validate** is grammar; **plan** is semantics against live infrastructure. CI pipelines typically run all three on every pull request, then run `plan` with read-only credentials.
 
-### Why this matters for beginners
+**Interactive reference:** [Core Workflow](../../html/workflow.html)
 
-A missing argument or typo in a resource block might not be obvious until `plan` — or worse, mid-`apply`. Running `terraform validate` after every edit builds a habit that saves hours of debugging. Similarly, `terraform fmt` eliminates style debates in code review.
+## terraform fmt
 
----
+- Rewrites `.tf`, `.tfvars`, and `.tftest.hcl` files in place.
+- `terraform fmt -check` exits non-zero in CI when files need formatting.
+- Lab 04 starts with misaligned braces—`fmt` fixes them in one pass.
 
-## Key concepts
+## terraform validate
 
-| Concept | Tool | Purpose |
-|---------|------|---------|
-| Canonical formatting | `terraform fmt` | Consistent HCL style |
-| Static analysis | `terraform validate` | Syntax + internal consistency |
-| Format check (CI) | `terraform fmt -check` | Fail build on unformatted files |
-| Sensitive values | `sensitive = true` | Redact CLI output |
-| Lock file | `.terraform.lock.hcl` | Reproducible provider versions |
-| Pre-commit hooks | External (optional) | Auto-fmt before commit |
+- Requires `init` first (providers must be installed).
+- Catches unknown arguments, wrong types, and broken references.
+- Does **not** verify credentials, quotas, or that an AMI exists in your account.
 
----
+## Sensitive outputs (Lab 04)
 
-## Quality gate workflow
-
-```
-  Developer edit (.tf)
-         │
-         ▼
-  ┌─────────────┐     fail    ┌──────────────┐
-  │ terraform fmt│────────────▶│ fix formatting│
-  └──────┬──────┘             └──────────────┘
-         │ pass
-         ▼
-  ┌─────────────┐     fail    ┌──────────────┐
-  │terraform init│────────────▶│ install providers│
-  └──────┬──────┘             └──────────────┘
-         │ pass
-         ▼
-  ┌─────────────┐     fail    ┌──────────────┐
-  │   validate   │────────────▶│ fix config errors │
-  └──────┬──────┘             └──────────────┘
-         │ pass
-         ▼
-  ┌─────────────┐
-  │     plan      │
-  └─────────────┘
+```hcl
+output "formatted_example" {
+  value     = random_string.formatted_example.result
+  sensitive = true
+}
 ```
 
----
+- CLI masks the value in `apply` output and `terraform output`.
+- Value remains in state—protect state files accordingly.
+- Use for tokens, connection strings, or generated secrets in training scenarios.
 
-## Lab 04 walkthrough
+## Pre-apply review checklist
 
-### Configuration
+- [ ] `terraform fmt -recursive` (from repo root or lab folder)
+- [ ] `terraform validate`
+- [ ] `terraform plan` reviewed line by line
+- [ ] Destroy plan understood for any `forces replacement`
+- [ ] Tags and names match environment policy
 
-`labs/lab04-fmt-validate/main.tf`:
+## Lab 04 configuration excerpt
 
 ```hcl
 terraform {
@@ -76,191 +60,61 @@ resource "random_string" "formatted_example" {
   numeric = true
   upper   = true
 }
-
-output "formatted_example" {
-  value     = random_string.formatted_example.result
-  sensitive = true
-}
 ```
 
-### Step 1 — Initialize
+After `fmt`, indentation and brace placement match HashiCorp style—easier for teammates and linters.
+
+## Integrating with CI (concept)
+
+Typical job steps:
+
+1. `terraform init -backend=false` (validation-only jobs)
+2. `terraform fmt -check`
+3. `terraform validate`
+4. `terraform plan` (with remote backend and credentials in CI secrets)
+
+Extended track Lab 02 (`lab02-validate-only`) explores validate-only roots without apply.
+
+## Common validate errors
+
+| Message | Cause | Fix |
+|---------|-------|-----|
+| Missing required provider | Skipped `init` | Run `terraform init` |
+| Reference to undeclared resource | Typo in address | Match `resource` block name |
+| Invalid value for variable | Wrong type in tfvars | Align with `variable` block `type` |
+
+## fmt in team workflows
+
+Run `terraform fmt -recursive` from the essentials `labs/` parent before opening a PR if you touched multiple directories. Consistent formatting lets reviewers focus on logic—CIDR changes and security group rules—not brace placement.
+
+Pair fmt with editor integration: the Terraform VS Code extension can format on save using the same rules as the CLI.
+
+## validate vs plan
+
+| Stage | Contacts cloud API? | Catches |
+|-------|---------------------|---------|
+| `validate` | No | Syntax, unknown args, type errors |
+| `plan` | Yes (refresh) | Drift, quota errors, missing AMIs |
+
+A green `validate` does not guarantee a green `plan`. Always run both before apply in AWS labs.
+
+## Operational commands (reference)
 
 ```bash
 cd terraform/essentials/labs/lab04-fmt-validate
 terraform init
-```
-
-### Step 2 — Format
-
-```bash
 terraform fmt
-```
-
-`fmt` rewrites files to standard style (2-space indent, aligned `=`). No output means already formatted.
-
-### Step 3 — Validate
-
-```bash
+terraform fmt -check -diff
 terraform validate
-```
-
-Expected:
-
-```
-Success! The configuration is valid.
-```
-
-### What validate checks
-
-- Block structure and argument types
-- Reference validity (`var.x`, `resource.y.z`)
-- Provider configuration schema
-- **Does not** call cloud APIs
-- **Does not** verify credentials
-
-### Step 4 — Apply and test sensitive output
-
-```bash
-terraform apply
-terraform output formatted_example
-# (sensitive value)
-
-terraform output -raw formatted_example
-# reveals actual 10-character string
-```
-
-### Step 5 — Destroy
-
-```bash
-terraform destroy
+terraform plan
+terraform output -json   # structured output for scripts
 ```
 
 ---
 
-## CI integration examples
+## Hands-On Labs
 
-### Shell script for PR checks
-
-```bash
-#!/usr/bin/env bash
-set -euo pipefail
-
-terraform fmt -check -recursive .
-terraform init -backend=false -input=false
-terraform validate
-```
-
-### GitHub Actions (conceptual)
-
-```yaml
-jobs:
-  terraform:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: 1.5.0
-      - run: terraform fmt -check -recursive
-      - run: terraform init -backend=false
-      - run: terraform validate
-```
-
-For AWS plan in CI, use OIDC or short-lived credentials — never commit keys.
-
----
-
-## Sensitive outputs and variables
-
-```hcl
-output "db_password" {
-  value     = random_password.db.result
-  sensitive = true
-}
-
-variable "api_token" {
-  type      = string
-  sensitive = true
-}
-```
-
-**Important:** `sensitive = true` redacts **CLI display** only. Values still exist in **state**. Encrypt remote backends and restrict state access.
-
----
-
-## fmt style rules (examples)
-
-Before fmt:
-
-```hcl
-resource "random_string" "x" {
-length=10
-special=true
-}
-```
-
-After fmt:
-
-```hcl
-resource "random_string" "x" {
-  length  = 10
-  special = true
-}
-```
-
----
-
-## Common mistakes
-
-| Mistake | Symptom | Fix |
-|---------|---------|-----|
-| validate before init | Provider schema missing | Run `init` first |
-| Ignoring fmt in CI | Inconsistent reviews | Add `fmt -check` |
-| Assuming validate catches all errors | Runtime API errors at apply | Still review plan |
-| `sensitive` on output only | Secret still in state | Protect state backend |
-| Not committing lock file | Different provider versions on CI | Commit `.terraform.lock.hcl` |
-| Skipping validate in hurry | Broken main branch | Make validate mandatory |
-
----
-
-## Pre-apply checklist
-
-- [ ] `terraform fmt` (or `-check` in CI)
-- [ ] `terraform init` (if providers changed)
-- [ ] `terraform validate` succeeds
-- [ ] `AWS_PROFILE` set for AWS labs
-- [ ] `terraform plan` reviewed — note `+/-/~` counts
-- [ ] Destroy scheduled after verification
-
----
-
-## Links
-
-| Resource | Path |
-|----------|------|
-| Lab 04 manual | [labmanuals/lab04-fmt-validate.md](../../labmanuals/lab04-fmt-validate.md) |
-| HTML: Workflow | [html/workflow.html](../../html/workflow.html) |
-| Previous | [04-workflow/README.md](../04-workflow/README.md) |
-| Next | [06-variables/README.md](../06-variables/README.md) |
-
----
-
-## Hands-on lab
-
-**[Lab 04 — Fmt & Validate](../../labmanuals/lab04-fmt-validate.md)** — No AWS required.
-
----
-
-## Key takeaways
-
-1. **fmt** standardizes style; **validate** catches structural errors.
-2. Run both **before every plan** in learning and production.
-3. **Sensitive** flags hide values in normal CLI output, not in state.
-4. CI should run `fmt -check` and `validate` on every change.
-5. Quality gates are free — use them consistently.
-
----
-
-## Next steps
-
-Read [06 — Variables](../06-variables/README.md) for inputs, locals, and tfvars.
+| Lab | Description |
+|-----|-------------|
+| [Lab 04: Format and Validate](../../labmanuals/lab04-fmt-validate.md) | Fix formatting, validate config, sensitive output behavior |
+| [Extended Lab 02: Validate Only](../../../extended/labmanuals/lab02-validate-only.md) | CI-style validate without apply |

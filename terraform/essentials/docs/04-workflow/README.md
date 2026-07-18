@@ -1,67 +1,25 @@
-# 04 — Workflow
+# Terraform Core Workflow
 
-## Overview
+## Objective (conceptual)
 
-The Terraform workflow is a disciplined loop: **initialize** plugins, **validate** configuration, **plan** changes, **apply** approved changes, and **destroy** when tearing down. Quality gates (`fmt`, `validate`) belong in every run and in CI pipelines. This chapter maps each command to Lab 03 (lifecycle) and Lab 04 (quality).
+Terraform's daily loop is **init → fmt → validate → plan → apply → (eventually) destroy**. Each command has a distinct job: `init` prepares plugins and backends; `plan` is a dry-run diff; `apply` commits changes; `destroy` removes managed resources. Treat `plan` as mandatory review—especially before any command that bills a cloud account.
 
-For beginners, the workflow is the safety rail: `plan` is read-only preview; `apply` mutates infrastructure. Skipping plan review is the most common cause of accidental production outages.
+The mental model is **propose then commit**, like code review for infrastructure. State bridges configuration and reality; the workflow always compares `.tf` files to state and refreshes from the API before planning.
 
-### Why this matters for beginners
+**Interactive reference:** [Core Workflow](../../html/workflow.html)
 
-Terraform will destroy resources if you remove them from configuration. The plan output is your last chance to catch `1 to destroy` before typing `yes`. Labs 03 and 04 build muscle memory: init → validate → plan → apply → verify → destroy.
+## Command responsibilities
 
----
+| Command | Purpose |
+|---------|---------|
+| `terraform init` | Download providers, configure backend, create `.terraform/` |
+| `terraform fmt` | Format `.tf` files to canonical style |
+| `terraform validate` | Check syntax and internal consistency (no cloud calls) |
+| `terraform plan` | Show create/update/destroy actions |
+| `terraform apply` | Execute the plan (prompts unless `-auto-approve`) |
+| `terraform destroy` | Tear down all managed resources in the directory |
 
-## Key concepts
-
-| Command | Modifies cloud? | Modifies state? | Lab |
-|---------|-----------------|-----------------|-----|
-| `terraform init` | No | No (setup only) | 01, 03 |
-| `terraform fmt` | No | No | 04 |
-| `terraform validate` | No | No | 01, 04 |
-| `terraform plan` | No | No | 03 |
-| `terraform apply` | Yes | Yes | 03 |
-| `terraform destroy` | Yes | Yes | 03 |
-
----
-
-## Core workflow diagram
-
-```
-                    ┌──────────────┐
-                    │ terraform init│
-                    └──────┬───────┘
-                           ▼
-              ┌────────────────────────┐
-              │ terraform fmt (optional) │
-              └────────────┬───────────┘
-                           ▼
-              ┌────────────────────────┐
-              │ terraform validate      │
-              └────────────┬───────────┘
-                           ▼
-              ┌────────────────────────┐
-              │ terraform plan          │◀── read-only preview
-              └────────────┬───────────┘
-                           ▼
-              ┌────────────────────────┐
-              │ terraform apply         │◀── type "yes"
-              └────────────┬───────────┘
-                           ▼
-              ┌────────────────────────┐
-              │ verify outputs / console  │
-              └────────────┬───────────┘
-                           ▼
-              ┌────────────────────────┐
-              │ terraform destroy       │◀── cleanup (AWS labs)
-              └────────────────────────┘
-```
-
----
-
-## Lab 03 — Plan, apply, destroy
-
-Configuration: `labs/lab03-plan-apply-destroy/main.tf`
+## Lab 03: plan and apply cycle
 
 ```hcl
 resource "random_string" "example" {
@@ -75,73 +33,25 @@ output "generated_value" {
 }
 ```
 
-### Initialize
+Typical first apply output: `Plan: 1 to add, 0 to change, 0 to destroy`. After apply, `terraform.tfstate` records the resource ID.
 
-```bash
-cd terraform/essentials/labs/lab03-plan-apply-destroy
-terraform init
-```
+## Lab 04: fmt and validate
 
-Expected tail:
-
-```
-Terraform has been successfully initialized!
-```
-
-### Plan
-
-```bash
-terraform plan
-```
-
-Expected:
-
-```
-Plan: 1 to add, 0 to change, 0 to destroy.
-
-  # random_string.example will be created
-  + resource "random_string" "example" {
-      + length  = 12
-      + result  = (known after apply)
-      ...
-    }
-```
-
-### Apply
-
-```bash
-terraform apply
-```
-
-Review plan, type `yes`.
-
-Expected:
-
-```
-Apply complete! Resources: 1 added, 0 changed, 0 destroyed.
-
-Outputs:
-
-generated_value = "abcdefghijkl"
-```
-
-### Destroy
-
-```bash
-terraform destroy
-```
-
-Type `yes`. Expected: `1 destroyed`.
-
----
-
-## Lab 04 — Format and validate
-
-Configuration: `labs/lab04-fmt-validate/main.tf`
+Lab 04 ships intentionally messy formatting—run `terraform fmt` to normalize indentation:
 
 ```hcl
+terraform {
+required_version = ">= 1.5.0"
+  required_providers {
+    random = {
+  source  = "hashicorp/random"
+      version = "~> 3.0"
+    }
+  }
+}
+
 resource "random_string" "formatted_example" {
-  length  = 10
+length  = 10
   special = true
   numeric = true
   upper   = true
@@ -153,150 +63,62 @@ output "formatted_example" {
 }
 ```
 
-### Format
+`sensitive = true` on an output redacts the value in normal CLI output but does not remove it from state.
+
+## Safe apply habits
+
+- Run from **one lab directory** at a time—each has isolated state.
+- Read the plan summary line: `Plan: X to add, Y to change, Z to destroy`.
+- For AWS labs, run `destroy` when finished to stop charges.
+- Use `terraform plan -out=tfplan` in CI; `terraform apply tfplan` applies exactly that plan.
+
+## State file appearance
+
+After first `apply`, `terraform.tfstate` maps addresses like `random_string.example` to provider-assigned attributes. Do not hand-edit state; use `terraform state` subcommands if correction is needed.
+
+## When to re-run init
+
+- New or changed `required_providers`
+- Backend configuration changes
+- Cloning the repo on a new machine
+
+## Plan flags (reference)
+
+- `-destroy` — Plan teardown instead of forward changes.
+- `-target=RESOURCE` — Limit scope (debug only; avoid in production pipelines).
+- `-var='name=value'` — Override a variable at plan time.
+
+## Saving and reusing plans
 
 ```bash
-cd terraform/essentials/labs/lab04-fmt-validate
+terraform plan -out=tfplan
+terraform show tfplan
+terraform apply tfplan
+```
+
+The saved plan file locks the exact diff—useful in CI where operators should not re-plan with different variables between steps.
+
+## Operational commands (reference)
+
+```bash
+cd terraform/essentials/labs/lab03-plan-apply-destroy
 terraform init
+terraform plan
+terraform apply
+terraform show
+terraform destroy
+
+cd ../lab04-fmt-validate
 terraform fmt
-```
-
-If files need formatting, `fmt` prints their names. Re-run until silent.
-
-CI pattern:
-
-```bash
-terraform fmt -check -recursive .
-# Non-zero exit if formatting needed
-```
-
-### Validate
-
-```bash
 terraform validate
-```
-
-Expected: `Success! The configuration is valid.`
-
-### Sensitive output behavior
-
-After apply:
-
-```bash
-terraform output formatted_example
-# (sensitive value)
-
-terraform output -raw formatted_example
-# actual string value
+terraform plan
 ```
 
 ---
 
-## Reading plan symbols
+## Hands-On Labs
 
-| Symbol | Meaning |
-|--------|---------|
-| `+` | Create |
-| `-` | Destroy |
-| `~` | Update in-place |
-| `-/+` | Destroy and recreate |
-| `<=` | Read (data source) |
-
----
-
-## Plan internals (simplified)
-
-```
-1. Refresh state  ──▶  Query provider APIs for current attributes
-2. Diff           ──▶  Compare state + config
-3. Graph          ──▶  Order actions by dependencies
-4. Display        ──▶  Print human-readable plan
-```
-
-Drift example: if someone changes a tag in the AWS console, the next plan may show `~ tags`.
-
----
-
-## Useful flags
-
-```bash
-terraform plan -out=tfplan          # Save plan for reviewed apply
-terraform apply tfplan              # Apply exact saved plan
-terraform apply -auto-approve       # Skip prompt (CI only)
-terraform plan -destroy             # Plan deletion without destroy cmd
-terraform apply -refresh-only       # Update state only
-terraform plan -target=aws_instance.web  # Limit scope (emergency only)
-```
-
----
-
-## CI/CD pipeline pattern
-
-```yaml
-# Pseudocode pipeline stages
-- terraform fmt -check -recursive
-- terraform init -backend=false    # validate-only in CI
-- terraform validate
-- terraform plan -out=plan.tfplan
-# manual approval gate
-- terraform apply plan.tfplan
-```
-
----
-
-## Common mistakes
-
-| Mistake | Consequence | Prevention |
-|---------|-------------|------------|
-| `apply` without reading plan | Unintended deletes | Always review `+/-/~` |
-| `validate` before `init` | Provider errors | init first |
-| Skipping `destroy` on AWS | Billing | Add destroy to checklist |
-| `-auto-approve` locally | Accidental changes | Type `yes` manually when learning |
-| Editing state instead of re-applying | Orphan resources | Use workflow commands |
-| Running from wrong directory | Wrong state file | Verify `pwd` and lab folder |
-
----
-
-## Evidence checklist (labs)
-
-After each AWS lab, record:
-
-- [ ] Terraform version (`terraform version`)
-- [ ] Plan summary (N add / change / destroy)
-- [ ] Key output values (instance_id, vpc_id, etc.)
-- [ ] Destroy confirmation (`0 destroyed` remaining resources)
-
----
-
-## Links
-
-| Resource | Path |
-|----------|------|
-| Lab 03 | [labmanuals/lab03-plan-apply-destroy.md](../../labmanuals/lab03-plan-apply-destroy.md) |
-| Lab 04 | [labmanuals/lab04-fmt-validate.md](../../labmanuals/lab04-fmt-validate.md) |
-| HTML: Workflow | [html/workflow.html](../../html/workflow.html) |
-| Previous | [03-resources/README.md](../03-resources/README.md) |
-| Next | [05-quality/README.md](../05-quality/README.md) |
-
----
-
-## Hands-on labs
-
-1. **[Lab 03](../../labmanuals/lab03-plan-apply-destroy.md)** — Full lifecycle with `random_string`.
-2. **[Lab 04](../../labmanuals/lab04-fmt-validate.md)** — `fmt`, `validate`, sensitive outputs.
-
----
-
-## Key takeaways
-
-1. **init** prepares; **plan** previews; **apply** executes; **destroy** cleans up.
-2. **fmt** and **validate** are fast checks — run them every time.
-3. Plan output symbols (`+`, `-`, `~`) are your safety review.
-4. Lab 03 proves the loop without AWS cost.
-5. Always **destroy** AWS resources when finished.
-
----
-
-## Next steps
-
-Continue to [05 — Quality](../05-quality/README.md) for expanded quality practices, then [06 — Variables](../06-variables/README.md).
+| Lab | Description |
+|-----|-------------|
+| [Lab 03: Plan, Apply, Destroy](../../labmanuals/lab03-plan-apply-destroy.md) | Full create and teardown cycle with outputs |
+| [Lab 04: Format and Validate](../../labmanuals/lab04-fmt-validate.md) | `fmt`, `validate`, sensitive outputs |

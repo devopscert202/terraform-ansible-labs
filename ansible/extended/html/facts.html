@@ -3,434 +3,631 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Facts &amp; Custom Facts — Ansible Extended</title>
+    <title>Ansible Facts — Interactive Guide</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
-            --red: #CC0000;
-            --red-deep: #990000;
-            --red-sky: #ffe4e4;
+            --brand: #CC0000;
+            --brand-deep: #990000;
+            --brand-sky: #ffe4e6;
             --ink: #1a1a2e;
             --muted: #64748b;
-            --line: #e2e8f0;
+            --surface: #ffffff;
+            --panel: #ffffff;
+            --line: #dbe3f1;
             --mint: #dcfce7;
             --amber: #fef3c7;
+            --rose: #ffe4e6;
             --blue: #2563eb;
+            --slate-900: #0f172a;
             --slate-700: #334155;
+            --slate-500: #64748b;
+            --slate-200: #e2e8f0;
         }
         body {
             font-family: "Segoe UI", system-ui, sans-serif;
-            background: linear-gradient(180deg, #fffafa 0%, #f4f6f8 100%);
+            background: linear-gradient(180deg, #f8fbff 0%, #eef4fb 100%);
             color: var(--ink);
             line-height: 1.6;
             padding: 20px;
         }
-        .container { max-width: 1100px; margin: 0 auto; }
+        .container { max-width: 1380px; margin: 0 auto; }
         .hero {
             position: relative;
+            text-align: center;
             background: white;
             border-radius: 16px;
-            padding: 28px 32px;
-            margin-bottom: 20px;
-            border: 1px solid rgba(204,0,0,0.1);
-            box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+            padding: 34px 32px 28px;
+            box-shadow: 0 4px 18px rgba(15, 23, 42, 0.08);
+            margin-bottom: 26px;
+            border: 1px solid color-mix(in srgb, var(--brand) 10%, transparent);
+        }
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: var(--brand-sky);
+            color: var(--brand-deep);
+            font-size: 0.82rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 14px;
+        }
+        h1 {
+            font-size: clamp(2rem, 4vw, 3rem);
+            color: var(--brand);
+            margin-bottom: 10px;
+            line-height: 1.1;
+        }
+        .subtitle {
+            font-size: 1.03rem;
+            color: var(--muted);
+            max-width: 980px;
+            margin: 0 auto 18px;
+        }
+        .lead-panel {
+            background: linear-gradient(180deg, #f8fbff 0%, color-mix(in srgb, var(--brand-sky) 60%, white) 100%);
+            border: 1px solid color-mix(in srgb, var(--brand) 12%, transparent);
+            border-radius: 14px;
+            padding: 18px 20px;
+            max-width: 980px;
+            margin: 0 auto;
+        }
+        .lead-panel p { color: #334155; font-size: 0.98rem; }
+        .controls {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 0 0 24px;
+        }
+        .btn {
+            border: 2px solid var(--brand);
+            background: white;
+            color: var(--brand-deep);
+            padding: 11px 20px;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+        }
+        .btn:hover, .btn.active {
+            background: var(--brand);
+            color: white;
+            box-shadow: 0 4px 12px color-mix(in srgb, var(--brand) 30%, transparent);
+            transform: translateY(-2px);
+        }
+        .view {
+            display: none;
+            background: var(--panel);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 30px;
+            margin-bottom: 26px;
+            border: 1px solid rgba(15,23,42,0.04);
+        }
+        .view.active { display: block; }
+        .section-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 18px;
+            align-items: end;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .section-head h2 { color: var(--ink); font-size: 1.45rem; }
+        .section-kicker {
+            color: var(--brand-deep);
+            text-transform: uppercase;
+            font-size: 0.76rem;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            margin-bottom: 10px;
+        }
+        .section-note {
+            border-left: 4px solid var(--brand);
+            background: color-mix(in srgb, var(--brand-sky) 50%, white);
+            color: var(--brand-deep);
+            padding: 14px 16px;
+            border-radius: 12px;
+            margin-top: 18px;
+        }
+        .concept-grid, .practice-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));
+            gap: 18px;
+        }
+        .card {
+            background: linear-gradient(180deg, #ffffff, #f8fbff);
+            border: 1px solid var(--line);
+            border-top: 4px solid var(--brand);
+            border-radius: 16px;
+            padding: 20px;
+            min-height: 170px;
+            box-shadow: 0 6px 18px rgba(15,23,42,0.05);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .card:hover, .flow-step:hover, .example-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 24px rgba(15,23,42,0.1);
+        }
+        .card-badge {
+            display: inline-flex;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: var(--brand-sky);
+            color: var(--brand-deep);
+            font-weight: 700;
+            margin-bottom: 14px;
+        }
+        .practice-card .card-badge { background: var(--mint); color: #166534; }
+        .practice-card { border-top-color: #22c55e; }
+        .card p { color: #475569; }
+        .flow-track {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));
+            gap: 18px;
+        }
+        .flow-step {
+            position: relative;
+            border-radius: 16px;
+            padding: 22px 18px 18px;
+            border: 1px solid color-mix(in srgb, var(--brand) 18%, transparent);
+            background: linear-gradient(160deg, #ffffff 0%, color-mix(in srgb, var(--brand-sky) 40%, white) 100%);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .step-number {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            background: var(--brand);
+            color: white;
+            font-weight: 800;
+            margin-bottom: 14px;
+            box-shadow: 0 10px 20px color-mix(in srgb, var(--brand) 22%, transparent);
+        }
+        .flow-step h3 { font-size: 1rem; margin-bottom: 10px; color: #0f172a; }
+        .flow-step p { color: #475569; font-size: 0.95rem; }
+        .example-stack { display: grid; gap: 18px; }
+        .example-card {
+            border: 1px solid rgba(15,23,42,0.08);
+            border-radius: 16px;
+            padding: 18px;
+            background: linear-gradient(180deg, #ffffff, #f8fafc);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .lab-callout {
+            border: 1px dashed color-mix(in srgb, var(--brand) 35%, transparent);
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin: 14px 0;
+            background: color-mix(in srgb, var(--brand-sky) 35%, white);
+            color: #334155;
+            font-size: 0.92rem;
+        }
+        .lab-callout strong { color: var(--brand-deep); }
+        pre {
+            margin-top: 10px;
+            background: #0f172a;
+            color: #dbeafe;
+            border-radius: 16px;
+            padding: 18px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            overflow-x: hidden;
+            font-size: 0.88rem;
+            line-height: 1.55;
+            border: 1px solid rgba(148,163,184,0.18);
+        }
+        code { font-family: Consolas, 'Cascadia Code', monospace; }
+        .table-wrap {
+            overflow-x: auto;
+            border-radius: 16px;
+            border: 1px solid var(--line);
+            background: white;
+        }
+        table { width: 100%; border-collapse: collapse; }
+        th, td {
+            padding: 14px 16px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+            vertical-align: top;
+        }
+        th {
+            background: linear-gradient(180deg, var(--brand), var(--brand-deep));
+            color: white;
+            font-weight: 700;
+        }
+        tbody tr:nth-child(even) { background: #f8fbff; }
+        .footer-note {
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.9rem;
+            margin-top: 18px;
+        }
+        .footer-note a { color: var(--brand); text-decoration: none; }
+        .footer-note a:hover { text-decoration: underline; }
+        @media (max-width: 900px) {
+            body { padding: 14px; }
+            .hero, .view { padding: 22px; }
+            .controls { justify-content: flex-start; }
+            .concept-grid, .practice-grid, .flow-track { grid-template-columns: 1fr; }
         }
         .home-link {
-            position: absolute; top: 16px; right: 20px;
-            color: var(--red); text-decoration: none; font-size: 0.88rem; font-weight: 600;
-            padding: 6px 14px; border-radius: 8px;
-            border: 1px solid rgba(204,0,0,0.2); background: rgba(204,0,0,0.05);
+            position: absolute;
+            top: 16px;
+            right: 20px;
+            color: var(--brand);
+            text-decoration: none;
+            font-size: 0.88rem;
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: 8px;
+            border: 1px solid color-mix(in srgb, var(--brand) 18%, transparent);
+            background: color-mix(in srgb, var(--brand) 6%, transparent);
+            transition: background 0.2s, color 0.2s;
         }
-        .home-link:hover { background: rgba(204,0,0,0.12); }
-        .hero h1 { color: var(--red); font-size: 1.9rem; margin-top: 8px; }
-        .lead { color: var(--muted); margin-top: 8px; font-size: 0.95rem; }
-        .repo-box {
-            background: var(--mint); border-left: 4px solid #22c55e;
-            padding: 12px 16px; border-radius: 6px; margin: 16px 0; font-size: 0.88rem;
+        .home-link:hover {
+            background: color-mix(in srgb, var(--brand) 13%, transparent);
+            color: var(--brand-deep);
         }
-        .repo-box ul { margin: 8px 0 0 18px; }
-        .flow-section { margin-bottom: 20px; }
-        .section-title {
-            font-size: 1rem; font-weight: 700; color: var(--slate-700);
-            margin-bottom: 12px; padding: 8px 12px;
-            background: #f1f5f9; border-left: 4px solid var(--red);
-        }
-        .flow-container {
-            display: flex; align-items: center; justify-content: center;
-            flex-wrap: wrap; gap: 8px; margin: 14px 0;
-        }
-        .flow-box {
-            background: linear-gradient(135deg, #CC0000 0%, #990000 100%);
-            color: white; padding: 12px 16px; border-radius: 8px;
-            text-align: center; font-weight: 600; font-size: 0.82rem;
-            cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
-            min-width: 120px; box-shadow: 0 3px 8px rgba(204,0,0,0.25);
-        }
-        .flow-box:hover { transform: translateY(-2px); box-shadow: 0 5px 14px rgba(204,0,0,0.35); }
-        .flow-box.setup { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); }
-        .flow-box.cache { background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%); }
-        .flow-box.vars { background: linear-gradient(135deg, #059669 0%, #047857 100%); }
-        .flow-box.custom { background: linear-gradient(135deg, #d97706 0%, #b45309 100%); }
-        .arrow { font-size: 1.3rem; color: var(--muted); }
-        .pipeline-detail {
-            background: white; border: 1px solid var(--line); border-radius: 10px;
-            padding: 14px; margin-top: 10px; font-size: 0.88rem; min-height: 52px;
-        }
-        .custom-flow {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 10px; margin: 14px 0;
-        }
-        .custom-step {
-            background: white; border: 2px solid var(--line); border-radius: 8px;
-            padding: 12px; text-align: center; font-size: 0.82rem; cursor: pointer;
-            transition: border-color 0.2s;
-        }
-        .custom-step:hover, .custom-step.active { border-color: var(--red); background: #fff8f8; }
-        .custom-step .icon { font-size: 1.4rem; margin-bottom: 4px; }
-        .fact-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
-        .fact-card {
-            background: white; border: 2px solid var(--line); border-radius: 8px;
-            padding: 12px; cursor: pointer; transition: all 0.2s;
-        }
-        .fact-card:hover, .fact-card.selected { border-color: var(--red); background: #fff8f8; }
-        .fact-name { font-weight: 700; font-size: 0.82rem; color: var(--red); font-family: monospace; }
-        .fact-val { font-size: 0.85rem; color: var(--muted); margin-top: 4px; }
-        .fact-type { font-size: 0.7rem; color: #94a3b8; margin-top: 4px; text-transform: uppercase; }
-        #factOutput {
-            margin-top: 12px; padding: 12px; background: #1e293b; color: #e2e8f0;
-            border-radius: 8px; font-family: monospace; font-size: 0.82rem; min-height: 60px;
-        }
-        .example-scenario {
-            background: var(--amber); border-left: 4px solid #f59e0b;
-            padding: 14px; border-radius: 6px; margin: 16px 0; font-size: 0.88rem;
-        }
-        .example-scenario h3 { font-size: 0.92rem; color: #92400e; margin-bottom: 6px; }
-        .example-scenario p { color: #78350f; margin-bottom: 4px; }
-        .code-tabs { display: flex; gap: 5px; margin-bottom: 8px; flex-wrap: wrap; }
-        .code-tab {
-            padding: 6px 12px; background: #e9ecef; border: none;
-            border-radius: 6px 6px 0 0; cursor: pointer; font-size: 0.8rem; font-weight: 600;
-        }
-        .code-tab.active { background: var(--red); color: white; }
-        .code-content { display: none; }
-        .code-content.active { display: block; }
-        pre {
-            background: #1e293b; color: #e2e8f0; padding: 14px; border-radius: 8px;
-            font-size: 0.78rem; line-height: 1.5; overflow-x: auto;
-            white-space: pre-wrap; word-wrap: break-word;
-        }
-        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin: 12px 0; }
-        th, td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; }
-        th { background: #f8fafc; color: var(--slate-700); }
-        .subset-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .subset-card {
-            background: white; border: 1px solid var(--line); border-radius: 8px; padding: 12px;
-            font-size: 0.85rem;
-        }
-        .subset-card h4 { color: var(--red); font-size: 0.88rem; margin-bottom: 6px; }
-        footer { text-align: center; color: var(--muted); font-size: 0.85rem; margin-top: 24px; }
-        @media (max-width: 600px) { .subset-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
     <div class="container">
         <header class="hero">
             <a href="index.html" class="home-link">&#8962; Home</a>
-            <span style="font-size:0.8rem;color:var(--muted);">Lab 02 · Facts</span>
-            <h1>Facts &amp; Custom Facts</h1>
-            <p class="lead">Ansible discovers host state through the <code>setup</code> module. Facts become <code>ansible_*</code> variables you use in templates, conditionals, and ad hoc commands.</p>
+            <div class="eyebrow">Ansible Extended</div>
+            <h1>Facts</h1>
+            <p class="subtitle">Gathering facts, fact caching, and custom facts scripts.</p>
+            <div class="lead-panel">
+                <p>Facts are variables Ansible discovers about each host — OS, network, hardware — powering conditional logic and templates.</p>
+            </div>
         </header>
 
-        <div class="repo-box">
-            <strong>Repository files for this lab:</strong>
-            <ul>
-                <li><code>labs/inventory/hosts.ini</code> — static inventory for webservers and appservers</li>
-                <li><code>labmanuals/lab02-facts.md</code> — step-by-step with validation commands</li>
-                <li><code>docs/facts/gathering-facts.md</code> and <code>docs/facts/custom-facts.md</code> — reference docs</li>
-            </ul>
+        <div class="controls">
+            <button class="btn active" data-view="concept">Concept</button>
+            <button class="btn" data-view="architecture">Architecture</button>
+            <button class="btn" data-view="flow">Flow</button>
+            <button class="btn" data-view="setup">Setup</button>
+            <button class="btn" data-view="commands">Commands</button>
+            <button class="btn" data-view="examples">Examples</button>
+            <button class="btn" data-view="comparison">Compare</button>
+            <button class="btn" data-view="practice">Practice</button>
         </div>
 
-        <!-- Fact Gathering Pipeline -->
-        <div class="flow-section">
-            <div class="section-title">1. Fact Gathering Pipeline (click each stage)</div>
-            <div class="flow-container">
-                <div class="flow-box" onclick="showPipeline('play')">▶ Play Starts</div>
-                <span class="arrow">→</span>
-                <div class="flow-box setup" onclick="showPipeline('setup')">📡 setup Module</div>
-                <span class="arrow">→</span>
-                <div class="flow-box" onclick="showPipeline('facts')">🔍 Collect Facts</div>
-                <span class="arrow">→</span>
-                <div class="flow-box vars" onclick="showPipeline('vars')">📦 ansible_facts</div>
-                <span class="arrow">→</span>
-                <div class="flow-box cache" onclick="showPipeline('tasks')">⚙️ Tasks Run</div>
-            </div>
-            <div class="pipeline-detail" id="pipelineDetail">
-                Click a stage above to see what happens during fact gathering on each managed host.
-            </div>
-        </div>
-
-        <div class="example-scenario">
-            <h3>Example scenario: OS-aware package install</h3>
-            <p><strong>Problem:</strong> You need nginx on Debian hosts but httpd on Red Hat — without hard-coding per host.</p>
-            <p><strong>Solution:</strong> Facts provide <code>ansible_facts.os_family</code>. A <code>when:</code> clause selects the correct package manager task.</p>
-            <p><strong>Flow:</strong> Play starts → setup gathers <code>ansible_distribution</code> → task uses <code>ansible.builtin.apt</code> when family is Debian.</p>
-        </div>
-
-        <!-- Custom Facts Flow -->
-        <div class="flow-section">
-            <div class="section-title">2. Custom Facts Flow (local facts in /etc/ansible/facts.d/)</div>
-            <div class="custom-flow">
-                <div class="custom-step" onclick="showCustom('deploy')">
-                    <div class="icon">📄</div>
-                    Deploy .fact file
-                </div>
-                <div class="custom-step" onclick="showCustom('execute')">
-                    <div class="icon">⚡</div>
-                    Executable script (optional)
-                </div>
-                <div class="custom-step" onclick="showCustom('gather')">
-                    <div class="icon">🔄</div>
-                    Re-run setup
-                </div>
-                <div class="custom-step" onclick="showCustom('local')">
-                    <div class="icon">🏷️</div>
-                    ansible_local.*
-                </div>
-                <div class="custom-step" onclick="showCustom('use')">
-                    <div class="icon">✅</div>
-                    Use in playbooks
+        <section id="concept" class="view active">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Core Model</div>
+                    <h2>Fact Types</h2>
                 </div>
             </div>
-            <div class="pipeline-detail" id="customDetail">
-                Custom facts extend Ansible with site-specific metadata: tier, environment, cost center, or application version.
+<div class="concept-grid">
+                <article class="card">
+                    <div class="card-badge">ansible_facts</div>
+                    <p>All facts from setup module — ansible_os_family, etc.</p>
+                </article>
+                <article class="card">
+                    <div class="card-badge">gather_facts</div>
+                    <p>Play key gather_facts: true (default).</p>
+                </article>
+                <article class="card">
+                    <div class="card-badge">filter</div>
+                    <p>setup: filter=ansible_distribution* — subset only.</p>
+                </article>
+                <article class="card">
+                    <div class="card-badge">custom facts</div>
+                    <p>/etc/ansible/facts.d/*.fact scripts on managed node.</p>
+                </article>
+                <article class="card">
+                    <div class="card-badge">fact caching</div>
+                    <p>JSON file or Redis — speed up large inventories.</p>
+                </article>
+                <article class="card">
+                    <div class="card-badge">set_fact</div>
+                    <p>Define runtime facts in play.</p>
+                </article>
             </div>
-        </div>
-
-        <!-- Interactive Fact Explorer -->
-        <div class="flow-section">
-            <div class="section-title">3. Interactive Fact Explorer (simulated host: web1)</div>
-            <div class="fact-grid">
-                <div class="fact-card" data-json='{"ansible_hostname": "web1", "ansible_fqdn": "web1.lab.local"}'>
-                    <div class="fact-name">ansible_hostname</div>
-                    <div class="fact-val">web1</div>
-                    <div class="fact-type">network</div>
-                </div>
-                <div class="fact-card" data-json='{"ansible_distribution": "Ubuntu", "ansible_distribution_version": "22.04", "ansible_distribution_release": "jammy"}'>
-                    <div class="fact-name">ansible_distribution*</div>
-                    <div class="fact-val">Ubuntu 22.04 (jammy)</div>
-                    <div class="fact-type">distribution</div>
-                </div>
-                <div class="fact-card" data-json='{"ansible_os_family": "Debian"}'>
-                    <div class="fact-name">ansible_os_family</div>
-                    <div class="fact-val">Debian</div>
-                    <div class="fact-type">distribution</div>
-                </div>
-                <div class="fact-card" data-json='{"ansible_memtotal_mb": 976, "ansible_memfree_mb": 412}'>
-                    <div class="fact-name">ansible_memtotal_mb</div>
-                    <div class="fact-val">976 MB total</div>
-                    <div class="fact-type">hardware</div>
-                </div>
-                <div class="fact-card" data-json='{"ansible_processor_vcpus": 2, "ansible_processor_count": 1}'>
-                    <div class="fact-name">ansible_processor_vcpus</div>
-                    <div class="fact-val">2 vCPUs</div>
-                    <div class="fact-type">hardware</div>
-                </div>
-                <div class="fact-card" data-json='{"ansible_default_ipv4": {"address": "10.0.1.10", "interface": "ens5", "gateway": "10.0.1.1"}}'>
-                    <div class="fact-name">ansible_default_ipv4</div>
-                    <div class="fact-val">10.0.1.10 (ens5)</div>
-                    <div class="fact-type">network</div>
-                </div>
-                <div class="fact-card" data-json='{"ansible_local": {"lab": {"tier": "web", "course": "extended"}}}'>
-                    <div class="fact-name">ansible_local.lab</div>
-                    <div class="fact-val">tier=web (custom)</div>
-                    <div class="fact-type">local facts</div>
-                </div>
-                <div class="fact-card" data-json='{"ansible_python_version": "3.10.12"}'>
-                    <div class="fact-name">ansible_python_version</div>
-                    <div class="fact-val">3.10.12</div>
-                    <div class="fact-type">python</div>
+        </section>
+        <section id="architecture" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Discovery</div>
+                    <h2>Fact Gathering Pipeline</h2>
                 </div>
             </div>
-            <div id="factOutput">Click a fact card to see JSON structure (as returned by setup module).</div>
-        </div>
-
-        <!-- Code Examples -->
-        <div class="flow-section">
-            <div class="section-title">4. Code Examples (click tabs)</div>
-            <div class="code-tabs">
-                <button class="code-tab active" onclick="showCode('adhoc')">Ad Hoc Setup</button>
-                <button class="code-tab" onclick="showCode('filter')">Filter Facts</button>
-                <button class="code-tab" onclick="showCode('subset')">Gather Subset</button>
-                <button class="code-tab" onclick="showCode('disable')">Disable Facts</button>
-                <button class="code-tab" onclick="showCode('custom')">Custom Facts</button>
-                <button class="code-tab" onclick="showCode('playbook')">Playbook Usage</button>
+<div class="example-stack">
+            <div class="lab-callout"><strong>Repo lab files:</strong> ansible/extended/labs/</div>
+                <section class="example-card">
+                    <div class="section-kicker">Filtered setup</div>
+                    <pre><code>ansible webservers -m ansible.builtin.setup -a 'filter=ansible_memtotal_mb'</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">custom fact script</div>
+                    <pre><code>#!/bin/bash
+echo '{"app_version": "2.1.0"}'</code></pre>
+                </section>
             </div>
-            <div id="adhoc-code" class="code-content active">
-<pre># Gather all facts on one host (verbose JSON output)
-ansible -i inventory/hosts.ini web1 -m ansible.builtin.setup
-
-# Facts are also gathered automatically at play start unless gather_facts: false</pre>
-            </div>
-            <div id="filter-code" class="code-content">
-<pre># Filter by glob pattern — only distribution keys returned
-ansible -i inventory/hosts.ini webservers \
-  -m ansible.builtin.setup -a "filter=ansible_distribution*"
-
-# Multiple patterns (comma-separated)
-ansible -i inventory/hosts.ini web1 \
-  -m ansible.builtin.setup -a "filter=ansible_distribution*,ansible_memtotal_mb"</pre>
-            </div>
-            <div id="subset-code" class="code-content">
-<pre># Gather only specific subsets (faster on large fleets)
-- name: Minimal fact gather
-  ansible.builtin.setup:
-    gather_subset:
-      - "!all"
-      - distribution
-      - network
-
-# Common subsets: all, min, hardware, network, virtual, ohai, facter</pre>
-            </div>
-            <div id="disable-code" class="code-content">
-<pre>---
-- name: Fast play without facts
-  hosts: all
-  gather_facts: false   # Skip automatic setup at play start
-  tasks:
-    - ansible.builtin.debug:
-        msg: "No ansible_distribution available unless you run setup manually"</pre>
-            </div>
-            <div id="custom-code" class="code-content">
-<pre># Deploy INI-style fact file (lab exercise)
-- ansible.builtin.copy:
-    dest: /etc/ansible/facts.d/lab.fact
-    mode: "0755"
-    content: |
-      [lab]
-      tier=web
-      course=extended
-
-# After deploy, re-gather:
-- ansible.builtin.setup:
-
-# Access: {{ ansible_local.lab.tier }}  →  "web"</pre>
-            </div>
-            <div id="playbook-code" class="code-content">
-<pre>---
-- name: Use facts in conditionals
-  hosts: webservers
-  tasks:
-    - name: Show OS info
-      ansible.builtin.debug:
-        msg: "{{ inventory_hostname }} runs {{ ansible_facts.distribution }} {{ ansible_facts.distribution_version }}"
-
-    - name: Install nginx on Debian family
-      ansible.builtin.apt:
-        name: nginx
-        state: present
-      when: ansible_facts.os_family == "Debian"</pre>
-            </div>
-        </div>
-
-        <!-- Fact Subsets Reference -->
-        <div class="flow-section">
-            <div class="section-title">5. Common Facts Reference</div>
-            <table>
-                <thead>
-                    <tr><th>Fact variable</th><th>Example value</th><th>Use case</th></tr>
-                </thead>
-                <tbody>
-                    <tr><td><code>ansible_hostname</code></td><td>web1</td><td>Short hostname in templates</td></tr>
-                    <tr><td><code>ansible_fqdn</code></td><td>web1.lab.local</td><td>SSL certs, DNS records</td></tr>
-                    <tr><td><code>ansible_distribution</code></td><td>Ubuntu</td><td>OS-specific tasks</td></tr>
-                    <tr><td><code>ansible_os_family</code></td><td>Debian</td><td>Package manager selection (apt vs yum)</td></tr>
-                    <tr><td><code>ansible_memtotal_mb</code></td><td>976</td><td>Capacity checks, JVM heap sizing</td></tr>
-                    <tr><td><code>ansible_default_ipv4.address</code></td><td>10.0.1.10</td><td>Bind services, firewall rules</td></tr>
-                    <tr><td><code>ansible_local.*</code></td><td>tier=web</td><td>Site metadata from facts.d</td></tr>
-                </tbody>
-            </table>
-        </div>
-
-        <div class="flow-section">
-            <div class="section-title">6. gather_subset Strategies</div>
-            <div class="subset-grid">
-                <div class="subset-card">
-                    <h4>Full gather (default)</h4>
-                    <p>All subsets collected. Best for small inventories or when you need complete host context. Adds 2–10 seconds per host.</p>
-                </div>
-                <div class="subset-card">
-                    <h4>Minimal + distribution</h4>
-                    <p><code>gather_subset: "!all,min,distribution"</code> — Fast OS detection for conditional package tasks.</p>
-                </div>
-                <div class="subset-card">
-                    <h4>Network only</h4>
-                    <p><code>gather_subset: "!all,network"</code> — IP addressing without full hardware scan.</p>
-                </div>
-                <div class="subset-card">
-                    <h4>Fact caching (production)</h4>
-                    <p>Configure <code>fact_caching</code> in ansible.cfg to avoid re-gathering unchanged hosts between plays.</p>
+            <svg viewBox="0 0 950 320" style="width:100%;max-width:950px;margin:20px auto;display:block;">
+                <text x="475" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#1e293b">Facts Pipeline</text>
+                <rect x="50" y="80" width="160" height="55" rx="8" fill="#ffe4e6" stroke="#CC0000" stroke-width="2"/><text x="130" y="107" text-anchor="middle" font-size="12" font-weight="bold" fill="#1e293b">setup module</text><rect x="240" y="80" width="160" height="55" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/><text x="320" y="107" text-anchor="middle" font-size="12" font-weight="bold" fill="#1e293b">fact cache</text><rect x="430" y="80" width="160" height="55" rx="8" fill="#dcfce7" stroke="#22c55e" stroke-width="2"/><text x="510" y="107" text-anchor="middle" font-size="12" font-weight="bold" fill="#1e293b">hostvars</text><rect x="620" y="80" width="160" height="55" rx="8" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/><text x="700" y="107" text-anchor="middle" font-size="12" font-weight="bold" fill="#1e293b">when/templates</text>
+                
+            </svg>
+        </section>
+        <section id="flow" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Lab 02</div>
+                    <h2>Facts Lab Workflow</h2>
                 </div>
             </div>
-        </div>
-
-        <div class="example-scenario">
-            <h3>Lab validation checklist</h3>
-            <p>✓ Filter facts with <code>filter=ansible_distribution*</code></p>
-            <p>✓ Confirm <code>ansible_os_family</code> is Debian on Ubuntu 22.04</p>
-            <p>✓ Deploy <code>/etc/ansible/facts.d/lab.fact</code> and read <code>ansible_local.lab.tier</code></p>
-            <p>✓ Understand when to set <code>gather_facts: false</code> for speed</p>
-        </div>
-
-        <footer>Ansible Extended · Lab 02 · <a href="index.html" style="color:#CC0000">Catalog</a> · Offline · No CDN</footer>
+<div class="flow-track">
+                <div class="flow-step">
+                    <div class="step-number">1</div>
+                    <h3>Lab 02 extended</h3>
+                    <p>Gather full facts for one host.</p>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">2</div>
+                    <h3>Filter</h3>
+                    <p>Request only network facts.</p>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">3</div>
+                    <h3>Custom fact</h3>
+                    <p>Deploy script to /etc/ansible/facts.d/</p>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">4</div>
+                    <h3>Re-gather</h3>
+                    <p>ansible -m setup — see custom key.</p>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">5</div>
+                    <h3>when</h3>
+                    <p>Use ansible_distribution_major_version in playbook.</p>
+                </div>
+            </div>
+        </section>
+        <section id="setup" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Disable</div>
+                    <h2>When to Skip Facts</h2>
+                </div>
+            </div>
+<div class="example-stack">
+                <section class="example-card">
+                    <div class="section-kicker">gather_facts: false</div>
+                    <pre><code># speed up large static plays</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">fact_path</div>
+                    <pre><code>ansible.cfg fact_caching_connection</code></pre>
+                </section>
+            </div>
+        </section>
+        <section id="commands" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Quick Reference</div>
+                    <h2>Facts Commands</h2>
+                </div>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Category</th><th>Command</th><th>Description</th></tr></thead>
+                    <tbody>
+                        <tr><td>All facts</td><td><code>-m setup</code></td><td>Full fact dump</td></tr>
+                        <tr><td>Filter</td><td><code>-m setup -a 'filter=ansible_eth*'</code></td><td>Subset</td></tr>
+                        <tr><td>Debug fact</td><td><code>-m debug -a 'var=ansible_os_family'</code></td><td>Single value</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="section-note">Extended reference appendix — bookmark for exam prep and on-the-job lookup.</div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Topic</th><th>Command / Pattern</th><th>Notes</th></tr></thead>
+                    <tbody>
+                        <tr><td>ansible_date_time</td><td>time facts</td><td>Lab 02</td></tr>
+                        <tr><td>custom .fact</td><td>executable JSON output</td><td>Lab 02</td></tr>
+                        <tr><td>set_fact</td><td>runtime variables</td><td>Extended</td></tr>
+                        <tr><td>gather_subset</td><td>minimal fact gather</td><td>Performance</td></tr>
+                        <tr><td>fact caching</td><td>jsonfile plugin</td><td>Large inv</td></tr>
+                    </tbody>
+                </table>
+            </div>            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Facts — reference drill 1</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Facts — reference drill 2</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Facts — reference drill 3</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="section-note">Extended reference appendix — bookmark for exam prep and on-the-job lookup.</div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Topic</th><th>Command / Pattern</th><th>Notes</th></tr></thead>
+                    <tbody>
+                        <tr><td>Review</td><td>Re-read lab manual objectives</td><td>Facts</td></tr>
+                        <tr><td>Validate</td><td>Run syntax-check or validate</td><td>Before apply</td></tr>
+                        <tr><td>Cleanup</td><td>Destroy or remove lab changes</td><td>End of session</td></tr>
+                        <tr><td>Docs</td><td>Cross-link markdown docs</td><td>../docs/</td></tr>
+                        <tr><td>Git</td><td>Commit only safe files</td><td>No secrets/state</td></tr>
+                        <tr><td>Pair</td><td>Walk through with teammate</td><td>Teaching reinforces</td></tr>
+                        <tr><td>Notes</td><td>Document failures and fixes</td><td>Personal runbook</td></tr>
+                        <tr><td>Next</td><td>Follow learning path order</td><td>curriculum/learning-paths.md</td></tr>
+                    </tbody>
+                </table>
+            </div>            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Facts — reference drill 1</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Facts — reference drill 2</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Facts — reference drill 3</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+        </section>
+        <section id="examples" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Hands-On</div>
+                    <h2>Lab 02 Extended</h2>
+                </div>
+            </div>
+<div class="example-stack">
+            <div class="lab-callout"><strong>Repo lab files:</strong> lab02-facts.md</div>
+                <section class="example-card">
+                    <div class="section-kicker">Memory fact</div>
+                    <pre><code>ansible web1 -i inventory/hosts.ini.local -m setup -a 'filter=ansible_memtotal_mb'</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">OS family</div>
+                    <pre><code>ansible web1 -i inventory/hosts.ini.local -m debug -a 'var=ansible_os_family'</code></pre>
+                </section>
+            </div>
+            <div class="section-note">Extended reference appendix — bookmark for exam prep and on-the-job lookup.</div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Topic</th><th>Command / Pattern</th><th>Notes</th></tr></thead>
+                    <tbody>
+                        <tr><td>Review</td><td>Re-read lab manual objectives</td><td>Facts</td></tr>
+                        <tr><td>Validate</td><td>Run syntax-check or validate</td><td>Before apply</td></tr>
+                        <tr><td>Cleanup</td><td>Destroy or remove lab changes</td><td>End of session</td></tr>
+                        <tr><td>Docs</td><td>Cross-link markdown docs</td><td>../docs/</td></tr>
+                        <tr><td>Git</td><td>Commit only safe files</td><td>No secrets/state</td></tr>
+                        <tr><td>Pair</td><td>Walk through with teammate</td><td>Teaching reinforces</td></tr>
+                        <tr><td>Notes</td><td>Document failures and fixes</td><td>Personal runbook</td></tr>
+                        <tr><td>Next</td><td>Follow learning path order</td><td>curriculum/learning-paths.md</td></tr>
+                    </tbody>
+                </table>
+            </div>            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Facts — reference drill 1</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Facts — reference drill 2</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Facts — reference drill 3</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+        </section>
+        <section id="comparison" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Decision Guide</div>
+                    <h2>Facts vs Variables</h2>
+                </div>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th></th><th>Facts</th><th>Inventory vars</th></tr></thead>
+                    <tbody>
+                        <tr><td>Source</td><td>Discovered</td><td>Declared</td></tr>
+                        <tr><td>Changes</td><td>Each run</td><td>When you edit</td></tr>
+                        <tr><td>Use</td><td>Conditionals</td><td>Configuration</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        <section id="practice" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Use It Well</div>
+                    <h2>Facts Practice</h2>
+                </div>
+            </div>
+<div class="practice-grid">
+                <article class="card practice-card">
+                    <div class="card-badge">Lab 02</div>
+                    <p>Complete facts and custom fact lab.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab02-facts.md">Open lab manual →</a></p>
+                </article>
+                <article class="card practice-card">
+                    <div class="card-badge">Filter</div>
+                    <p>Gather only ansible_processor* facts.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab02-facts.md">Open lab manual →</a></p>
+                </article>
+                <article class="card practice-card">
+                    <div class="card-badge">Custom</div>
+                    <p>Write .fact script returning JSON.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab02-facts.md">Open lab manual →</a></p>
+                </article>
+                <article class="card practice-card">
+                    <div class="card-badge">when</div>
+                    <p>Skip task when ansible_virtualization_type==docker.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab02-facts.md">Open lab manual →</a></p>
+                </article>
+                <article class="card practice-card">
+                    <div class="card-badge">Debug</div>
+                    <p>Print ansible_all_ipv4_addresses.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab02-facts.md">Open lab manual →</a></p>
+                </article>
+                <article class="card practice-card">
+                    <div class="card-badge">Performance</div>
+                    <p>Compare runtime with gather_facts false.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab02-facts.md">Open lab manual →</a></p>
+                </article>
+            </div>
+            <div class="section-note">Extended reference appendix — bookmark for exam prep and on-the-job lookup.</div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Topic</th><th>Command / Pattern</th><th>Notes</th></tr></thead>
+                    <tbody>
+                        <tr><td>Review</td><td>Re-read lab manual objectives</td><td>Facts</td></tr>
+                        <tr><td>Validate</td><td>Run syntax-check or validate</td><td>Before apply</td></tr>
+                        <tr><td>Cleanup</td><td>Destroy or remove lab changes</td><td>End of session</td></tr>
+                        <tr><td>Docs</td><td>Cross-link markdown docs</td><td>../docs/</td></tr>
+                        <tr><td>Git</td><td>Commit only safe files</td><td>No secrets/state</td></tr>
+                        <tr><td>Pair</td><td>Walk through with teammate</td><td>Teaching reinforces</td></tr>
+                        <tr><td>Notes</td><td>Document failures and fixes</td><td>Personal runbook</td></tr>
+                        <tr><td>Next</td><td>Follow learning path order</td><td>curriculum/learning-paths.md</td></tr>
+                    </tbody>
+                </table>
+            </div>            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Facts — reference drill 1</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Facts — reference drill 2</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Facts — reference drill 3</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+        </section>
     </div>
 
     <script>
-        const pipelineMessages = {
-            play: 'When a play targets hosts, Ansible connects via SSH (or other connection plugin). If gather_facts is true (default), the setup module runs before the first task.',
-            setup: 'The ansible.builtin.setup module executes on the managed node. It collects hardware, network, OS, and local facts. Python on the target must be available.',
-            facts: 'Raw fact data is collected from /proc, uname, distribution files, and /etc/ansible/facts.d/. Scripts in facts.d must be executable and return JSON or INI.',
-            vars: 'Facts are merged into ansible_facts namespace. In playbooks use ansible_facts.hostname or the legacy ansible_hostname form (still works).',
-            tasks: 'Subsequent tasks can reference facts in when clauses, templates, and module arguments. Facts persist for the duration of the play on each host.',
-            cache: 'Optional: fact_caching in ansible.cfg stores facts between runs. Default lab config has no cache — facts refresh each play.'
-        };
-
-        const customMessages = {
-            deploy: 'Copy a .fact INI file or JSON file to /etc/ansible/facts.d/ on the managed node. File must be readable; scripts must be executable (mode 0755).',
-            execute: 'Executable scripts in facts.d run during setup. They must print valid JSON to stdout. Use for dynamic values like application version from a running service.',
-            gather: 'Facts are NOT automatically refreshed when you add files mid-play. Run setup module again or start a new play to load ansible_local variables.',
-            local: 'Local facts appear under ansible_local.<filename_without_extension>. INI sections become nested dict keys.',
-            use: 'Reference in templates: {{ ansible_local.lab.tier }}. Use in when: ansible_local.lab.tier == "web". Combine with group_vars for tier-specific roles.'
-        };
-
-        function showPipeline(stage) {
-            document.getElementById('pipelineDetail').textContent = pipelineMessages[stage] || pipelineMessages.play;
-        }
-
-        function showCustom(stage) {
-            document.querySelectorAll('.custom-step').forEach(s => s.classList.remove('active'));
-            event.currentTarget.classList.add('active');
-            document.getElementById('customDetail').textContent = customMessages[stage];
-        }
-
-        function showCode(type) {
-            document.querySelectorAll('.code-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.code-tab').forEach(el => el.classList.remove('active'));
-            document.getElementById(type + '-code').classList.add('active');
-            document.querySelectorAll('.code-tab').forEach(tab => {
-                if (tab.getAttribute('onclick').includes("'" + type + "'")) tab.classList.add('active');
-            });
-        }
-
-        document.querySelectorAll('.fact-card').forEach(function(card) {
-            card.addEventListener('click', function() {
-                document.querySelectorAll('.fact-card').forEach(c => c.classList.remove('selected'));
-                card.classList.add('selected');
-                try {
-                    const obj = JSON.parse(card.dataset.json);
-                    document.getElementById('factOutput').textContent = JSON.stringify(obj, null, 2);
-                } catch (e) {
-                    document.getElementById('factOutput').textContent = card.dataset.json;
-                }
+        const buttons = document.querySelectorAll('.btn');
+        const views = document.querySelectorAll('.view');
+        buttons.forEach((button) => {
+            button.addEventListener('click', () => {
+                const viewId = button.dataset.view;
+                buttons.forEach((b) => b.classList.remove('active'));
+                views.forEach((v) => v.classList.remove('active'));
+                button.classList.add('active');
+                document.getElementById(viewId).classList.add('active');
             });
         });
     </script>

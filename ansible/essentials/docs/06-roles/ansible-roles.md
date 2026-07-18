@@ -1,36 +1,26 @@
 # Ansible Roles
 
-> **Curriculum:** Ansible Essentials · **Brand:** `#EE0000` · **Lab targets:** Ubuntu 22.04 · **SSH:** port 22
+## Objective (conceptual)
 
-## Overview
+A **role** is a portable directory layout for tasks, handlers, defaults, vars, templates, and files. Instead of one long playbook, you call `roles: - webserver` and Ansible loads conventional paths automatically. Roles enable reuse across playbooks and sharing via Ansible Galaxy or internal git repos.
 
-A **role** packages tasks, handlers, defaults, templates, files, and metadata into a standard directory tree under `roles/<name>/`. Playbooks stay short—they list roles instead of repeating task blocks. Roles are how teams share reusable automation (web server, database client, monitoring agent) and publish to Ansible Galaxy.
+The mental model: a role is a **mini-package** with an API (`defaults` and `vars` in, service status out).
 
-The lab role `roles/webserver/` installs Apache, enables `mod_rewrite`, ensures the service runs, and restarts on configuration changes. Playbook `playbooks/role-site.yml` invokes it in three lines.
+**Interactive reference:** [Roles and Vault](../../html/roles-and-vault.html)
 
-**Interactive reference:** [roles-and-vault.html](../../html/roles-and-vault.html)
-
----
-
-## Key Concepts
-
-### Standard Directory Layout
+## Standard role layout
 
 ```
 roles/webserver/
-├── defaults/main.yml    # low-precedence variables (override-friendly)
-├── tasks/main.yml       # main task list (required for most roles)
-├── handlers/main.yml    # notified actions (restarts, reloads)
-├── templates/           # Jinja2 templates (.j2)
-├── files/               # static files (copy module)
-├── vars/main.yml        # role variables (higher than defaults)
-├── meta/main.yml        # dependencies, Galaxy metadata
-└── README.md            # documentation (optional)
+├── defaults/main.yml    # lowest precedence variables
+├── tasks/main.yml       # entry task list
+├── handlers/main.yml    # handler definitions
+├── templates/           # Jinja2 templates
+├── files/               # static files
+└── meta/main.yml        # role metadata and dependencies
 ```
 
-Ansible auto-loads `tasks/main.yml`, `handlers/main.yml`, and `defaults/main.yml` when the role is listed—no explicit import required.
-
-### Role Invocation
+## Playbook invoking a role
 
 ```yaml
 ---
@@ -41,42 +31,11 @@ Ansible auto-loads `tasks/main.yml`, `handlers/main.yml`, and `defaults/main.yml
     - webserver
 ```
 
-With parameters:
+`roles_path = roles` in `ansible.cfg` resolves the directory name.
 
-```yaml
-roles:
-  - role: webserver
-    vars:
-      web_package: apache2
-```
+## Role tasks excerpt
 
-### Execution Order (Multi-Role)
-
-```
-Play starts
-  → Role A: all tasks
-  → Role B: all tasks
-  → Handlers (once, end of play)
-Play ends
-```
-
-Extended lab `site.yml` uses `common` then `webserver` then `nodejs_app`.
-
----
-
-## Lab Role: webserver
-
-### defaults/main.yml
-
-```yaml
----
-web_package: apache2
-web_service: apache2
-```
-
-Lowest precedence—consumers override without editing role code.
-
-### tasks/main.yml
+`roles/webserver/tasks/main.yml`:
 
 ```yaml
 ---
@@ -99,207 +58,76 @@ Lowest precedence—consumers override without editing role code.
     enabled: true
 ```
 
-### handlers/main.yml
+Variables `web_package` and `web_service` typically come from `defaults/main.yml` so consumers can override without editing tasks.
+
+## Role parameters
+
+Pass overrides inline:
 
 ```yaml
----
-- name: Restart web service
-  ansible.builtin.service:
-    name: "{{ web_service }}"
-    state: restarted
-```
-
-**Critical:** `notify: Restart web service` must match handler `name` exactly.
-
----
-
-## ansible.cfg and roles_path
-
-```ini
-[defaults]
-roles_path = roles
-```
-
-Playbooks run from `ansible/essentials/labs/` resolve `roles/webserver` relative to this path.
-
----
-
-## ansible-galaxy init
-
-Scaffold a new role:
-
-```bash
-ansible-galaxy init myrole
-```
-
-Creates full skeleton including `meta/main.yml`, `tests/`, and `README.md`. Lab role `webserver` is pre-built—do not overwrite when practicing.
-
-### Install from Galaxy
-
-```bash
-ansible-galaxy install geerlingguy.apache
-```
-
-`requirements.yml`:
-
-```yaml
----
 roles:
-  - name: geerlingguy.apache
-    version: 3.1.0
+  - role: webserver
+    vars:
+      web_package: nginx
 ```
 
-```bash
-ansible-galaxy install -r requirements.yml
-```
+Or use `group_vars` / `host_vars` for environment-specific values.
 
----
+## Handlers in roles
 
-## Role vs Inline Playbook
+Define handlers in `handlers/main.yml`; tasks `notify` by **name** string. Handlers flush at end of play unless `ansible.builtin.meta: flush_handlers` runs earlier.
 
-| Criterion | Inline (`apache.yml`) | Role (`webserver`) |
-|-----------|----------------------|-------------------|
-| Lines in playbook | Many tasks | `roles: [webserver]` |
-| Reuse across projects | Copy/paste | Import role |
-| Testing | Coupled to playbook | Molecule / targeted play |
-| Galaxy publishing | No | Yes with `meta/main.yml` |
-| Lab | Lab 04 | Lab 06 |
+## Multiple roles in site playbooks
 
-### When to Extract a Role
-
-| Signal | Action |
-|--------|--------|
-| Same tasks in 2+ playbooks | Create role |
-| Team owns "web tier" separately | Role + dedicated repo |
-| Single lab exercise | Inline OK |
-| Need dependency chain | `meta/main.yml` dependencies |
-
----
-
-## Variable Precedence in Roles
-
-```
-extra vars (-e)
-    ▼
-play vars / vars_files
-    ▼
-inventory group_vars / host_vars
-    ▼
-role vars (vars/main.yml)
-    ▼
-role defaults (defaults/main.yml)
-```
-
-Override `web_package` in `group_vars/webservers.yml` without touching `roles/webserver/tasks/main.yml`.
-
----
-
-## meta/main.yml (Dependencies)
-
-Extended pattern:
+Extended `site.yml` pattern:
 
 ```yaml
 ---
-dependencies:
-  - role: common
+- name: Configure web tier with roles
+  hosts: webservers
+  become: true
+  roles:
+    - role: common
+    - role: webserver
+
+- name: Configure app tier with roles
+  hosts: appservers
+  become: true
+  roles:
+    - role: common
+    - role: nodejs_app
 ```
 
-Ansible runs `common` role before dependent role automatically.
+`common` role applies baseline packages; tier roles add specialization.
 
----
+## When to extract a role
 
-## Run the Lab Role
+- Same tasks appear in two playbooks.
+- You want versioned releases (`meta/main.yml` dependencies).
+- Team boundaries: platform owns `common`, app team owns `nodejs_app`.
+
+## Role vs playbook
+
+| Playbook | Role |
+|----------|------|
+| Top-level entry, selects hosts | No `hosts:` — caller provides |
+| May list multiple roles | Single focused purpose |
+| Run with `ansible-playbook` | Invoked via `roles:` list |
+
+## Operational commands (reference)
 
 ```bash
 cd ansible/essentials/labs
-ansible-playbook -i inventory/hosts.ini.local playbooks/role-site.yml --syntax-check
-ansible-playbook -i inventory/hosts.ini.local playbooks/role-site.yml
-ansible webservers -i inventory/hosts.ini.local -b \
-  -m ansible.builtin.command -a "systemctl is-active apache2"
+ansible-galaxy role init myrole    # scaffold new role
+ansible-playbook playbooks/role-site.yml
+ansible-playbook playbooks/role-site.yml --tags install   # if tags defined
 ```
 
 ---
 
-## Troubleshooting
+## Hands-On Labs
 
-| Symptom | Likely cause | Fix |
-|---------|--------------|-----|
-| `the role 'webserver' was not found` | Wrong cwd or roles_path | Run from `labs/`; check ansible.cfg |
-| Handler never runs | notify name mismatch | Compare task notify to handler name |
-| Wrong package installed | Overridden variable | Check group_vars and `-e` |
-| Tasks run twice | Role listed twice | Deduplicate `roles:` list |
-| Template not found in role | Path | Use `templates/foo.j2` without role prefix in task |
-| Role changes ignored | Old playbook cache | N/A in Ansible; check correct role path |
-
-### Handler Name Break-Fix Example
-
-```yaml
-# WRONG
-notify: restart web service
-# handler name: Restart web service  → no match
-
-# RIGHT
-notify: Restart web service
-```
-
-Extended [lab09 break-fix](../../extended/labmanuals/lab09-break-fix-drills.md) covers this scenario.
-
----
-
-## Directory Roles vs collections
-
-| Type | Path | Use |
-|------|------|-----|
-| Standalone role | `roles/webserver/` | Lab, simple projects |
-| Collection role | `collections/namespace/name/roles/` | Enterprise, versioning |
-| Galaxy role | `~/.ansible/roles/` | Third-party install |
-
-Lab uses standalone directory roles.
-
----
-
-## Hands-on Labs
-
-| Lab | Topic | Manual |
-|-----|-------|--------|
-| Lab 06 | Create and run role | [lab06](../../labmanuals/lab06-roles-create.md) |
-| Lab 07 | Vault + capstone | [lab07](../../labmanuals/lab07-vault-and-nodejs-capstone.md) |
-
-Extended: [lab08 roles project](../../extended/labmanuals/lab08-roles-project.md)
-
-**HTML companion:** [roles-and-vault.html](../../html/roles-and-vault.html)
-
----
-
-## Production Practices
-
-| Practice | Rationale |
-|----------|-----------|
-| One role per concern | webserver ≠ database |
-| README per role | Document variables and examples |
-| Pin Galaxy versions | Reproducible builds |
-| Molecule tests | CI for roles |
-| defaults over vars | Easier overrides |
-
----
-
-## Next Steps
-
-1. Complete [Lab 06](../../labmanuals/lab06-roles-create.md).
-2. Protect secrets with [Ansible Vault](../07-vault/ansible-vault.md).
-3. Explore multi-role `site.yml` in [Extended track](../../extended/labmanuals/lab08-roles-project.md).
-
----
-
-## Quick Reference
-
-```bash
-find roles/webserver -type f
-ansible-galaxy init myrole
-ansible-playbook -i inventory/hosts.ini.local playbooks/role-site.yml
-```
-
-```yaml
-roles:
-  - webserver
-```
+| Lab | Description |
+|-----|-------------|
+| [Lab 06: Create Roles](../../labmanuals/lab06-roles-create.md) | Build `webserver` role from playbook tasks |
+| [Extended Lab 08: Roles Project](../../../extended/labmanuals/lab08-roles-project.md) | Multi-role site playbook |

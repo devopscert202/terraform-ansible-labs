@@ -3,114 +3,281 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dynamic Inventory (AWS) — Ansible Extended</title>
+    <title>Dynamic Inventory — Interactive Guide</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
-            --red: #CC0000; --red-deep: #990000; --ink: #1a1a2e;
-            --muted: #64748b; --line: #e2e8f0; --amber: #fef3c7; --mint: #dcfce7;
-            --aws-orange: #ff9900; --slate-700: #334155;
+            --brand: #CC0000;
+            --brand-deep: #990000;
+            --brand-sky: #ffe4e6;
+            --ink: #1a1a2e;
+            --muted: #64748b;
+            --surface: #ffffff;
+            --panel: #ffffff;
+            --line: #dbe3f1;
+            --mint: #dcfce7;
+            --amber: #fef3c7;
+            --rose: #ffe4e6;
+            --blue: #2563eb;
+            --slate-900: #0f172a;
+            --slate-700: #334155;
+            --slate-500: #64748b;
+            --slate-200: #e2e8f0;
         }
         body {
             font-family: "Segoe UI", system-ui, sans-serif;
-            background: linear-gradient(180deg, #fffafa 0%, #f0f4f8 100%);
-            color: var(--ink); line-height: 1.6; padding: 20px;
+            background: linear-gradient(180deg, #f8fbff 0%, #eef4fb 100%);
+            color: var(--ink);
+            line-height: 1.6;
+            padding: 20px;
         }
-        .container { max-width: 1100px; margin: 0 auto; }
+        .container { max-width: 1380px; margin: 0 auto; }
         .hero {
-            position: relative; background: white; border-radius: 16px;
-            padding: 28px 32px; margin-bottom: 20px;
-            border: 1px solid rgba(204,0,0,0.1); box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+            position: relative;
+            text-align: center;
+            background: white;
+            border-radius: 16px;
+            padding: 34px 32px 28px;
+            box-shadow: 0 4px 18px rgba(15, 23, 42, 0.08);
+            margin-bottom: 26px;
+            border: 1px solid color-mix(in srgb, var(--brand) 10%, transparent);
+        }
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: var(--brand-sky);
+            color: var(--brand-deep);
+            font-size: 0.82rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 14px;
+        }
+        h1 {
+            font-size: clamp(2rem, 4vw, 3rem);
+            color: var(--brand);
+            margin-bottom: 10px;
+            line-height: 1.1;
+        }
+        .subtitle {
+            font-size: 1.03rem;
+            color: var(--muted);
+            max-width: 980px;
+            margin: 0 auto 18px;
+        }
+        .lead-panel {
+            background: linear-gradient(180deg, #f8fbff 0%, color-mix(in srgb, var(--brand-sky) 60%, white) 100%);
+            border: 1px solid color-mix(in srgb, var(--brand) 12%, transparent);
+            border-radius: 14px;
+            padding: 18px 20px;
+            max-width: 980px;
+            margin: 0 auto;
+        }
+        .lead-panel p { color: #334155; font-size: 0.98rem; }
+        .controls {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 0 0 24px;
+        }
+        .btn {
+            border: 2px solid var(--brand);
+            background: white;
+            color: var(--brand-deep);
+            padding: 11px 20px;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+        }
+        .btn:hover, .btn.active {
+            background: var(--brand);
+            color: white;
+            box-shadow: 0 4px 12px color-mix(in srgb, var(--brand) 30%, transparent);
+            transform: translateY(-2px);
+        }
+        .view {
+            display: none;
+            background: var(--panel);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 30px;
+            margin-bottom: 26px;
+            border: 1px solid rgba(15,23,42,0.04);
+        }
+        .view.active { display: block; }
+        .section-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 18px;
+            align-items: end;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .section-head h2 { color: var(--ink); font-size: 1.45rem; }
+        .section-kicker {
+            color: var(--brand-deep);
+            text-transform: uppercase;
+            font-size: 0.76rem;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            margin-bottom: 10px;
+        }
+        .section-note {
+            border-left: 4px solid var(--brand);
+            background: color-mix(in srgb, var(--brand-sky) 50%, white);
+            color: var(--brand-deep);
+            padding: 14px 16px;
+            border-radius: 12px;
+            margin-top: 18px;
+        }
+        .concept-grid, .practice-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));
+            gap: 18px;
+        }
+        .card {
+            background: linear-gradient(180deg, #ffffff, #f8fbff);
+            border: 1px solid var(--line);
+            border-top: 4px solid var(--brand);
+            border-radius: 16px;
+            padding: 20px;
+            min-height: 170px;
+            box-shadow: 0 6px 18px rgba(15,23,42,0.05);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .card:hover, .flow-step:hover, .example-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 24px rgba(15,23,42,0.1);
+        }
+        .card-badge {
+            display: inline-flex;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: var(--brand-sky);
+            color: var(--brand-deep);
+            font-weight: 700;
+            margin-bottom: 14px;
+        }
+        .practice-card .card-badge { background: var(--mint); color: #166534; }
+        .practice-card { border-top-color: #22c55e; }
+        .card p { color: #475569; }
+        .flow-track {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));
+            gap: 18px;
+        }
+        .flow-step {
+            position: relative;
+            border-radius: 16px;
+            padding: 22px 18px 18px;
+            border: 1px solid color-mix(in srgb, var(--brand) 18%, transparent);
+            background: linear-gradient(160deg, #ffffff 0%, color-mix(in srgb, var(--brand-sky) 40%, white) 100%);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .step-number {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            background: var(--brand);
+            color: white;
+            font-weight: 800;
+            margin-bottom: 14px;
+            box-shadow: 0 10px 20px color-mix(in srgb, var(--brand) 22%, transparent);
+        }
+        .flow-step h3 { font-size: 1rem; margin-bottom: 10px; color: #0f172a; }
+        .flow-step p { color: #475569; font-size: 0.95rem; }
+        .example-stack { display: grid; gap: 18px; }
+        .example-card {
+            border: 1px solid rgba(15,23,42,0.08);
+            border-radius: 16px;
+            padding: 18px;
+            background: linear-gradient(180deg, #ffffff, #f8fafc);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .lab-callout {
+            border: 1px dashed color-mix(in srgb, var(--brand) 35%, transparent);
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin: 14px 0;
+            background: color-mix(in srgb, var(--brand-sky) 35%, white);
+            color: #334155;
+            font-size: 0.92rem;
+        }
+        .lab-callout strong { color: var(--brand-deep); }
+        pre {
+            margin-top: 10px;
+            background: #0f172a;
+            color: #dbeafe;
+            border-radius: 16px;
+            padding: 18px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            overflow-x: hidden;
+            font-size: 0.88rem;
+            line-height: 1.55;
+            border: 1px solid rgba(148,163,184,0.18);
+        }
+        code { font-family: Consolas, 'Cascadia Code', monospace; }
+        .table-wrap {
+            overflow-x: auto;
+            border-radius: 16px;
+            border: 1px solid var(--line);
+            background: white;
+        }
+        table { width: 100%; border-collapse: collapse; }
+        th, td {
+            padding: 14px 16px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+            vertical-align: top;
+        }
+        th {
+            background: linear-gradient(180deg, var(--brand), var(--brand-deep));
+            color: white;
+            font-weight: 700;
+        }
+        tbody tr:nth-child(even) { background: #f8fbff; }
+        .footer-note {
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.9rem;
+            margin-top: 18px;
+        }
+        .footer-note a { color: var(--brand); text-decoration: none; }
+        .footer-note a:hover { text-decoration: underline; }
+        @media (max-width: 900px) {
+            body { padding: 14px; }
+            .hero, .view { padding: 22px; }
+            .controls { justify-content: flex-start; }
+            .concept-grid, .practice-grid, .flow-track { grid-template-columns: 1fr; }
         }
         .home-link {
-            position: absolute; top: 16px; right: 20px; color: var(--red);
-            text-decoration: none; font-size: 0.88rem; font-weight: 600;
-            padding: 6px 14px; border-radius: 8px;
-            border: 1px solid rgba(204,0,0,0.2); background: rgba(204,0,0,0.05);
+            position: absolute;
+            top: 16px;
+            right: 20px;
+            color: var(--brand);
+            text-decoration: none;
+            font-size: 0.88rem;
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: 8px;
+            border: 1px solid color-mix(in srgb, var(--brand) 18%, transparent);
+            background: color-mix(in srgb, var(--brand) 6%, transparent);
+            transition: background 0.2s, color 0.2s;
         }
-        .hero h1 { color: var(--red); font-size: 1.85rem; margin-top: 8px; }
-        .lead { color: var(--muted); margin-top: 8px; font-size: 0.95rem; }
-        .repo-box {
-            background: var(--mint); border-left: 4px solid #22c55e;
-            padding: 12px 16px; border-radius: 6px; margin: 16px 0; font-size: 0.88rem;
-        }
-        .repo-box ul { margin: 8px 0 0 18px; }
-        .section-title {
-            font-size: 1rem; font-weight: 700; color: var(--slate-700);
-            margin: 20px 0 12px; padding: 8px 12px;
-            background: #f1f5f9; border-left: 4px solid var(--red);
-        }
-        .arch-diagram {
-            display: grid; grid-template-columns: 1fr auto 1fr auto 1fr;
-            gap: 8px; align-items: center; margin: 16px 0;
-        }
-        .arch-box {
-            background: white; border: 2px solid var(--line); border-radius: 10px;
-            padding: 14px; text-align: center; font-size: 0.82rem; cursor: pointer;
-            transition: all 0.2s; min-height: 80px;
-        }
-        .arch-box:hover, .arch-box.active { border-color: var(--red); background: #fff8f8; }
-        .arch-box.aws { border-color: var(--aws-orange); }
-        .arch-box.aws:hover { background: #fff8f0; }
-        .arch-arrow { font-size: 1.4rem; color: var(--muted); text-align: center; }
-        .arch-detail {
-            background: #1e293b; color: #e2e8f0; padding: 12px; border-radius: 8px;
-            font-size: 0.82rem; min-height: 56px; margin-top: 10px;
-        }
-        .refresh-flow {
-            display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
-            justify-content: center; margin: 14px 0;
-        }
-        .refresh-step {
-            background: linear-gradient(135deg, #CC0000 0%, #990000 100%);
-            color: white; padding: 10px 14px; border-radius: 8px;
-            font-size: 0.8rem; font-weight: 600; cursor: pointer;
-        }
-        .refresh-step.aws { background: linear-gradient(135deg, #ff9900 0%, #ec7211 100%); }
-        .refresh-step.output { background: linear-gradient(135deg, #059669 0%, #047857 100%); }
-        .simulator {
-            background: white; border: 1px solid var(--line); border-radius: 12px;
-            padding: 18px; margin: 14px 0;
-        }
-        .simulator label { font-size: 0.88rem; font-weight: 600; }
-        .simulator select, .simulator button {
-            padding: 8px 12px; border-radius: 6px; border: 1px solid var(--line);
-            margin: 8px 4px 8px 0; font-size: 0.88rem;
-        }
-        .simulator button { background: var(--red); color: white; border: none; cursor: pointer; }
-        .simulator button:hover { background: var(--red-deep); }
-        #invResult {
-            margin-top: 12px; padding: 14px; background: #0f172a; color: #94f7b4;
-            border-radius: 8px; font-family: monospace; font-size: 0.8rem;
-            white-space: pre-wrap; min-height: 100px;
-        }
-        .code-tabs { display: flex; gap: 5px; margin-bottom: 8px; flex-wrap: wrap; }
-        .code-tab {
-            padding: 6px 12px; background: #e9ecef; border: none;
-            border-radius: 6px 6px 0 0; cursor: pointer; font-size: 0.8rem; font-weight: 600;
-        }
-        .code-tab.active { background: var(--red); color: white; }
-        .code-content { display: none; }
-        .code-content.active { display: block; }
-        pre {
-            background: #1e293b; color: #e2e8f0; padding: 14px; border-radius: 8px;
-            font-size: 0.76rem; line-height: 1.5; white-space: pre-wrap;
-        }
-        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin: 12px 0; }
-        th, td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; }
-        th { background: #f8fafc; }
-        .example-scenario {
-            background: var(--amber); border-left: 4px solid #f59e0b;
-            padding: 14px; border-radius: 6px; margin: 16px 0; font-size: 0.88rem;
-        }
-        .example-scenario h3 { font-size: 0.92rem; color: #92400e; margin-bottom: 6px; }
-        .checklist { list-style: none; font-size: 0.88rem; }
-        .checklist li { padding: 6px 0; border-bottom: 1px solid var(--line); }
-        .checklist li::before { content: "☐ "; color: var(--red); font-weight: bold; }
-        footer { text-align: center; color: var(--muted); font-size: 0.85rem; margin-top: 24px; }
-        @media (max-width: 800px) {
-            .arch-diagram { grid-template-columns: 1fr; }
-            .arch-arrow { transform: rotate(90deg); }
+        .home-link:hover {
+            background: color-mix(in srgb, var(--brand) 13%, transparent);
+            color: var(--brand-deep);
         }
     </style>
 </head>
@@ -118,292 +285,359 @@
     <div class="container">
         <header class="hero">
             <a href="index.html" class="home-link">&#8962; Home</a>
-            <span style="font-size:0.8rem;color:var(--muted);">Lab 07 · Dynamic Inventory</span>
-            <h1>Dynamic Inventory — AWS EC2 Plugin</h1>
-            <p class="lead">The <code>amazon.aws.aws_ec2</code> inventory plugin queries the EC2 API at runtime. No manual IP updates when instances launch or terminate.</p>
+            <div class="eyebrow">Ansible Extended</div>
+            <h1>Dynamic Inventory</h1>
+            <p class="subtitle">AWS EC2 inventory plugin — auto-discover instances by tag and region.</p>
+            <div class="lead-panel">
+                <p>Dynamic inventory generates host lists from cloud APIs — eliminating manual IP edits when instances churn.</p>
+            </div>
         </header>
 
-        <div class="repo-box">
-            <strong>Repository files:</strong>
-            <ul>
-                <li><code>labs/inventory/aws_ec2.yml</code> — plugin configuration with filters and keyed_groups</li>
-                <li><code>labs/inventory/hosts.ini</code> — static fallback for local labs</li>
-                <li><code>labmanuals/lab07-dynamic-inventory.md</code> — full lab with AWS tagging steps</li>
-            </ul>
+        <div class="controls">
+            <button class="btn active" data-view="concept">Concept</button>
+            <button class="btn" data-view="architecture">Architecture</button>
+            <button class="btn" data-view="flow">Flow</button>
+            <button class="btn" data-view="setup">Setup</button>
+            <button class="btn" data-view="commands">Commands</button>
+            <button class="btn" data-view="examples">Examples</button>
+            <button class="btn" data-view="comparison">Compare</button>
+            <button class="btn" data-view="practice">Practice</button>
         </div>
 
-        <!-- Architecture -->
-        <div class="section-title">1. AWS EC2 Plugin Architecture (click components)</div>
-        <div class="arch-diagram">
-            <div class="arch-box" onclick="showArch('control')">
-                <strong>🖥️ Control Node</strong><br>
-                ansible / ansible-inventory
+        <section id="concept" class="view active">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Core Model</div>
+                    <h2>Inventory Plugins</h2>
+                </div>
             </div>
-            <div class="arch-arrow">→</div>
-            <div class="arch-box" onclick="showArch('plugin')">
-                <strong>🔌 Inventory Plugin</strong><br>
-                amazon.aws.aws_ec2
+<div class="concept-grid">
+                <article class="card">
+                    <div class="card-badge">Plugin</div>
+                    <p>ansible.builtin.aws_ec2 — query EC2 API.</p>
+                </article>
+                <article class="card">
+                    <div class="card-badge">constructed</div>
+                    <p>Build groups from instance tags.</p>
+                </article>
+                <article class="card">
+                    <div class="card-badge">cache</div>
+                    <p>Inventory cache reduces API calls.</p>
+                </article>
+                <article class="card">
+                    <div class="card-badge">aws_profile</div>
+                    <p>Credential chain like AWS CLI.</p>
+                </article>
+                <article class="card">
+                    <div class="card-badge">hostnames</div>
+                    <p>Public vs private DNS selection.</p>
+                </article>
+                <article class="card">
+                    <div class="card-badge">ansible-inventory</div>
+                    <p>Validate plugin output offline.</p>
+                </article>
             </div>
-            <div class="arch-arrow">→</div>
-            <div class="arch-box aws" onclick="showArch('api')">
-                <strong>☁️ AWS EC2 API</strong><br>
-                DescribeInstances
+        </section>
+        <section id="architecture" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">EC2 Plugin</div>
+                    <h2>aws_ec2 Flow</h2>
+                </div>
             </div>
-        </div>
-        <div class="arch-diagram" style="margin-top:0">
-            <div class="arch-box" onclick="showArch('boto')">
-                <strong>📦 boto3</strong><br>
-                AWS SDK for Python
-            </div>
-            <div class="arch-arrow">+</div>
-            <div class="arch-box" onclick="showArch('iam')">
-                <strong>🔑 IAM / Profile</strong><br>
-                AWS_PROFILE credentials
-            </div>
-            <div class="arch-arrow">→</div>
-            <div class="arch-box" onclick="showArch('output')">
-                <strong>📋 Inventory JSON</strong><br>
-                Groups + hostvars
-            </div>
-        </div>
-        <div class="arch-detail" id="archDetail">
-            Click any architecture component to understand its role in dynamic inventory resolution.
-        </div>
-
-        <!-- Refresh flow -->
-        <div class="section-title">2. Inventory Refresh Flow</div>
-        <div class="refresh-flow">
-            <span class="refresh-step" onclick="showRefresh(1)">1. Run command</span>
-            <span>→</span>
-            <span class="refresh-step" onclick="showRefresh(2)">2. Load aws_ec2.yml</span>
-            <span>→</span>
-            <span class="refresh-step aws" onclick="showRefresh(3)">3. EC2 API query</span>
-            <span>→</span>
-            <span class="refresh-step" onclick="showRefresh(4)">4. Apply filters</span>
-            <span>→</span>
-            <span class="refresh-step" onclick="showRefresh(5)">5. keyed_groups</span>
-            <span>→</span>
-            <span class="refresh-step output" onclick="showRefresh(6)">6. compose vars</span>
-        </div>
-        <div class="arch-detail" id="refreshDetail" style="background:#f8fafc;color:var(--ink);border:1px solid var(--line)">
-            Every ansible command re-fetches inventory unless caching is configured. Terraform-provisioned instances appear automatically after tagging.
-        </div>
-
-        <div class="example-scenario">
-            <h3>Example scenario: Auto Scaling replacement</h3>
-            <p><strong>Event:</strong> ASG terminates unhealthy instance i-0abc and launches i-0xyz.</p>
-            <p><strong>Static inventory:</strong> Requires manual edit of hosts.ini — risk of stale IPs.</p>
-            <p><strong>Dynamic inventory:</strong> Next <code>ansible-inventory --graph</code> shows i-0xyz in role_webservers automatically.</p>
-        </div>
-
-        <!-- Simulator -->
-        <div class="section-title">3. Group Membership Simulator</div>
-        <div class="simulator">
-            <label>Instance tags:</label><br>
-            <select id="role">
-                <option value="webservers">Role=webservers</option>
-                <option value="appservers">Role=appservers</option>
-            </select>
-            <select id="env">
-                <option value="ansible-lab">Environment=ansible-lab</option>
-                <option value="production">Environment=production</option>
-            </select>
-            <select id="state">
-                <option value="running">state=running</option>
-                <option value="stopped">state=stopped</option>
-            </select>
-            <button type="button" id="btnBuild">Build inventory</button>
-            <button type="button" id="btnGraph">Show --graph</button>
-            <div id="invResult">@role_webservers:
-  |--10.0.1.10
-  |--10.0.1.11
-
-@aws_region_us_east_1:
-  |--10.0.1.10
-  |--10.0.1.11</div>
-        </div>
-
-        <!-- Plugin config tabs -->
-        <div class="section-title">4. Plugin Configuration (code tabs)</div>
-        <div class="code-tabs">
-            <button class="code-tab active" onclick="showCode('plugin')">aws_ec2.yml</button>
-            <button class="code-tab" onclick="showCode('graph')">--graph</button>
-            <button class="code-tab" onclick="showCode('list')">--list</button>
-            <button class="code-tab" onclick="showCode('ping')">Ping</button>
-            <button class="code-tab" onclick="showCode('playbook')">Playbook</button>
-            <button class="code-tab" onclick="showCode('install')">Prerequisites</button>
-        </div>
-        <div id="plugin-code" class="code-content active">
-<pre>---
-plugin: amazon.aws.aws_ec2
+<div class="example-stack">
+            <div class="lab-callout"><strong>Repo lab files:</strong> ansible/extended/labs/dynamic_inventory/</div>
+                <section class="example-card">
+                    <div class="section-kicker">aws_ec2.yml</div>
+                    <pre><code>plugin: amazon.aws.aws_ec2
 regions:
   - us-east-1
 filters:
-  instance-state-name: running
-  tag:Environment: ansible-lab
+  tag:Environment: dev
 keyed_groups:
   - key: tags.Role
-    prefix: role
-  - key: placement.region
-    prefix: aws_region
-hostnames:
-  - private-ip-address
-compose:
-  ansible_host: private_ip_address
-  ansible_user: "'ubuntu'"</pre>
-        </div>
-        <div id="graph-code" class="code-content">
-<pre>export AWS_PROFILE=lab-terraform
-export AWS_DEFAULT_REGION=us-east-1
-
-ansible-inventory -i inventory/aws_ec2.yml --graph
-
-# Expected output:
-@role_webservers:
-  |--10.0.1.10
-@role_appservers:
-  |--10.0.1.12
-@aws_region_us_east_1:
-  |--10.0.1.10
-  |--10.0.1.12</pre>
-        </div>
-        <div id="list-code" class="code-content">
-<pre>ansible-inventory -i inventory/aws_ec2.yml --list | jq '._meta.hostvars'
-
-# Shows per-host variables:
-# ansible_host, ansible_user, instance_id, tags, placement, etc.</pre>
-        </div>
-        <div id="ping-code" class="code-content">
-<pre># Control node must reach private IPs (same VPC)
-ansible -i inventory/aws_ec2.yml role_webservers -m ansible.builtin.ping
-
-# SUCCESS => { "ping": "pong" }</pre>
-        </div>
-        <div id="playbook-code" class="code-content">
-<pre>ansible-playbook -i inventory/aws_ec2.yml \
-  playbooks/loops-packages.yml --limit role_webservers</pre>
-        </div>
-        <div id="install-code" class="code-content">
-<pre>pip install boto3 botocore
-ansible-galaxy collection install amazon.aws
-
-aws sts get-caller-identity --profile lab-terraform
-ansible-doc -t inventory amazon.aws.aws_ec2</pre>
-        </div>
-
-        <!-- Config reference table -->
-        <div class="section-title">5. Configuration Keys Reference</div>
-        <table>
-            <thead>
-                <tr><th>Key</th><th>Purpose</th><th>Lab value</th></tr>
-            </thead>
-            <tbody>
-                <tr><td><code>plugin</code></td><td>Inventory plugin FQCN</td><td>amazon.aws.aws_ec2</td></tr>
-                <tr><td><code>regions</code></td><td>Limit API queries</td><td>us-east-1</td></tr>
-                <tr><td><code>filters</code></td><td>EC2 DescribeInstances filters</td><td>running + Environment tag</td></tr>
-                <tr><td><code>keyed_groups</code></td><td>Auto-create groups from instance attributes</td><td>tags.Role → role_webservers</td></tr>
-                <tr><td><code>hostnames</code></td><td>How hosts appear in inventory</td><td>private-ip-address</td></tr>
-                <tr><td><code>compose</code></td><td>Set host variables from instance data</td><td>ansible_host, ansible_user</td></tr>
-            </tbody>
-        </table>
-
-        <div class="section-title">6. Static vs Dynamic Comparison</div>
-        <table>
-            <thead><tr><th>Aspect</th><th>Static (hosts.ini)</th><th>Dynamic (aws_ec2.yml)</th></tr></thead>
-            <tbody>
-                <tr><td>IP updates</td><td>Manual edit required</td><td>Automatic on each run</td></tr>
-                <tr><td>AWS credentials</td><td>Not needed</td><td>IAM profile or keys required</td></tr>
-                <tr><td>Group assignment</td><td>Explicit in INI sections</td><td>From tags via keyed_groups</td></tr>
-                <tr><td>Best for</td><td>Fixed lab VMs, air-gapped</td><td>Cloud fleets, ASG, Terraform</td></tr>
-                <tr><td>Debugging</td><td>Simple file edit</td><td>Check tags, region, filters</td></tr>
-            </tbody>
-        </table>
-
-        <div class="section-title">7. Troubleshooting Checklist</div>
-        <ul class="checklist">
-            <li>Credentials: <code>aws sts get-caller-identity --profile lab-terraform</code></li>
-            <li>Region: <code>echo $AWS_DEFAULT_REGION</code> matches plugin regions</li>
-            <li>Tags: Environment=ansible-lab and Role=webservers|appservers on instances</li>
-            <li>Collection: <code>ansible-galaxy collection list amazon.aws</code></li>
-            <li>SSH: Control node in VPC can reach private IPs on port 22</li>
-            <li>Empty inventory: filters too restrictive — test with fewer filters</li>
-        </ul>
-
-        <footer>Ansible Extended · Lab 07 · <a href="index.html" style="color:#CC0000">Catalog</a></footer>
+    prefix: role</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">Run</div>
+                    <pre><code>ansible-inventory -i aws_ec2.yml --graph</code></pre>
+                </section>
+            </div>
+            <svg viewBox="0 0 950 320" style="width:100%;max-width:950px;margin:20px auto;display:block;">
+                <text x="475" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#1e293b">Dynamic Inventory</text>
+                <rect x="40" y="80" width="150" height="55" rx="8" fill="#ffe4e6" stroke="#CC0000" stroke-width="2"/><text x="115" y="107" text-anchor="middle" font-size="12" font-weight="bold" fill="#1e293b">aws_ec2.yml</text><rect x="220" y="80" width="150" height="55" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/><text x="295" y="107" text-anchor="middle" font-size="12" font-weight="bold" fill="#1e293b">EC2 API</text><rect x="400" y="80" width="150" height="55" rx="8" fill="#dcfce7" stroke="#22c55e" stroke-width="2"/><text x="475" y="107" text-anchor="middle" font-size="12" font-weight="bold" fill="#1e293b">inventory graph</text><rect x="580" y="80" width="150" height="55" rx="8" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/><text x="655" y="107" text-anchor="middle" font-size="12" font-weight="bold" fill="#1e293b">ansible-playbook</text>
+                
+            </svg>
+        </section>
+        <section id="flow" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Lab 07</div>
+                    <h2>Dynamic Inventory Lab</h2>
+                </div>
+            </div>
+<div class="flow-track">
+                <div class="flow-step">
+                    <div class="step-number">1</div>
+                    <h3>Install collection</h3>
+                    <p>ansible-galaxy collection install amazon.aws</p>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">2</div>
+                    <h3>Configure plugin</h3>
+                    <p>Edit aws_ec2.yml with region and tags.</p>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">3</div>
+                    <h3>Graph</h3>
+                    <p>ansible-inventory -i aws_ec2.yml --graph</p>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">4</div>
+                    <h3>Ping</h3>
+                    <p>ansible all -i aws_ec2.yml -m ping</p>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">5</div>
+                    <h3>Playbook</h3>
+                    <p>Run site.yml against dynamic hosts.</p>
+                </div>
+            </div>
+        </section>
+        <section id="setup" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">AWS</div>
+                    <h2>Credentials for Plugin</h2>
+                </div>
+            </div>
+<div class="example-stack">
+                <section class="example-card">
+                    <div class="section-kicker">Profile</div>
+                    <pre><code>export AWS_PROFILE=lab-profile
+aws sts get-caller-identity</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">Collection</div>
+                    <pre><code>ansible-galaxy collection install amazon.aws community.aws</code></pre>
+                </section>
+            </div>
+        </section>
+        <section id="commands" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Quick Reference</div>
+                    <h2>Dynamic Inventory CLI</h2>
+                </div>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Category</th><th>Command</th><th>Description</th></tr></thead>
+                    <tbody>
+                        <tr><td>Graph</td><td><code>ansible-inventory -i aws_ec2.yml --graph</code></td><td>Host tree</td></tr>
+                        <tr><td>List</td><td><code>ansible-inventory -i aws_ec2.yml --list</code></td><td>JSON hosts</td></tr>
+                        <tr><td>Playbook</td><td><code>ansible-playbook -i aws_ec2.yml site.yml</code></td><td>Run against EC2</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="section-note">Extended reference appendix — bookmark for exam prep and on-the-job lookup.</div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Topic</th><th>Command / Pattern</th><th>Notes</th></tr></thead>
+                    <tbody>
+                        <tr><td>keyed_groups</td><td>tag-based groups</td><td>Lab 07</td></tr>
+                        <tr><td>hostnames</td><td>name: private-ip-address</td><td>Lab 07</td></tr>
+                        <tr><td>compose</td><td>ansible_host override</td><td>Lab 07</td></tr>
+                        <tr><td>cache</td><td>inventory cache plugin</td><td>Performance</td></tr>
+                        <tr><td>filters</td><td>tag:Role=web</td><td>Lab 07</td></tr>
+                    </tbody>
+                </table>
+            </div>            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Dynamic Inv — reference drill 1</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Dynamic Inv — reference drill 2</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Dynamic Inv — reference drill 3</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="section-note">Extended reference appendix — bookmark for exam prep and on-the-job lookup.</div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Topic</th><th>Command / Pattern</th><th>Notes</th></tr></thead>
+                    <tbody>
+                        <tr><td>Review</td><td>Re-read lab manual objectives</td><td>Dynamic Inventory</td></tr>
+                        <tr><td>Validate</td><td>Run syntax-check or validate</td><td>Before apply</td></tr>
+                        <tr><td>Cleanup</td><td>Destroy or remove lab changes</td><td>End of session</td></tr>
+                        <tr><td>Docs</td><td>Cross-link markdown docs</td><td>../docs/</td></tr>
+                        <tr><td>Git</td><td>Commit only safe files</td><td>No secrets/state</td></tr>
+                        <tr><td>Pair</td><td>Walk through with teammate</td><td>Teaching reinforces</td></tr>
+                        <tr><td>Notes</td><td>Document failures and fixes</td><td>Personal runbook</td></tr>
+                        <tr><td>Next</td><td>Follow learning path order</td><td>curriculum/learning-paths.md</td></tr>
+                    </tbody>
+                </table>
+            </div>            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Dynamic Inventory — reference drill 1</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Dynamic Inventory — reference drill 2</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Dynamic Inventory — reference drill 3</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+        </section>
+        <section id="examples" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Hands-On</div>
+                    <h2>Lab 07 Commands</h2>
+                </div>
+            </div>
+<div class="example-stack">
+            <div class="lab-callout"><strong>Repo lab files:</strong> dynamic_inventory/aws_ec2.yml</div>
+                <section class="example-card">
+                    <div class="section-kicker">Inventory graph</div>
+                    <pre><code>cd ansible/extended/labs/dynamic_inventory
+ansible-inventory -i aws_ec2.yml --graph</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">Ping dynamic</div>
+                    <pre><code>ansible role_web -i aws_ec2.yml -m ansible.builtin.ping</code></pre>
+                </section>
+            </div>
+            <div class="section-note">Extended reference appendix — bookmark for exam prep and on-the-job lookup.</div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Topic</th><th>Command / Pattern</th><th>Notes</th></tr></thead>
+                    <tbody>
+                        <tr><td>Review</td><td>Re-read lab manual objectives</td><td>Dynamic Inventory</td></tr>
+                        <tr><td>Validate</td><td>Run syntax-check or validate</td><td>Before apply</td></tr>
+                        <tr><td>Cleanup</td><td>Destroy or remove lab changes</td><td>End of session</td></tr>
+                        <tr><td>Docs</td><td>Cross-link markdown docs</td><td>../docs/</td></tr>
+                        <tr><td>Git</td><td>Commit only safe files</td><td>No secrets/state</td></tr>
+                        <tr><td>Pair</td><td>Walk through with teammate</td><td>Teaching reinforces</td></tr>
+                        <tr><td>Notes</td><td>Document failures and fixes</td><td>Personal runbook</td></tr>
+                        <tr><td>Next</td><td>Follow learning path order</td><td>curriculum/learning-paths.md</td></tr>
+                    </tbody>
+                </table>
+            </div>            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Dynamic Inventory — reference drill 1</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Dynamic Inventory — reference drill 2</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Dynamic Inventory — reference drill 3</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+        </section>
+        <section id="comparison" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Decision Guide</div>
+                    <h2>Static vs Dynamic</h2>
+                </div>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th></th><th>Static INI</th><th>aws_ec2 plugin</th></tr></thead>
+                    <tbody>
+                        <tr><td>IP churn</td><td>Manual updates</td><td>Automatic</td></tr>
+                        <tr><td>Lab essentials</td><td>Yes</td><td>Extended</td></tr>
+                        <tr><td>AWS coupling</td><td>None</td><td>Required</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        <section id="practice" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Use It Well</div>
+                    <h2>Dynamic Inventory Practice</h2>
+                </div>
+            </div>
+<div class="practice-grid">
+                <article class="card practice-card">
+                    <div class="card-badge">Lab 07</div>
+                    <p>Configure and graph EC2 inventory.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab07-dynamic-inventory.md">Open lab manual →</a></p>
+                </article>
+                <article class="card practice-card">
+                    <div class="card-badge">Tags</div>
+                    <p>Filter instances by Environment tag.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab07-dynamic-inventory.md">Open lab manual →</a></p>
+                </article>
+                <article class="card practice-card">
+                    <div class="card-badge">keyed_groups</div>
+                    <p>Create group per Role tag.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab07-dynamic-inventory.md">Open lab manual →</a></p>
+                </article>
+                <article class="card practice-card">
+                    <div class="card-badge">Ping</div>
+                    <p>Verify SSH to discovered hosts.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab07-dynamic-inventory.md">Open lab manual →</a></p>
+                </article>
+                <article class="card practice-card">
+                    <div class="card-badge">Project</div>
+                    <p>Extended roles project lab 08.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab08-roles-project.md">Open lab manual →</a></p>
+                </article>
+                <article class="card practice-card">
+                    <div class="card-badge">Cache</div>
+                    <p>Enable inventory cache; compare speed.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab07-dynamic-inventory.md">Open lab manual →</a></p>
+                </article>
+            </div>
+            <div class="section-note">Extended reference appendix — bookmark for exam prep and on-the-job lookup.</div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Topic</th><th>Command / Pattern</th><th>Notes</th></tr></thead>
+                    <tbody>
+                        <tr><td>Review</td><td>Re-read lab manual objectives</td><td>Dynamic Inventory</td></tr>
+                        <tr><td>Validate</td><td>Run syntax-check or validate</td><td>Before apply</td></tr>
+                        <tr><td>Cleanup</td><td>Destroy or remove lab changes</td><td>End of session</td></tr>
+                        <tr><td>Docs</td><td>Cross-link markdown docs</td><td>../docs/</td></tr>
+                        <tr><td>Git</td><td>Commit only safe files</td><td>No secrets/state</td></tr>
+                        <tr><td>Pair</td><td>Walk through with teammate</td><td>Teaching reinforces</td></tr>
+                        <tr><td>Notes</td><td>Document failures and fixes</td><td>Personal runbook</td></tr>
+                        <tr><td>Next</td><td>Follow learning path order</td><td>curriculum/learning-paths.md</td></tr>
+                    </tbody>
+                </table>
+            </div>            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Dynamic Inventory — reference drill 1</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Dynamic Inventory — reference drill 2</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Dynamic Inventory — reference drill 3</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+        </section>
     </div>
 
     <script>
-        const archMessages = {
-            control: 'Control node runs ansible, ansible-playbook, or ansible-inventory. The -i flag points to aws_ec2.yml which triggers the inventory plugin.',
-            plugin: 'amazon.aws.aws_ec2 is an inventory plugin (not a script). Ansible 2.9+ uses plugins defined in YAML with plugin: key at top of file.',
-            api: 'Plugin calls EC2 DescribeInstances with configured regions and filters. Returns instance metadata: IPs, tags, state, instance type, AZ.',
-            boto: 'boto3 is the AWS SDK for Python. Must be installed on control node. botocore provides low-level HTTP client.',
-            iam: 'Credentials from AWS_PROFILE, environment variables, or IAM role on EC2 control node. Needs ec2:DescribeInstances permission.',
-            output: 'Plugin returns inventory structure: groups (keyed_groups), hosts, and _meta.hostvars with composed variables like ansible_host.'
-        };
-
-        const refreshMessages = {
-            1: 'User runs: ansible-inventory -i inventory/aws_ec2.yml --graph (or any ansible command with -i)',
-            2: 'Ansible loads YAML, identifies plugin: amazon.aws.aws_ec2, initializes plugin with file contents.',
-            3: 'Plugin uses boto3 to call DescribeInstances in configured regions. Pagination handled automatically.',
-            4: 'filters: instance-state-name: running and tag:Environment: ansible-lab reduce result set.',
-            5: 'keyed_groups creates role_webservers from tags.Role value. Also aws_region_us_east_1 from placement.region.',
-            6: 'compose sets ansible_host to private_ip_address and ansible_user to ubuntu. SSH module uses these hostvars.'
-        };
-
-        function showArch(part) {
-            document.querySelectorAll('.arch-box').forEach(b => b.classList.remove('active'));
-            event.currentTarget.classList.add('active');
-            document.getElementById('archDetail').textContent = archMessages[part];
-        }
-
-        function showRefresh(step) {
-            document.getElementById('refreshDetail').textContent = refreshMessages[step];
-        }
-
-        function showCode(type) {
-            document.querySelectorAll('.code-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.code-tab').forEach(el => el.classList.remove('active'));
-            document.getElementById(type + '-code').classList.add('active');
-            document.querySelectorAll('.code-tab').forEach(tab => {
-                if (tab.getAttribute('onclick').includes("'" + type + "'")) tab.classList.add('active');
+        const buttons = document.querySelectorAll('.btn');
+        const views = document.querySelectorAll('.view');
+        buttons.forEach((button) => {
+            button.addEventListener('click', () => {
+                const viewId = button.dataset.view;
+                buttons.forEach((b) => b.classList.remove('active'));
+                views.forEach((v) => v.classList.remove('active'));
+                button.classList.add('active');
+                document.getElementById(viewId).classList.add('active');
             });
-        }
-
-        function buildInventory(graph) {
-            const role = document.getElementById('role').value;
-            const env = document.getElementById('env').value;
-            const state = document.getElementById('state').value;
-            const el = document.getElementById('invResult');
-
-            if (state === 'stopped') {
-                el.textContent = '# Empty inventory — filter instance-state-name: running excludes stopped instances';
-                return;
-            }
-            if (env !== 'ansible-lab') {
-                el.textContent = '# Empty inventory — tag:Environment: ansible-lab filter does not match "' + env + '"';
-                return;
-            }
-
-            const ips = role === 'webservers' ? ['10.0.1.10', '10.0.1.11'] : ['10.0.1.12'];
-            if (graph) {
-                let out = '@role_' + role + ':\n';
-                ips.forEach(ip => { out += '  |--' + ip + '\n'; });
-                out += '\n@aws_region_us_east_1:\n';
-                ips.forEach(ip => { out += '  |--' + ip + '\n'; });
-                el.textContent = out.trim();
-            } else {
-                el.textContent = JSON.stringify({
-                    _meta: { hostvars: Object.fromEntries(ips.map(ip => [ip, {
-                        ansible_host: ip, ansible_user: 'ubuntu', tags: { Role: role, Environment: env }
-                    }]))},
-                    ['role_' + role]: { hosts: ips }
-                }, null, 2);
-            }
-        }
-
-        document.getElementById('btnBuild').addEventListener('click', () => buildInventory(false));
-        document.getElementById('btnGraph').addEventListener('click', () => buildInventory(true));
+        });
     </script>
 </body>
 </html>

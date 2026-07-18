@@ -1,46 +1,14 @@
-# 06 — Variables
+# Terraform Variables and Locals
 
-## Overview
+## Objective (conceptual)
 
-Variables parameterize Terraform configurations so one codebase deploys multiple environments. Instead of copying `main.tf` for dev and prod, you change **inputs** — via defaults, `terraform.tfvars`, or environment variables — while keeping resource logic identical.
+**Input variables** parameterize a module so the same code targets different environments. **Locals** compute derived values once and reuse them across resources—keeping tags and names DRY without exposing another input. **tfvars** files supply values per environment; CLI `-var` flags override at runtime.
 
-This chapter covers Lab 05 (typed variables, locals, tag merge) and previews Lab 08 (validation, secrets). Variables are the primary interface between platform teams and application teams consuming modules.
+The mental model: variables are the **knobs** operators turn; locals are **private helpers** inside the module; defaults document safe training values while production passes explicit tfvars in CI.
 
-### Why this matters for beginners
+**Interactive reference:** [Variables and tfvars](../../html/variables.html)
 
-Hard-coding `instance_type = "t3.micro"` works once. When you need `t3.large` in staging, variables prevent a search-and-replace across dozens of files. **Type constraints** catch `instance_type = 123` at validate time instead of at the AWS API.
-
----
-
-## Key concepts
-
-| Concept | Scope | Set by caller? |
-|---------|-------|----------------|
-| `variable` | Input from outside | Yes |
-| `locals` | Internal computed | No |
-| `output` | Exported result | N/A |
-| `default` | Fallback value | In variable block |
-| `terraform.tfvars` | Auto-loaded values file | Yes |
-| `TF_VAR_*` | Environment injection | Yes |
-| `validation` | Input rules | In variable block |
-
----
-
-## Variable precedence (highest wins)
-
-```
-1. -var and -var-file on CLI
-2. *.auto.tfvars (alphabetical)
-3. terraform.tfvars
-4. TF_VAR_<name> environment variables
-5. default in variable block
-```
-
----
-
-## Lab 05 — Full example
-
-### variables.tf
+## Variable declaration (Lab 05)
 
 ```hcl
 variable "aws_region" {
@@ -68,13 +36,9 @@ variable "tags" {
 }
 ```
 
-### main.tf (locals + resource)
+## Locals merge tags onto resources
 
 ```hcl
-provider "aws" {
-  region = var.aws_region
-}
-
 locals {
   common_tags = merge(var.tags, {
     Name      = var.server_name
@@ -90,173 +54,76 @@ resource "aws_instance" "web" {
 }
 ```
 
-### outputs.tf
+`merge` combines maps; later keys win on collision. Every resource sharing `local.common_tags` updates together when `var.tags` changes.
 
-```hcl
-output "instance_id" {
-  value = aws_instance.web.id
-}
+## Value precedence (highest wins)
 
-output "public_ip" {
-  value = aws_instance.web.public_ip
-}
-```
+1. `-var` / `-var-file` on CLI
+2. `*.auto.tfvars` (alphabetical)
+3. `terraform.tfvars`
+4. Environment variables `TF_VAR_name`
+5. `default` in `variable` block
 
----
+Lab 08 demonstrates tfvars for non-secret and sensitive values separately.
 
-## Passing values
+## tfvars example pattern
 
-### Defaults only
+Copy `terraform.tfvars.example` to `terraform.tfvars` locally—commit the example, gitignore the real file if it holds environment-specific data.
 
-```bash
-terraform plan
-# Uses all defaults from variables.tf
-```
+## Validation and types (essentials scope)
 
-### terraform.tfvars
+- `type = string | number | bool | list(...) | map(...)` catches category errors at plan time.
+- `description` documents intent for module consumers.
+- `sensitive = true` on variables redacts values in logs (Lab 08).
 
-Create `terraform.tfvars` (gitignore if environment-specific):
-
-```hcl
-aws_region    = "us-east-1"
-server_name   = "my-custom-web"
-instance_type = "t3.micro"
-
-tags = {
-  Environment = "training"
-  Owner       = "platform-team"
-}
-```
-
-### CLI override
-
-```bash
-terraform plan -var="instance_type=t3.small"
-```
-
-### Environment variable
-
-```bash
-export TF_VAR_server_name="from-env"
-terraform plan
-```
-
----
-
-## Type reference
-
-```hcl
-variable "name"     { type = string }
-variable "count"    { type = number }
-variable "enabled"  { type = bool }
-variable "azs"      { type = list(string) }
-variable "tags"     { type = map(string) }
-
-variable "config" {
-  type = object({
-    size = string
-    port = number
-  })
-}
-```
-
----
-
-## locals vs variables
-
-```hcl
-# Variable — external input
-variable "environment" {
-  type    = string
-  default = "dev"
-}
-
-# Local — derived inside module
-locals {
-  name_prefix = "${var.environment}-app"
-  common_tags = {
-    Environment = var.environment
-    ManagedBy   = "Terraform"
-  }
-}
-```
-
-Use locals to avoid repeating expressions and to keep resource blocks readable.
-
----
-
-## merge() for tags
+## Lab 08: configuration map
 
 ```hcl
 locals {
-  common_tags = merge(var.tags, {
-    Name = var.server_name
-  })
-}
-```
-
-Later map keys override earlier on collision.
-
----
-
-## Lab 08 preview — validation
-
-```hcl
-variable "cloud" {
-  type = string
-  validation {
-    condition     = contains(["aws", "azure", "gcp", "vmware"], var.cloud)
-    error_message = "cloud must be aws, azure, gcp, or vmware."
+  configuration = {
+    cloud        = var.cloud
+    department   = var.department
+    cost_code    = var.cost_code
+    ip_address   = var.ip_address
+    phone_number = var.phone_number
   }
 }
+
+output "phone_number" {
+  description = "Sensitive values are redacted in normal CLI output but remain in state."
+  value       = local.configuration.phone_number
+  sensitive   = true
+}
 ```
 
-Validation runs during `plan` and `apply`, not during `validate` for all cases — but invalid values are rejected before API calls.
+Never commit real phone numbers or secrets—use placeholders in examples.
+
+## Variables vs outputs vs locals
+
+| Construct | Direction | Typical use |
+|-----------|-----------|-------------|
+| `variable` | In | Region, instance size, feature flags |
+| `output` | Out | IDs, ARNs for humans or remote state consumers |
+| `locals` | Internal | Computed names, merged tags, repeated expressions |
+
+## Operational commands (reference)
+
+```bash
+cd terraform/essentials/labs/lab05-variables
+terraform init
+terraform plan -var="server_name=demo-web"
+terraform apply -var-file=terraform.tfvars
+
+cd ../lab08-tfvars-secrets
+terraform plan
+terraform output phone_number
+```
 
 ---
 
-## Common mistakes
+## Hands-On Labs
 
-| Mistake | Result | Fix |
-|---------|--------|-----|
-| Untyped variables | Weak error messages | Add `type =` |
-| Secrets in tfvars in git | Credential leak | TF_VAR_ or secret manager |
-| Confusing locals with variables | Can't override from outside | Use variable for inputs |
-| Wrong precedence assumption | Unexpected values | Check CLI > tfvars > TF_VAR > default |
-| Missing description | Poor module docs | Add `description =` |
-| `sensitive` thought to hide from state | Secret in plaintext state | Encrypt backend |
-
----
-
-## Links
-
-| Resource | Path |
-|----------|------|
-| Lab 05 | [labmanuals/lab05-variables.md](../../labmanuals/lab05-variables.md) |
-| Lab 08 | [labmanuals/lab08-tfvars-secrets.md](../../labmanuals/lab08-tfvars-secrets.md) |
-| HTML: Variables | [html/variables.html](../../html/variables.html) |
-| Previous | [05-quality/README.md](../05-quality/README.md) |
-| Next | [07-state/README.md](../07-state/README.md) |
-
----
-
-## Hands-on labs
-
-1. **[Lab 05](../../labmanuals/lab05-variables.md)** — EC2 with variables and merged tags.
-2. **[Lab 08](../../labmanuals/lab08-tfvars-secrets.md)** — Validation and sensitive inputs.
-
----
-
-## Key takeaways
-
-1. **Variables** are inputs; **locals** are internal computations.
-2. Know **precedence** when debugging unexpected values.
-3. Use **types** and **validation** to fail fast.
-4. **merge()** composes tag maps cleanly in Lab 05.
-5. Never commit **secrets** in tfvars — use `TF_VAR_` or ignored files.
-
----
-
-## Next steps
-
-Read [07 — State](../07-state/README.md) for state file anatomy and inspection commands.
+| Lab | Description |
+|-----|-------------|
+| [Lab 05: Variables](../../labmanuals/lab05-variables.md) | Input variables, locals, merged tags on EC2 |
+| [Lab 08: tfvars and Secrets](../../labmanuals/lab08-tfvars-secrets.md) | tfvars files, sensitive variables and outputs |

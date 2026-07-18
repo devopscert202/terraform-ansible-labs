@@ -3,391 +3,645 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Break-Fix Drills — Ansible Extended</title>
+    <title>Break-Fix Drills — Interactive Guide</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
-            --red: #CC0000; --red-deep: #990000; --green: #16a34a;
-            --ink: #1a1a2e; --muted: #64748b; --line: #e2e8f0;
-            --amber: #fef3c7; --rose: #ffe4e6; --slate-700: #334155;
+            --brand: #CC0000;
+            --brand-deep: #990000;
+            --brand-sky: #ffe4e6;
+            --ink: #1a1a2e;
+            --muted: #64748b;
+            --surface: #ffffff;
+            --panel: #ffffff;
+            --line: #dbe3f1;
+            --mint: #dcfce7;
+            --amber: #fef3c7;
+            --rose: #ffe4e6;
+            --blue: #2563eb;
+            --slate-900: #0f172a;
+            --slate-700: #334155;
+            --slate-500: #64748b;
+            --slate-200: #e2e8f0;
         }
         body {
             font-family: "Segoe UI", system-ui, sans-serif;
-            background: linear-gradient(180deg, #fffafa 0%, #f4f6f8 100%);
-            color: var(--ink); line-height: 1.6; padding: 20px;
+            background: linear-gradient(180deg, #f8fbff 0%, #eef4fb 100%);
+            color: var(--ink);
+            line-height: 1.6;
+            padding: 20px;
         }
-        .container { max-width: 1100px; margin: 0 auto; }
+        .container { max-width: 1380px; margin: 0 auto; }
         .hero {
-            position: relative; background: white; border-radius: 16px;
-            padding: 28px 32px; margin-bottom: 20px;
-            border: 1px solid rgba(204,0,0,0.1); box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+            position: relative;
+            text-align: center;
+            background: white;
+            border-radius: 16px;
+            padding: 34px 32px 28px;
+            box-shadow: 0 4px 18px rgba(15, 23, 42, 0.08);
+            margin-bottom: 26px;
+            border: 1px solid color-mix(in srgb, var(--brand) 10%, transparent);
+        }
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: var(--brand-sky);
+            color: var(--brand-deep);
+            font-size: 0.82rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 14px;
+        }
+        h1 {
+            font-size: clamp(2rem, 4vw, 3rem);
+            color: var(--brand);
+            margin-bottom: 10px;
+            line-height: 1.1;
+        }
+        .subtitle {
+            font-size: 1.03rem;
+            color: var(--muted);
+            max-width: 980px;
+            margin: 0 auto 18px;
+        }
+        .lead-panel {
+            background: linear-gradient(180deg, #f8fbff 0%, color-mix(in srgb, var(--brand-sky) 60%, white) 100%);
+            border: 1px solid color-mix(in srgb, var(--brand) 12%, transparent);
+            border-radius: 14px;
+            padding: 18px 20px;
+            max-width: 980px;
+            margin: 0 auto;
+        }
+        .lead-panel p { color: #334155; font-size: 0.98rem; }
+        .controls {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 0 0 24px;
+        }
+        .btn {
+            border: 2px solid var(--brand);
+            background: white;
+            color: var(--brand-deep);
+            padding: 11px 20px;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+        }
+        .btn:hover, .btn.active {
+            background: var(--brand);
+            color: white;
+            box-shadow: 0 4px 12px color-mix(in srgb, var(--brand) 30%, transparent);
+            transform: translateY(-2px);
+        }
+        .view {
+            display: none;
+            background: var(--panel);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 30px;
+            margin-bottom: 26px;
+            border: 1px solid rgba(15,23,42,0.04);
+        }
+        .view.active { display: block; }
+        .section-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 18px;
+            align-items: end;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .section-head h2 { color: var(--ink); font-size: 1.45rem; }
+        .section-kicker {
+            color: var(--brand-deep);
+            text-transform: uppercase;
+            font-size: 0.76rem;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            margin-bottom: 10px;
+        }
+        .section-note {
+            border-left: 4px solid var(--brand);
+            background: color-mix(in srgb, var(--brand-sky) 50%, white);
+            color: var(--brand-deep);
+            padding: 14px 16px;
+            border-radius: 12px;
+            margin-top: 18px;
+        }
+        .concept-grid, .practice-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));
+            gap: 18px;
+        }
+        .card {
+            background: linear-gradient(180deg, #ffffff, #f8fbff);
+            border: 1px solid var(--line);
+            border-top: 4px solid var(--brand);
+            border-radius: 16px;
+            padding: 20px;
+            min-height: 170px;
+            box-shadow: 0 6px 18px rgba(15,23,42,0.05);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .card:hover, .flow-step:hover, .example-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 24px rgba(15,23,42,0.1);
+        }
+        .card-badge {
+            display: inline-flex;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: var(--brand-sky);
+            color: var(--brand-deep);
+            font-weight: 700;
+            margin-bottom: 14px;
+        }
+        .practice-card .card-badge { background: var(--mint); color: #166534; }
+        .practice-card { border-top-color: #22c55e; }
+        .card p { color: #475569; }
+        .flow-track {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));
+            gap: 18px;
+        }
+        .flow-step {
+            position: relative;
+            border-radius: 16px;
+            padding: 22px 18px 18px;
+            border: 1px solid color-mix(in srgb, var(--brand) 18%, transparent);
+            background: linear-gradient(160deg, #ffffff 0%, color-mix(in srgb, var(--brand-sky) 40%, white) 100%);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .step-number {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            background: var(--brand);
+            color: white;
+            font-weight: 800;
+            margin-bottom: 14px;
+            box-shadow: 0 10px 20px color-mix(in srgb, var(--brand) 22%, transparent);
+        }
+        .flow-step h3 { font-size: 1rem; margin-bottom: 10px; color: #0f172a; }
+        .flow-step p { color: #475569; font-size: 0.95rem; }
+        .example-stack { display: grid; gap: 18px; }
+        .example-card {
+            border: 1px solid rgba(15,23,42,0.08);
+            border-radius: 16px;
+            padding: 18px;
+            background: linear-gradient(180deg, #ffffff, #f8fafc);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .lab-callout {
+            border: 1px dashed color-mix(in srgb, var(--brand) 35%, transparent);
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin: 14px 0;
+            background: color-mix(in srgb, var(--brand-sky) 35%, white);
+            color: #334155;
+            font-size: 0.92rem;
+        }
+        .lab-callout strong { color: var(--brand-deep); }
+        pre {
+            margin-top: 10px;
+            background: #0f172a;
+            color: #dbeafe;
+            border-radius: 16px;
+            padding: 18px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            overflow-x: hidden;
+            font-size: 0.88rem;
+            line-height: 1.55;
+            border: 1px solid rgba(148,163,184,0.18);
+        }
+        code { font-family: Consolas, 'Cascadia Code', monospace; }
+        .table-wrap {
+            overflow-x: auto;
+            border-radius: 16px;
+            border: 1px solid var(--line);
+            background: white;
+        }
+        table { width: 100%; border-collapse: collapse; }
+        th, td {
+            padding: 14px 16px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+            vertical-align: top;
+        }
+        th {
+            background: linear-gradient(180deg, var(--brand), var(--brand-deep));
+            color: white;
+            font-weight: 700;
+        }
+        tbody tr:nth-child(even) { background: #f8fbff; }
+        .footer-note {
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.9rem;
+            margin-top: 18px;
+        }
+        .footer-note a { color: var(--brand); text-decoration: none; }
+        .footer-note a:hover { text-decoration: underline; }
+        @media (max-width: 900px) {
+            body { padding: 14px; }
+            .hero, .view { padding: 22px; }
+            .controls { justify-content: flex-start; }
+            .concept-grid, .practice-grid, .flow-track { grid-template-columns: 1fr; }
         }
         .home-link {
-            position: absolute; top: 16px; right: 20px; color: var(--red);
-            text-decoration: none; font-size: 0.88rem; font-weight: 600;
-            padding: 6px 14px; border-radius: 8px;
-            border: 1px solid rgba(204,0,0,0.2); background: rgba(204,0,0,0.05);
+            position: absolute;
+            top: 16px;
+            right: 20px;
+            color: var(--brand);
+            text-decoration: none;
+            font-size: 0.88rem;
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: 8px;
+            border: 1px solid color-mix(in srgb, var(--brand) 18%, transparent);
+            background: color-mix(in srgb, var(--brand) 6%, transparent);
+            transition: background 0.2s, color 0.2s;
         }
-        .hero h1 { color: var(--red); font-size: 1.85rem; margin-top: 8px; }
-        .lead { color: var(--muted); margin-top: 8px; }
-        .repo-box {
-            background: #dcfce7; border-left: 4px solid var(--green);
-            padding: 12px 16px; border-radius: 6px; margin: 16px 0; font-size: 0.88rem;
+        .home-link:hover {
+            background: color-mix(in srgb, var(--brand) 13%, transparent);
+            color: var(--brand-deep);
         }
-        .repo-box ul { margin: 8px 0 0 18px; }
-        .section-title {
-            font-size: 1rem; font-weight: 700; color: var(--slate-700);
-            margin: 20px 0 12px; padding: 8px 12px;
-            background: #f1f5f9; border-left: 4px solid var(--red);
-        }
-        .workflow {
-            display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
-            justify-content: center; margin: 16px 0;
-        }
-        .wf-step {
-            background: linear-gradient(135deg, #CC0000 0%, #990000 100%);
-            color: white; padding: 12px 16px; border-radius: 8px;
-            font-size: 0.82rem; font-weight: 600; cursor: pointer;
-            text-align: center; min-width: 110px; transition: transform 0.2s;
-        }
-        .wf-step:hover { transform: translateY(-2px); }
-        .wf-step.diagnose { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); }
-        .wf-step.fix { background: linear-gradient(135deg, #059669 0%, #047857 100%); }
-        .wf-step.verify { background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%); }
-        .wf-arrow { color: var(--muted); font-size: 1.2rem; }
-        #workflowDetail {
-            background: white; border: 1px solid var(--line); border-radius: 10px;
-            padding: 14px; font-size: 0.88rem; margin-top: 10px; min-height: 52px;
-        }
-        .failure-grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 12px; margin: 14px 0;
-        }
-        .failure-card {
-            background: white; border: 2px solid var(--line); border-radius: 10px;
-            padding: 14px; cursor: pointer; transition: all 0.2s;
-        }
-        .failure-card:hover, .failure-card.active {
-            border-color: var(--red); background: #fff8f8;
-            box-shadow: 0 4px 12px rgba(204,0,0,0.1);
-        }
-        .failure-card .icon { font-size: 1.5rem; margin-bottom: 6px; }
-        .failure-card h4 { font-size: 0.9rem; color: var(--red); margin-bottom: 4px; }
-        .failure-card p { font-size: 0.8rem; color: var(--muted); }
-        .drill {
-            background: white; border: 1px solid var(--line); border-radius: 12px;
-            margin-bottom: 12px; overflow: hidden;
-        }
-        .drill-header {
-            padding: 14px 18px; cursor: pointer; display: flex;
-            justify-content: space-between; align-items: center;
-        }
-        .drill-header:hover { background: #fafafa; }
-        .drill.open .drill-header { border-bottom: 1px solid var(--line); background: #fff8f8; }
-        .drill h3 { font-size: 0.95rem; }
-        .drill-num {
-            background: var(--red); color: white; padding: 2px 8px;
-            border-radius: 4px; font-size: 0.75rem; margin-right: 8px;
-        }
-        .drill-body { display: none; padding: 16px 18px; font-size: 0.88rem; }
-        .drill.open .drill-body { display: block; }
-        .err {
-            background: var(--rose); border-left: 4px solid var(--red);
-            padding: 10px 12px; border-radius: 4px; font-family: monospace;
-            font-size: 0.8rem; color: #991b1b; margin: 10px 0;
-        }
-        .fix {
-            background: #f0fdf4; border-left: 4px solid var(--green);
-            padding: 10px 12px; border-radius: 4px; margin: 10px 0;
-        }
-        .code-tabs { display: flex; gap: 5px; margin: 12px 0 8px; flex-wrap: wrap; }
-        .code-tab {
-            padding: 5px 10px; background: #e9ecef; border: none;
-            border-radius: 6px; cursor: pointer; font-size: 0.78rem; font-weight: 600;
-        }
-        .code-tab.active { background: var(--red); color: white; }
-        pre {
-            background: #1e293b; color: #e2e8f0; padding: 12px; border-radius: 6px;
-            font-size: 0.76rem; white-space: pre-wrap; margin: 8px 0;
-        }
-        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin: 12px 0; }
-        th, td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; }
-        th { background: #f8fafc; }
-        .example-scenario {
-            background: var(--amber); border-left: 4px solid #f59e0b;
-            padding: 14px; border-radius: 6px; margin: 16px 0; font-size: 0.88rem;
-        }
-        footer { text-align: center; color: var(--muted); font-size: 0.85rem; margin-top: 24px; }
     </style>
 </head>
 <body>
     <div class="container">
         <header class="hero">
             <a href="index.html" class="home-link">&#8962; Home</a>
-            <span style="font-size:0.8rem;color:var(--muted);">Lab 09 · Break-Fix</span>
-            <h1>Break-Fix Troubleshooting Drills</h1>
-            <p class="lead">Production Ansible fails in predictable ways. Learn to read error messages, trace root cause, and verify fixes — the same workflow SREs use on call.</p>
+            <div class="eyebrow">Ansible Extended</div>
+            <h1>Troubleshooting</h1>
+            <p class="subtitle">Systematic diagnosis — verbose output, SSH, permissions, syntax, and handler failures.</p>
+            <div class="lead-panel">
+                <p>Break-fix labs intentionally break playbooks so you practice reading <strong>error output</strong> and recovering quickly.</p>
+            </div>
         </header>
 
-        <div class="repo-box">
-            <strong>Repository drill files:</strong>
-            <ul>
-                <li><code>labs/break-fix/drill-01-broken-yaml.yml</code> through <code>drill-05-broken-inventory.ini</code></li>
-                <li><code>labs/break-fix/solutions/</code> — fixed versions for comparison after you attempt repairs</li>
-                <li><code>labmanuals/lab09-break-fix-drills.md</code> — command-by-command lab guide</li>
-            </ul>
+        <div class="controls">
+            <button class="btn active" data-view="concept">Concept</button>
+            <button class="btn" data-view="architecture">Architecture</button>
+            <button class="btn" data-view="flow">Flow</button>
+            <button class="btn" data-view="setup">Setup</button>
+            <button class="btn" data-view="commands">Commands</button>
+            <button class="btn" data-view="examples">Examples</button>
+            <button class="btn" data-view="comparison">Compare</button>
+            <button class="btn" data-view="practice">Practice</button>
         </div>
 
-        <!-- Troubleshooting workflow -->
-        <div class="section-title">1. Troubleshooting Workflow (click each step)</div>
-        <div class="workflow">
-            <div class="wf-step" onclick="showWorkflow('reproduce')">1. Reproduce</div>
-            <span class="wf-arrow">→</span>
-            <div class="wf-step diagnose" onclick="showWorkflow('read')">2. Read error</div>
-            <span class="wf-arrow">→</span>
-            <div class="wf-step diagnose" onclick="showWorkflow('isolate')">3. Isolate</div>
-            <span class="wf-arrow">→</span>
-            <div class="wf-step fix" onclick="showWorkflow('fix')">4. Fix</div>
-            <span class="wf-arrow">→</span>
-            <div class="wf-step verify" onclick="showWorkflow('verify')">5. Verify</div>
-            <span class="wf-arrow">→</span>
-            <div class="wf-step verify" onclick="showWorkflow('document')">6. Document</div>
-        </div>
-        <div id="workflowDetail">
-            Click a workflow step to see what experienced Ansible operators do at each stage.
-        </div>
-
-        <!-- Failure mode cards -->
-        <div class="section-title">2. Common Failure Modes (click a card)</div>
-        <div class="failure-grid">
-            <div class="failure-card" onclick="showFailure('yaml')">
-                <div class="icon">📄</div>
-                <h4>YAML Syntax</h4>
-                <p>Indentation, colons, tabs forbidden</p>
-            </div>
-            <div class="failure-card" onclick="showFailure('become')">
-                <div class="icon">🔐</div>
-                <h4>Privilege / Become</h4>
-                <p>Permission denied on apt, systemd</p>
-            </div>
-            <div class="failure-card" onclick="showFailure('handler')">
-                <div class="icon">🔔</div>
-                <h4>Handler Mismatch</h4>
-                <p>Silent skip — no error shown</p>
-            </div>
-            <div class="failure-card" onclick="showFailure('fqcn')">
-                <div class="icon">📦</div>
-                <h4>Module FQCN</h4>
-                <p>Deprecation or resolution failure</p>
-            </div>
-            <div class="failure-card" onclick="showFailure('python')">
-                <div class="icon">🐍</div>
-                <h4>Python Interpreter</h4>
-                <p>python2 not found on Ubuntu 22.04</p>
-            </div>
-            <div class="failure-card" onclick="showFailure('ssh')">
-                <div class="icon">🔌</div>
-                <h4>Connection / SSH</h4>
-                <p>UNREACHABLE, wrong IP or user</p>
-            </div>
-        </div>
-        <div id="failureDetail" class="err" style="background:#f8fafc;border-color:var(--line);color:var(--ink)">
-            Select a failure mode card to see first-line diagnostics and fix patterns.
-        </div>
-
-        <!-- Interactive drills -->
-        <div class="section-title">3. Five Drills (expand each)</div>
-
-        <div class="drill" onclick="toggleDrill(this)">
-            <div class="drill-header">
-                <h3><span class="drill-num">01</span>YAML indentation error</h3>
-                <span>▼</span>
-            </div>
-            <div class="drill-body" onclick="event.stopPropagation()">
-                <p><strong>Broken file:</strong> <code>break-fix/drill-01-broken-yaml.yml</code></p>
-                <div class="err">ERROR! We were unable to read valid YAML: found unacceptable key...</div>
-                <p>Extra space before <code>ansible.builtin.apt</code> breaks task list indentation.</p>
-                <div class="code-tabs">
-                    <button class="code-tab active" onclick="showDrillCode(event,'d1b')">Broken</button>
-                    <button class="code-tab" onclick="showDrillCode(event,'d1f')">Fixed</button>
+        <section id="concept" class="view active">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Core Model</div>
+                    <h2>Troubleshooting Layers</h2>
                 </div>
-                <pre id="d1b-code">  tasks:
-    - name: Install curl
-     ansible.builtin.apt:    # ← wrong indent (5 spaces, need 6)
-        name: curl</pre>
-                <pre id="d1f-code" style="display:none">  tasks:
-    - name: Install curl
-      ansible.builtin.apt:   # aligned with name:
-        name: curl
-        state: present</pre>
-                <div class="fix"><strong>Fix:</strong> Align module key with <code>name:</code> under the task dash. Run <code>ansible-playbook --syntax-check</code> first.</div>
-                <pre>ansible-playbook -i inventory/hosts.ini break-fix/solutions/drill-01-fixed.yml</pre>
             </div>
-        </div>
-
-        <div class="drill" onclick="toggleDrill(this)">
-            <div class="drill-header">
-                <h3><span class="drill-num">02</span>Missing become for apt</h3>
-                <span>▼</span>
+<div class="concept-grid">
+                <article class="card">
+                    <div class="card-badge">SSH layer</div>
+                    <p>Connection refused, key permissions, wrong user.</p>
+                </article>
+                <article class="card">
+                    <div class="card-badge">Python layer</div>
+                    <p>Missing python3 on target — ansible_python_interpreter.</p>
+                </article>
+                <article class="card">
+                    <div class="card-badge">Permission</div>
+                    <p>sudo requires -b or become: true.</p>
+                </article>
+                <article class="card">
+                    <div class="card-badge">YAML syntax</div>
+                    <p>Indentation errors — ansible-playbook --syntax-check.</p>
+                </article>
+                <article class="card">
+                    <div class="card-badge">Task logic</div>
+                    <p>when conditions skipping critical tasks.</p>
+                </article>
+                <article class="card">
+                    <div class="card-badge">Handlers</div>
+                    <p>Not notified if task reports ok not changed.</p>
+                </article>
             </div>
-            <div class="drill-body" onclick="event.stopPropagation()">
-                <p><strong>Broken file:</strong> <code>break-fix/drill-02-missing-become.yml</code></p>
-                <div class="err">E: Could not open lock file /var/lib/dpkg/lock - open (13: Permission denied)</div>
-                <div class="fix"><strong>Fix:</strong> Add <code>become: true</code> at play level or <code>-b</code> on ad hoc commands.</div>
-                <pre>ansible-playbook -i inventory/hosts.ini break-fix/solutions/drill-02-fixed.yml
-# PLAY RECAP: failed=0</pre>
+        </section>
+        <section id="architecture" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Debug</div>
+                    <h2>Verbose Output Levels</h2>
+                </div>
             </div>
-        </div>
-
-        <div class="drill" onclick="toggleDrill(this)">
-            <div class="drill-header">
-                <h3><span class="drill-num">03</span>Handler name mismatch</h3>
-                <span>▼</span>
+<div class="example-stack">
+            <div class="lab-callout"><strong>Repo lab files:</strong> ansible/extended/labs/break-fix/</div>
+                <section class="example-card">
+                    <div class="section-kicker">verbosity</div>
+                    <pre><code>ansible-playbook site.yml -vvv  # connection detail
+ansible-playbook site.yml -vvvv  # maximum</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">step</div>
+                    <pre><code>ansible-playbook site.yml --step  # confirm each task</code></pre>
+                </section>
             </div>
-            <div class="drill-body" onclick="event.stopPropagation()">
-                <p><strong>Broken file:</strong> <code>break-fix/drill-03-handler-mismatch.yml</code></p>
-                <div class="err">(no error — handler silently skipped)</div>
-                <p><code>notify: restart nginx</code> ≠ handler <code>name: Restart nginx</code> — case and spacing matter.</p>
-                <div class="fix"><strong>Fix:</strong> Make notify string exactly match handler name. Look for missing <code>RUNNING HANDLER</code> in output.</div>
+            <svg viewBox="0 0 950 320" style="width:100%;max-width:950px;margin:20px auto;display:block;">
+                <text x="475" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#1e293b">Debug Workflow</text>
+                <rect x="40" y="80" width="150" height="55" rx="8" fill="#ffe4e6" stroke="#CC0000" stroke-width="2"/><text x="115" y="107" text-anchor="middle" font-size="12" font-weight="bold" fill="#1e293b">error output</text><rect x="220" y="80" width="150" height="55" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/><text x="295" y="107" text-anchor="middle" font-size="12" font-weight="bold" fill="#1e293b">isolate layer</text><rect x="400" y="80" width="150" height="55" rx="8" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/><text x="475" y="107" text-anchor="middle" font-size="12" font-weight="bold" fill="#1e293b">minimal repro</text><rect x="580" y="80" width="150" height="55" rx="8" fill="#dcfce7" stroke="#22c55e" stroke-width="2"/><text x="655" y="107" text-anchor="middle" font-size="12" font-weight="bold" fill="#1e293b">fix + verify</text>
+                
+            </svg>
+        </section>
+        <section id="flow" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Lab 09</div>
+                    <h2>Break-Fix Drill Flow</h2>
+                </div>
             </div>
-        </div>
-
-        <div class="drill" onclick="toggleDrill(this)">
-            <div class="drill-header">
-                <h3><span class="drill-num">04</span>Non-FQCN module name</h3>
-                <span>▼</span>
+<div class="flow-track">
+                <div class="flow-step">
+                    <div class="step-number">1</div>
+                    <h3>Lab 09</h3>
+                    <p>Open broken playbook scenario.</p>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">2</div>
+                    <h3>Reproduce</h3>
+                    <p>Run playbook — capture full error.</p>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">3</div>
+                    <h3>SSH check</h3>
+                    <p>ansible HOST -m ping -vvv</p>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">4</div>
+                    <h3>Syntax</h3>
+                    <p>ansible-playbook --syntax-check</p>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">5</div>
+                    <h3>Fix</h3>
+                    <p>Apply minimal fix — one issue at a time.</p>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">6</div>
+                    <h3>Document</h3>
+                    <p>Write root cause in lab notes.</p>
+                </div>
             </div>
-            <div class="drill-body" onclick="event.stopPropagation()">
-                <p><strong>Broken file:</strong> <code>break-fix/drill-04-non-fqcn.yml</code></p>
-                <div class="err">[DEPRECATION WARNING]: community.general ping has been deprecated... Use ansible.builtin.ping</div>
-                <div class="fix"><strong>Fix:</strong> Use <code>ansible.builtin.ping</code> instead of short <code>ping</code>.</div>
+        </section>
+        <section id="setup" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Toolkit</div>
+                    <h2>Diagnostic Commands</h2>
+                </div>
             </div>
-        </div>
-
-        <div class="drill" onclick="toggleDrill(this)">
-            <div class="drill-header">
-                <h3><span class="drill-num">05</span>Wrong Python interpreter</h3>
-                <span>▼</span>
+<div class="example-stack">
+                <section class="example-card">
+                    <div class="section-kicker">Ping one host</div>
+                    <pre><code>ansible web1 -i inventory/hosts.ini.local -m ping -vvv</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">List tasks</div>
+                    <pre><code>ansible-playbook broken.yml --list-tasks</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">Check diff</div>
+                    <pre><code>ansible-playbook site.yml --check --diff</code></pre>
+                </section>
             </div>
-            <div class="drill-body" onclick="event.stopPropagation()">
-                <p><strong>Broken file:</strong> <code>break-fix/drill-05-broken-inventory.ini</code></p>
-                <div class="err">/usr/bin/python: not found</div>
-                <div class="fix"><strong>Fix:</strong> Set <code>ansible_python_interpreter=/usr/bin/python3</code> in inventory vars.</div>
-                <pre>ansible -i break-fix/solutions/drill-05-fixed-inventory.ini webservers -m ansible.builtin.ping</pre>
+        </section>
+        <section id="commands" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Quick Reference</div>
+                    <h2>Troubleshooting Commands</h2>
+                </div>
             </div>
-        </div>
-
-        <div class="example-scenario">
-            <h3>On-call scenario: "Playbook worked yesterday"</h3>
-            <p><strong>Report:</strong> CI pipeline fails after Ubuntu AMI upgrade.</p>
-            <p><strong>Investigation order:</strong> syntax-check → ping with -vvv → check ansible_python_interpreter → verify become → compare handler names.</p>
-            <p><strong>Resolution:</strong> AMI removed python2 symlink — update inventory group_vars to python3.</p>
-        </div>
-
-        <!-- Error reference table -->
-        <div class="section-title">4. Error Message Quick Reference</div>
-        <table>
-            <thead>
-                <tr><th>Error fragment</th><th>Category</th><th>First action</th></tr>
-            </thead>
-            <tbody>
-                <tr><td><code>could not find expected ':'</code></td><td>YAML</td><td>Check indentation; no tabs; validate with --syntax-check</td></tr>
-                <tr><td><code>Permission denied</code> / dpkg lock</td><td>Become</td><td>Add become: true or -b flag</td></tr>
-                <tr><td>No RUNNING HANDLER</td><td>Handler</td><td>Compare notify vs handler name exactly</td></tr>
-                <tr><td><code>DEPRECATION WARNING</code></td><td>FQCN</td><td>Use ansible.builtin.* module names</td></tr>
-                <tr><td><code>python: not found</code></td><td>Interpreter</td><td>Set ansible_python_interpreter=/usr/bin/python3</td></tr>
-                <tr><td><code>UNREACHABLE</code></td><td>SSH</td><td>Test ssh manually; check IP, SG, ansible_user</td></tr>
-                <tr><td><code>FAILED! => {"msg": "Unable to find</code></td><td>Template/path</td><td>Verify src path relative to playbook or role</td></tr>
-            </tbody>
-        </table>
-
-        <div class="section-title">5. Diagnostic Commands Toolkit</div>
-        <pre>ansible-playbook play.yml --syntax-check     # YAML structure only
-ansible-playbook play.yml --check -v         # Dry run with verbosity
-ansible host -m ansible.builtin.ping -vvv    # Connection debug
-ansible-inventory -i inv --graph             # Verify groups and hosts
-ansible-doc ansible.builtin.apt              # Module parameter reference</pre>
-
-        <div class="section-title">6. Drill Command Reference</div>
-        <table>
-            <thead><tr><th>Drill</th><th>Broken path</th><th>Verify fix</th></tr></thead>
-            <tbody>
-                <tr><td>01 YAML</td><td><code>break-fix/drill-01-broken-yaml.yml</code></td><td><code>ansible-playbook --syntax-check break-fix/solutions/drill-01-fixed.yml</code></td></tr>
-                <tr><td>02 Become</td><td><code>break-fix/drill-02-missing-become.yml</code></td><td><code>ansible-playbook break-fix/solutions/drill-02-fixed.yml</code></td></tr>
-                <tr><td>03 Handler</td><td><code>break-fix/drill-03-handler-mismatch.yml</code></td><td>Look for <code>RUNNING HANDLER</code> in output</td></tr>
-                <tr><td>04 FQCN</td><td><code>break-fix/drill-04-non-fqcn.yml</code></td><td>No deprecation warnings</td></tr>
-                <tr><td>05 Python</td><td><code>break-fix/drill-05-broken-inventory.ini</code></td><td><code>ansible -i break-fix/solutions/drill-05-fixed-inventory.ini all -m ansible.builtin.ping</code></td></tr>
-            </tbody>
-        </table>
-
-        <div class="section-title">7. Prevention Checklist</div>
-        <ul style="margin:12px 0 12px 24px;font-size:0.9rem;line-height:1.9;">
-            <li>Run <code>ansible-playbook --syntax-check</code> before every apply</li>
-            <li>Use <code>ansible-lint</code> in CI for FQCN and handler patterns</li>
-            <li>Pin <code>ansible_python_interpreter</code> in group_vars/all.yml</li>
-            <li>Name handlers with consistent Title Case; copy notify string from handler name</li>
-            <li>Test with <code>--limit</code> on one host before fleet rollout</li>
-        </ul>
-
-        <div class="section-title">8. Time-Boxed Drill Flow (15 min each)</div>
-        <p style="font-size:0.9rem;margin:8px 0 16px;">Set a timer. Reproduce error → read first fatal line → apply fix → verify <code>failed=0</code>. Do not peek at solutions until attempt 2.</p>
-        <pre>cd ansible/extended/labs
-ansible-playbook break-fix/drill-01-broken-yaml.yml 2>&1 | head -20
-# after fix:
-ansible-playbook break-fix/solutions/drill-01-fixed.yml</pre>
-
-        <div class="section-title">9. Related Lab Manual</div>
-        <p style="font-size:0.9rem;margin-bottom:20px;">Full step-by-step drills: <code>extended/labmanuals/lab09-break-fix-drills.md</code> (714 lines). Broken files live under <code>extended/labs/break-fix/</code>; solutions under <code>break-fix/solutions/</code>.</p>
-
-        <footer>Ansible Extended · Lab 09 · Track complete · <a href="index.html" style="color:#CC0000">Catalog</a></footer>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Category</th><th>Command</th><th>Description</th></tr></thead>
+                    <tbody>
+                        <tr><td>Verbose</td><td><code>-v / -vvv / -vvvv</code></td><td>Increase detail</td></tr>
+                        <tr><td>Syntax</td><td><code>--syntax-check</code></td><td>YAML validation</td></tr>
+                        <tr><td>Step</td><td><code>--step</code></td><td>Interactive stepping</td></tr>
+                        <tr><td>Start at</td><td><code>--start-at-task</code></td><td>Resume mid-play</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="section-note">Extended reference appendix — bookmark for exam prep and on-the-job lookup.</div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Topic</th><th>Command / Pattern</th><th>Notes</th></tr></thead>
+                    <tbody>
+                        <tr><td>UNREACHABLE</td><td>SSH/firewall</td><td>Lab 09</td></tr>
+                        <tr><td>FAILED</td><td>task module error</td><td>Lab 09</td></tr>
+                        <tr><td>changed=0</td><td>handler won't run</td><td>Lab 09</td></tr>
+                        <tr><td>become</td><td>missing sudo</td><td>Lab 09</td></tr>
+                        <tr><td>inventory</td><td>wrong host/IP</td><td>Lab 09</td></tr>
+                    </tbody>
+                </table>
+            </div>            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Break-Fix — reference drill 1</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Break-Fix — reference drill 2</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Break-Fix — reference drill 3</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="section-note">Extended reference appendix — bookmark for exam prep and on-the-job lookup.</div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Topic</th><th>Command / Pattern</th><th>Notes</th></tr></thead>
+                    <tbody>
+                        <tr><td>Review</td><td>Re-read lab manual objectives</td><td>Troubleshooting</td></tr>
+                        <tr><td>Validate</td><td>Run syntax-check or validate</td><td>Before apply</td></tr>
+                        <tr><td>Cleanup</td><td>Destroy or remove lab changes</td><td>End of session</td></tr>
+                        <tr><td>Docs</td><td>Cross-link markdown docs</td><td>../docs/</td></tr>
+                        <tr><td>Git</td><td>Commit only safe files</td><td>No secrets/state</td></tr>
+                        <tr><td>Pair</td><td>Walk through with teammate</td><td>Teaching reinforces</td></tr>
+                        <tr><td>Notes</td><td>Document failures and fixes</td><td>Personal runbook</td></tr>
+                        <tr><td>Next</td><td>Follow learning path order</td><td>curriculum/learning-paths.md</td></tr>
+                    </tbody>
+                </table>
+            </div>            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Troubleshooting — reference drill 1</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Troubleshooting — reference drill 2</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Troubleshooting — reference drill 3</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+        </section>
+        <section id="examples" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Hands-On</div>
+                    <h2>Lab 09 Scenarios</h2>
+                </div>
+            </div>
+<div class="example-stack">
+            <div class="lab-callout"><strong>Repo lab files:</strong> lab09-break-fix-drills.md</div>
+                <section class="example-card">
+                    <div class="section-kicker">Drill</div>
+                    <pre><code>cd ansible/extended/labs
+ansible-playbook -i inventory/hosts.ini.local break-fix/drill-01-broken-yaml.yml</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">After fix</div>
+                    <pre><code>ansible-playbook -i inventory/hosts.ini.local break-fix/drill-01-broken-yaml.yml --check</code></pre>
+                </section>
+            </div>
+            <div class="section-note">Extended reference appendix — bookmark for exam prep and on-the-job lookup.</div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Topic</th><th>Command / Pattern</th><th>Notes</th></tr></thead>
+                    <tbody>
+                        <tr><td>Review</td><td>Re-read lab manual objectives</td><td>Troubleshooting</td></tr>
+                        <tr><td>Validate</td><td>Run syntax-check or validate</td><td>Before apply</td></tr>
+                        <tr><td>Cleanup</td><td>Destroy or remove lab changes</td><td>End of session</td></tr>
+                        <tr><td>Docs</td><td>Cross-link markdown docs</td><td>../docs/</td></tr>
+                        <tr><td>Git</td><td>Commit only safe files</td><td>No secrets/state</td></tr>
+                        <tr><td>Pair</td><td>Walk through with teammate</td><td>Teaching reinforces</td></tr>
+                        <tr><td>Notes</td><td>Document failures and fixes</td><td>Personal runbook</td></tr>
+                        <tr><td>Next</td><td>Follow learning path order</td><td>curriculum/learning-paths.md</td></tr>
+                    </tbody>
+                </table>
+            </div>            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Troubleshooting — reference drill 1</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Troubleshooting — reference drill 2</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Troubleshooting — reference drill 3</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+        </section>
+        <section id="comparison" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Decision Guide</div>
+                    <h2>Symptom → Cause</h2>
+                </div>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Symptom</th><th>Likely cause</th><th>First check</th></tr></thead>
+                    <tbody>
+                        <tr><td>UNREACHABLE</td><td>SSH/network</td><td>ping -vvv</td></tr>
+                        <tr><td>Permission denied</td><td>SSH key/user</td><td>ssh manually</td></tr>
+                        <tr><td>sudo password</td><td>Missing become</td><td>add -b</td></tr>
+                        <tr><td>yaml parsing error</td><td>Bad indent</td><td>--syntax-check</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        <section id="practice" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Use It Well</div>
+                    <h2>Break-Fix Practice</h2>
+                </div>
+            </div>
+<div class="practice-grid">
+                <article class="card practice-card">
+                    <div class="card-badge">Lab 09</div>
+                    <p>Complete all break-fix drills.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab09-break-fix-drills.md">Open lab manual →</a></p>
+                </article>
+                <article class="card practice-card">
+                    <div class="card-badge">Time box</div>
+                    <p>Fix each scenario in under 10 minutes.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab09-break-fix-drills.md">Open lab manual →</a></p>
+                </article>
+                <article class="card practice-card">
+                    <div class="card-badge">Log</div>
+                    <p>Keep troubleshooting journal.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab09-break-fix-drills.md">Open lab manual →</a></p>
+                </article>
+                <article class="card practice-card">
+                    <div class="card-badge">Pair</div>
+                    <p>Explain fix to partner — teaching reinforces.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab09-break-fix-drills.md">Open lab manual →</a></p>
+                </article>
+                <article class="card practice-card">
+                    <div class="card-badge">Create break</div>
+                    <p>Break your own playbook; swap with peer.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab09-break-fix-drills.md">Open lab manual →</a></p>
+                </article>
+                <article class="card practice-card">
+                    <div class="card-badge">Handlers</div>
+                    <p>Diagnose notify not firing.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab06-handlers.md">Open lab manual →</a></p>
+                </article>
+            </div>
+            <div class="section-note">Extended reference appendix — bookmark for exam prep and on-the-job lookup.</div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Topic</th><th>Command / Pattern</th><th>Notes</th></tr></thead>
+                    <tbody>
+                        <tr><td>Review</td><td>Re-read lab manual objectives</td><td>Troubleshooting</td></tr>
+                        <tr><td>Validate</td><td>Run syntax-check or validate</td><td>Before apply</td></tr>
+                        <tr><td>Cleanup</td><td>Destroy or remove lab changes</td><td>End of session</td></tr>
+                        <tr><td>Docs</td><td>Cross-link markdown docs</td><td>../docs/</td></tr>
+                        <tr><td>Git</td><td>Commit only safe files</td><td>No secrets/state</td></tr>
+                        <tr><td>Pair</td><td>Walk through with teammate</td><td>Teaching reinforces</td></tr>
+                        <tr><td>Notes</td><td>Document failures and fixes</td><td>Personal runbook</td></tr>
+                        <tr><td>Next</td><td>Follow learning path order</td><td>curriculum/learning-paths.md</td></tr>
+                    </tbody>
+                </table>
+            </div>            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Troubleshooting — reference drill 1</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Troubleshooting — reference drill 2</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Troubleshooting — reference drill 3</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+        </section>
     </div>
 
     <script>
-        const workflowMessages = {
-            reproduce: 'Run the same command that failed. Capture full output. Note Ansible version, inventory file, and limit flags used.',
-            read: 'Read the FIRST fatal error — scroll past warnings. Note file path and line number. YAML errors often point to exact column.',
-            isolate: 'Reduce scope: --limit one host, comment out tasks, use ansible ad hoc ping. Determine if issue is inventory, play, or host-specific.',
-            fix: 'Apply minimal change. One fix at a time. Common fixes: indent, become, FQCN, handler name, python3 interpreter.',
-            verify: 'Re-run playbook. Confirm failed=0. For handlers, confirm RUNNING HANDLER appears when expected. Test idempotency.',
-            document: 'Record error message, root cause, and fix in runbook. Update group_vars or ansible.cfg to prevent recurrence.'
-        };
-
-        const failureMessages = {
-            yaml: 'FIRST CHECK: ansible-playbook --syntax-check. Use 2-space indent. Module keys align with "name:". Never use tabs. VS Code YAML extension highlights errors.',
-            become: 'Package install, service management, and file writes to /etc need root. Fix: become: true at play level, or -b on ad hoc. Verify ansible_user can sudo.',
-            handler: 'TRICKY: Play succeeds but service not reloaded. notify is case-sensitive string match. Use ansible.builtin.debug in handler temporarily to confirm execution.',
-            fqcn: 'Ansible 2.10+ moved modules to collections. Short names deprecated. Fix: ansible.builtin.ping, ansible.builtin.apt. Set collections_paths in ansible.cfg.',
-            python: 'Ubuntu 20.04+ may not have /usr/bin/python symlink. Fix in inventory: ansible_python_interpreter=/usr/bin/python3 under [group:vars] or group_vars/all.yml.',
-            ssh: 'UNREACHABLE means Ansible cannot connect before modules run. Check: ansible_host IP, security group port 22, ansible_user, private key in ssh-agent.'
-        };
-
-        function showWorkflow(step) {
-            document.getElementById('workflowDetail').textContent = workflowMessages[step];
-        }
-
-        function showFailure(type) {
-            document.querySelectorAll('.failure-card').forEach(c => c.classList.remove('active'));
-            event.currentTarget.classList.add('active');
-            const el = document.getElementById('failureDetail');
-            el.textContent = failureMessages[type];
-            el.style.background = '#fff8f8';
-            el.style.borderColor = '#CC0000';
-            el.style.color = '#1a1a2e';
-        }
-
-        function toggleDrill(el) {
-            if (event.target.closest('.drill-body')) return;
-            el.classList.toggle('open');
-        }
-
-        function showDrillCode(e, id) {
-            e.stopPropagation();
-            const body = e.target.closest('.drill-body');
-            body.querySelectorAll('pre').forEach(p => p.style.display = 'none');
-            document.getElementById(id + '-code').style.display = 'block';
-            body.querySelectorAll('.code-tab').forEach(t => t.classList.remove('active'));
-            e.target.classList.add('active');
-        }
+        const buttons = document.querySelectorAll('.btn');
+        const views = document.querySelectorAll('.view');
+        buttons.forEach((button) => {
+            button.addEventListener('click', () => {
+                const viewId = button.dataset.view;
+                buttons.forEach((b) => b.classList.remove('active'));
+                views.forEach((v) => v.classList.remove('active'));
+                button.classList.add('active');
+                document.getElementById(viewId).classList.add('active');
+            });
+        });
     </script>
 </body>
 </html>

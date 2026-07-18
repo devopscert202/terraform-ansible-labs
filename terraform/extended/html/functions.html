@@ -3,393 +3,651 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Functions &amp; Expressions | Terraform Extended</title>
+    <title>Terraform Functions — Interactive Guide</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
-            --purple: #6236a5; --purple-deep: #4a2780; --purple-sky: #ede4f7;
-            --ink: #21172d; --muted: #6b5b7a; --line: #e8ddf2;
-            --amber: #fef3c7; --mint: #dcfce7;
+            --brand: #6236a5;
+            --brand-deep: #4a2878;
+            --brand-sky: #ede4f7;
+            --ink: #1a1a2e;
+            --muted: #64748b;
+            --surface: #ffffff;
+            --panel: #ffffff;
+            --line: #dbe3f1;
+            --mint: #dcfce7;
+            --amber: #fef3c7;
+            --rose: #ffe4e6;
+            --blue: #2563eb;
+            --slate-900: #0f172a;
+            --slate-700: #334155;
+            --slate-500: #64748b;
+            --slate-200: #e2e8f0;
         }
         body {
             font-family: "Segoe UI", system-ui, sans-serif;
-            background: linear-gradient(180deg, #fcfaff 0%, #f3ebfa 100%);
-            padding: 20px; line-height: 1.6; color: var(--ink);
+            background: linear-gradient(180deg, #f8fbff 0%, #eef4fb 100%);
+            color: var(--ink);
+            line-height: 1.6;
+            padding: 20px;
         }
         .container { max-width: 1380px; margin: 0 auto; }
         .hero {
-            position: relative; text-align: center; background: white;
-            border-radius: 16px; padding: 34px 32px 28px;
-            box-shadow: 0 4px 18px rgba(98,54,165,0.1); margin-bottom: 20px;
-            border: 1px solid rgba(98,54,165,0.12);
+            position: relative;
+            text-align: center;
+            background: white;
+            border-radius: 16px;
+            padding: 34px 32px 28px;
+            box-shadow: 0 4px 18px rgba(15, 23, 42, 0.08);
+            margin-bottom: 26px;
+            border: 1px solid color-mix(in srgb, var(--brand) 10%, transparent);
         }
         .eyebrow {
-            display: inline-flex; padding: 6px 12px; border-radius: 999px;
-            background: var(--purple-sky); color: var(--purple-deep);
-            font-size: 0.82rem; font-weight: 700; margin-bottom: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: var(--brand-sky);
+            color: var(--brand-deep);
+            font-size: 0.82rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 14px;
         }
-        .hero h1 { color: var(--purple); font-size: clamp(1.8rem, 4vw, 2.5rem); }
-        .hero p { color: var(--muted); max-width: 760px; margin: 8px auto 0; }
-        .home-link {
-            position: absolute; top: 16px; right: 20px; color: var(--purple);
-            text-decoration: none; font-weight: 600; padding: 6px 14px;
-            border-radius: 8px; border: 1px solid rgba(98,54,165,0.18);
-            background: rgba(98,54,165,0.06);
+        h1 {
+            font-size: clamp(2rem, 4vw, 3rem);
+            color: var(--brand);
+            margin-bottom: 10px;
+            line-height: 1.1;
         }
-        .topnav {
-            display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
-            margin-bottom: 18px; padding: 12px; background: white;
-            border-radius: 12px; border: 1px solid var(--line);
+        .subtitle {
+            font-size: 1.03rem;
+            color: var(--muted);
+            max-width: 980px;
+            margin: 0 auto 18px;
         }
-        .topnav a { color: var(--purple); text-decoration: none; font-weight: 600; padding: 6px 14px; border-radius: 8px; font-size: 0.9rem; }
-        .topnav a:hover { background: var(--purple-sky); }
-        .flow-section {
-            background: white; border-radius: 12px; padding: 18px;
-            border: 1px solid var(--line); margin-bottom: 16px;
+        .lead-panel {
+            background: linear-gradient(180deg, #f8fbff 0%, color-mix(in srgb, var(--brand-sky) 60%, white) 100%);
+            border: 1px solid color-mix(in srgb, var(--brand) 12%, transparent);
+            border-radius: 14px;
+            padding: 18px 20px;
+            max-width: 980px;
+            margin: 0 auto;
         }
-        .section-title {
-            font-size: 17px; font-weight: bold; color: #3d2f4d;
-            margin-bottom: 12px; padding: 8px 12px; background: var(--purple-sky);
-            border-left: 4px solid var(--purple); border-radius: 0 8px 8px 0;
+        .lead-panel p { color: #334155; font-size: 0.98rem; }
+        .controls {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 0 0 24px;
         }
-        .cat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
-        .cat-card {
-            background: linear-gradient(135deg, #faf7fd, white);
-            border: 2px solid var(--line); border-radius: 10px;
-            padding: 16px; cursor: pointer; transition: all 0.2s;
+        .btn {
+            border: 2px solid var(--brand);
+            background: white;
+            color: var(--brand-deep);
+            padding: 11px 20px;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
         }
-        .cat-card:hover, .cat-card.active {
-            border-color: var(--purple); box-shadow: 0 4px 12px rgba(98,54,165,0.12);
+        .btn:hover, .btn.active {
+            background: var(--brand);
+            color: white;
+            box-shadow: 0 4px 12px color-mix(in srgb, var(--brand) 30%, transparent);
+            transform: translateY(-2px);
         }
-        .cat-card .emoji { font-size: 1.6rem; }
-        .cat-card h3 { font-size: 14px; color: var(--purple); margin: 6px 0; }
-        .cat-card p { font-size: 11px; color: var(--muted); }
-        .fn-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-        .fn-chip {
-            background: var(--purple-sky); color: var(--purple-deep);
-            padding: 4px 10px; border-radius: 999px; font-size: 11px; font-family: monospace;
+        .view {
+            display: none;
+            background: var(--panel);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 30px;
+            margin-bottom: 26px;
+            border: 1px solid rgba(15,23,42,0.04);
         }
-        .code-tabs { display: flex; gap: 5px; margin-bottom: 8px; flex-wrap: wrap; }
-        .code-tab {
-            padding: 6px 12px; background: #f3edf8; border: none; border-radius: 6px 6px 0 0;
-            cursor: pointer; font-size: 12px; font-weight: bold;
+        .view.active { display: block; }
+        .section-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 18px;
+            align-items: end;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid #e2e8f0;
         }
-        .code-tab.active { background: var(--purple); color: white; }
-        .code-content { display: none; }
-        .code-content.active { display: block; }
+        .section-head h2 { color: var(--ink); font-size: 1.45rem; }
+        .section-kicker {
+            color: var(--brand-deep);
+            text-transform: uppercase;
+            font-size: 0.76rem;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            margin-bottom: 10px;
+        }
+        .section-note {
+            border-left: 4px solid var(--brand);
+            background: color-mix(in srgb, var(--brand-sky) 50%, white);
+            color: var(--brand-deep);
+            padding: 14px 16px;
+            border-radius: 12px;
+            margin-top: 18px;
+        }
+        .concept-grid, .practice-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));
+            gap: 18px;
+        }
+        .card {
+            background: linear-gradient(180deg, #ffffff, #f8fbff);
+            border: 1px solid var(--line);
+            border-top: 4px solid var(--brand);
+            border-radius: 16px;
+            padding: 20px;
+            min-height: 170px;
+            box-shadow: 0 6px 18px rgba(15,23,42,0.05);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .card:hover, .flow-step:hover, .example-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 24px rgba(15,23,42,0.1);
+        }
+        .card-badge {
+            display: inline-flex;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: var(--brand-sky);
+            color: var(--brand-deep);
+            font-weight: 700;
+            margin-bottom: 14px;
+        }
+        .practice-card .card-badge { background: var(--mint); color: #166534; }
+        .practice-card { border-top-color: #22c55e; }
+        .card p { color: #475569; }
+        .flow-track {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));
+            gap: 18px;
+        }
+        .flow-step {
+            position: relative;
+            border-radius: 16px;
+            padding: 22px 18px 18px;
+            border: 1px solid color-mix(in srgb, var(--brand) 18%, transparent);
+            background: linear-gradient(160deg, #ffffff 0%, color-mix(in srgb, var(--brand-sky) 40%, white) 100%);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .step-number {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            background: var(--brand);
+            color: white;
+            font-weight: 800;
+            margin-bottom: 14px;
+            box-shadow: 0 10px 20px color-mix(in srgb, var(--brand) 22%, transparent);
+        }
+        .flow-step h3 { font-size: 1rem; margin-bottom: 10px; color: #0f172a; }
+        .flow-step p { color: #475569; font-size: 0.95rem; }
+        .example-stack { display: grid; gap: 18px; }
+        .example-card {
+            border: 1px solid rgba(15,23,42,0.08);
+            border-radius: 16px;
+            padding: 18px;
+            background: linear-gradient(180deg, #ffffff, #f8fafc);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .lab-callout {
+            border: 1px dashed color-mix(in srgb, var(--brand) 35%, transparent);
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin: 14px 0;
+            background: color-mix(in srgb, var(--brand-sky) 35%, white);
+            color: #334155;
+            font-size: 0.92rem;
+        }
+        .lab-callout strong { color: var(--brand-deep); }
         pre {
-            background: #2d2438; color: #ede4f7; padding: 14px; border-radius: 8px;
-            overflow-x: auto; font-size: 11px; line-height: 1.55;
+            margin-top: 10px;
+            background: #0f172a;
+            color: #dbeafe;
+            border-radius: 16px;
+            padding: 18px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            overflow-x: hidden;
+            font-size: 0.88rem;
+            line-height: 1.55;
+            border: 1px solid rgba(148,163,184,0.18);
         }
-        .example-scenario {
-            background: var(--amber); border-left: 4px solid #f59e0b;
-            padding: 14px; border-radius: 8px; margin-bottom: 14px;
+        code { font-family: Consolas, 'Cascadia Code', monospace; }
+        .table-wrap {
+            overflow-x: auto;
+            border-radius: 16px;
+            border: 1px solid var(--line);
+            background: white;
         }
-        .example-scenario h3 { font-size: 14px; color: #92400e; margin-bottom: 6px; }
-        .example-scenario p { font-size: 12px; color: #78350f; margin-bottom: 4px; }
-        .repo-box {
-            background: var(--mint); border-left: 4px solid #22c55e;
-            padding: 14px 16px; border-radius: 8px; margin-bottom: 14px;
+        table { width: 100%; border-collapse: collapse; }
+        th, td {
+            padding: 14px 16px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+            vertical-align: top;
         }
-        .repo-box ul { margin: 8px 0 0 18px; font-size: 13px; }
-        .detail-panel {
-            background: var(--purple-sky); border-radius: 8px; padding: 12px 16px;
-            margin-top: 12px; font-size: 13px; color: var(--purple-deep);
+        th {
+            background: linear-gradient(180deg, var(--brand), var(--brand-deep));
+            color: white;
+            font-weight: 700;
         }
-        .console-box {
-            background: #1a1028; color: #c4b5fd; padding: 14px; border-radius: 8px;
-            font-family: monospace; font-size: 12px; margin-top: 10px;
+        tbody tr:nth-child(even) { background: #f8fbff; }
+        .footer-note {
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.9rem;
+            margin-top: 18px;
         }
-        .footer-note { text-align: center; color: var(--muted); font-size: 0.9rem; margin-top: 18px; }
+        .footer-note a { color: var(--brand); text-decoration: none; }
+        .footer-note a:hover { text-decoration: underline; }
+        @media (max-width: 900px) {
+            body { padding: 14px; }
+            .hero, .view { padding: 22px; }
+            .controls { justify-content: flex-start; }
+            .concept-grid, .practice-grid, .flow-track { grid-template-columns: 1fr; }
+        }
+        .home-link {
+            position: absolute;
+            top: 16px;
+            right: 20px;
+            color: var(--brand);
+            text-decoration: none;
+            font-size: 0.88rem;
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: 8px;
+            border: 1px solid color-mix(in srgb, var(--brand) 18%, transparent);
+            background: color-mix(in srgb, var(--brand) 6%, transparent);
+            transition: background 0.2s, color 0.2s;
+        }
+        .home-link:hover {
+            background: color-mix(in srgb, var(--brand) 13%, transparent);
+            color: var(--brand-deep);
+        }
     </style>
 </head>
 <body>
-<div class="container">
-    <header class="hero">
-        <a href="index.html" class="home-link">&#8962; Home</a>
-        <div class="eyebrow">Labs 12–14 · Language</div>
-        <h1>Functions, Expressions &amp; Collections</h1>
-        <p>Functions transform values during planning. They never create infrastructure. Master categories, stable collection handling, and expression debugging.</p>
-    </header>
+    <div class="container">
+        <header class="hero">
+            <a href="index.html" class="home-link">&#8962; Home</a>
+            <div class="eyebrow">Terraform Extended</div>
+            <h1>Functions & Meta-Arguments</h1>
+            <p class="subtitle">for_each, count, lookup, merge, and collection functions for DRY configurations.</p>
+            <div class="lead-panel">
+                <p>HCL includes a rich function library and meta-arguments (<code>for_each</code>, <code>count</code>) to create multiple resources from data structures.</p>
+            </div>
+        </header>
 
-    <nav class="topnav">
-        <a href="index.html">Overview</a>
-        <a href="state.html">State</a>
-        <a href="provisioners.html">Provisioners</a>
-        <a href="functions.html">Functions</a>
-        <a href="projects.html">Projects</a>
-    </nav>
+        <div class="controls">
+            <button class="btn active" data-view="concept">Concept</button>
+            <button class="btn" data-view="architecture">Architecture</button>
+            <button class="btn" data-view="flow">Flow</button>
+            <button class="btn" data-view="setup">Setup</button>
+            <button class="btn" data-view="commands">Commands</button>
+            <button class="btn" data-view="examples">Examples</button>
+            <button class="btn" data-view="comparison">Compare</button>
+            <button class="btn" data-view="practice">Practice</button>
+        </div>
 
-    <div class="repo-box">
-        <strong>Repository lab paths:</strong>
-        <ul>
-            <li><code>terraform/extended/labs/lab12-collections/</code> — sets, maps, for_each, sort</li>
-            <li><code>terraform/extended/labs/lab13-functions/</code> — string, collection, numeric, encoding</li>
-            <li><code>terraform/extended/labs/lab14-dynamic-blocks/</code> — dynamic nested blocks</li>
-        </ul>
-    </div>
-
-    <div class="flow-section">
-        <div class="section-title">1. Function categories (click to explore)</div>
-        <div class="cat-grid">
-            <div class="cat-card active" onclick="showCategory('string')">
-                <div class="emoji">🔤</div>
-                <h3>String</h3>
-                <p>Names, slugs, trimming, splitting</p>
-                <div class="fn-list">
-                    <span class="fn-chip">lower</span><span class="fn-chip">replace</span><span class="fn-chip">format</span>
+        <section id="concept" class="view active">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Core Model</div>
+                    <h2>Functions and Meta-Arguments</h2>
                 </div>
             </div>
-            <div class="cat-card" onclick="showCategory('collection')">
-                <div class="emoji">📦</div>
-                <h3>Collection</h3>
-                <p>Lists, maps, sets, merging</p>
-                <div class="fn-list">
-                    <span class="fn-chip">merge</span><span class="fn-chip">toset</span><span class="fn-chip">sort</span>
+<div class="concept-grid">
+                <article class="card">
+                    <div class="card-badge">for_each</div>
+                    <p>Create one resource per map/set element — stable addresses.</p>
+                </article>
+                <article class="card">
+                    <div class="card-badge">count</div>
+                    <p>Integer-indexed resources — prefer for_each when keys matter.</p>
+                </article>
+                <article class="card">
+                    <div class="card-badge">lookup</div>
+                    <p>Safe map access with default fallback.</p>
+                </article>
+                <article class="card">
+                    <div class="card-badge">merge</div>
+                    <p>Combine maps — common for tags and labels.</p>
+                </article>
+                <article class="card">
+                    <div class="card-badge">dynamic blocks</div>
+                    <p>Generate nested blocks from collections.</p>
+                </article>
+                <article class="card">
+                    <div class="card-badge">try / can</div>
+                    <p>Defensive expressions for optional attributes.</p>
+                </article>
+            </div>
+        </section>
+        <section id="architecture" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Patterns</div>
+                    <h2>for_each Resource Map</h2>
                 </div>
             </div>
-            <div class="cat-card" onclick="showCategory('numeric')">
-                <div class="emoji">🔢</div>
-                <h3>Numeric &amp; CIDR</h3>
-                <p>Subnet math, parsing</p>
-                <div class="fn-list">
-                    <span class="fn-chip">cidrsubnet</span><span class="fn-chip">parseint</span>
-                </div>
-            </div>
-            <div class="cat-card" onclick="showCategory('encoding')">
-                <div class="emoji">🔐</div>
-                <h3>Encoding</h3>
-                <p>JSON, base64, hashing</p>
-                <div class="fn-list">
-                    <span class="fn-chip">jsonencode</span><span class="fn-chip">base64encode</span>
-                </div>
-            </div>
-        </div>
-        <div id="cat-detail" class="detail-panel">
-            String functions build predictable resource names. Lab 13 uses lower(replace(var.application, " ", "-")) to create a DNS-safe slug.
-        </div>
-    </div>
-
-    <div class="example-scenario">
-        <h3>Example: Deduplicate CIDR list before creating subnets</h3>
-        <p><strong>Input:</strong> <code>["10.0.2.0/24", "10.0.1.0/24", "10.0.1.0/24"]</code></p>
-        <p><strong>Expression:</strong> <code>sort(tolist(toset(var.cidrs)))</code></p>
-        <p><strong>Result:</strong> <code>["10.0.1.0/24", "10.0.2.0/24"]</code> — duplicates removed, order stabilized.</p>
-    </div>
-
-    <div class="flow-section">
-        <div class="section-title">2. Code examples from labs</div>
-        <div class="code-tabs">
-            <button class="code-tab active" onclick="showCode('collections')">Lab 12 collections</button>
-            <button class="code-tab" onclick="showCode('functions')">Lab 13 functions</button>
-            <button class="code-tab" onclick="showCode('dynamic')">Lab 14 dynamic</button>
-            <button class="code-tab" onclick="showCode('foreach')">for_each vs count</button>
-        </div>
-        <div id="collections-code" class="code-content active">
-<pre>variable "subnets" {
-  type = map(object({ cidr = string, az = string }))
-  default = {
-    app_a = { cidr = "10.0.1.0/24", az = "us-east-1a" }
-    app_b = { cidr = "10.0.2.0/24", az = "us-east-1b" }
-  }
-}
-
-resource "terraform_data" "subnet" {
-  for_each = var.subnets
-  input    = { name = each.key, cidr = each.value.cidr, az = each.value.az }
-}
-
-output "zones" { value = sort(tolist(var.availability_zones)) }</pre>
-        </div>
-        <div id="functions-code" class="code-content">
-<pre>locals {
-  slug          = lower(replace(var.application, " ", "-"))
-  unique_cidrs  = sort(tolist(toset(var.cidrs)))
-  subnet_prefix = cidrsubnet("10.20.0.0/16", 8, 12)
-  configuration = jsonencode({ name = local.slug, cidrs = local.unique_cidrs })
-}</pre>
-        </div>
-        <div id="dynamic-code" class="code-content">
-<pre>resource "aws_security_group" "service" {
-  dynamic "ingress" {
-    for_each = var.ingress_rules
-    content {
-      description = ingress.value.description
-      from_port   = ingress.value.port
-      to_port     = ingress.value.port
-      protocol    = "tcp"
-      cidr_blocks = ingress.value.cidr_blocks
-    }
-  }
-}</pre>
-        </div>
-        <div id="foreach-code" class="code-content">
-<pre># Prefer for_each with stable string keys:
-resource "aws_subnet" "public" {
-  for_each = var.public_subnets
+<div class="example-stack">
+            <div class="lab-callout"><strong>Repo lab files:</strong> terraform/extended/labs/lab13-functions/</div>
+                <section class="example-card">
+                    <div class="section-kicker">for_each subnets</div>
+                    <pre><code>resource "aws_subnet" "private" {
+  for_each = var.private_subnets
+  vpc_id     = aws_vpc.main.id
   cidr_block = each.value.cidr
-  tags = { Name = "${var.project}-${each.key}" }
-}
-
-# count is OK when index identity is intentional:
-resource "example" "replica" {
-  count = var.replica_count
-}</pre>
-        </div>
+  tags       = merge(var.common_tags, { Name = each.key })
+}</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">dynamic block</div>
+                    <pre><code>dynamic "ingress" {
+  for_each = var.ingress_rules
+  content {
+    from_port   = ingress.value.port
+    to_port     = ingress.value.port
+    protocol    = "tcp"
+    cidr_blocks = ingress.value.cidrs
+  }
+}</code></pre>
+                </section>
+            </div>
+            <svg viewBox="0 0 950 320" style="width:100%;max-width:950px;margin:20px auto;display:block;">
+                <text x="475" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#1e293b">for_each Expansion</text>
+                <rect x="50" y="80" width="140" height="55" rx="8" fill="#ede4f7" stroke="#6236a5" stroke-width="2"/><text x="120" y="107" text-anchor="middle" font-size="12" font-weight="bold" fill="#1e293b">var map</text><rect x="220" y="80" width="140" height="55" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/><text x="290" y="107" text-anchor="middle" font-size="12" font-weight="bold" fill="#1e293b">for_each</text><rect x="390" y="80" width="140" height="55" rx="8" fill="#dcfce7" stroke="#22c55e" stroke-width="2"/><text x="460" y="107" text-anchor="middle" font-size="12" font-weight="bold" fill="#1e293b">each.key</text><rect x="560" y="80" width="140" height="55" rx="8" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/><text x="630" y="107" text-anchor="middle" font-size="12" font-weight="bold" fill="#1e293b">each.value</text><rect x="730" y="80" width="140" height="55" rx="8" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/><text x="800" y="107" text-anchor="middle" font-size="12" font-weight="bold" fill="#1e293b">N resources</text>
+                
+            </svg>
+        </section>
+        <section id="flow" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Labs 12–14</div>
+                    <h2>Functions Lab Path</h2>
+                </div>
+            </div>
+<div class="flow-track">
+                <div class="flow-step">
+                    <div class="step-number">1</div>
+                    <h3>Lab 12 collections</h3>
+                    <p>Maps and lists driving multiple resources.</p>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">2</div>
+                    <h3>Lab 13 functions</h3>
+                    <p>lookup, merge, zipmap in real config.</p>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">3</div>
+                    <h3>Lab 14 dynamic blocks</h3>
+                    <p>Security group rules from variable list.</p>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">4</div>
+                    <h3>Plan review</h3>
+                    <p>Count resources in plan output vs map keys.</p>
+                </div>
+                <div class="flow-step">
+                    <div class="step-number">5</div>
+                    <h3>Refactor count→for_each</h3>
+                    <p>Understand address change implications.</p>
+                </div>
+            </div>
+        </section>
+        <section id="setup" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Console</div>
+                    <h2>Test Expressions</h2>
+                </div>
+            </div>
+<div class="example-stack">
+                <section class="example-card">
+                    <div class="section-kicker">terraform console</div>
+                    <pre><code>merge({a="1"}, {b="2"})
+lookup({x="10"}, "y", "default")</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">type constraint</div>
+                    <pre><code>variable "subnets" {
+  type = map(object({ cidr = string }))
+}</code></pre>
+                </section>
+            </div>
+        </section>
+        <section id="commands" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Quick Reference</div>
+                    <h2>Expression Debugging</h2>
+                </div>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Category</th><th>Command</th><th>Description</th></tr></thead>
+                    <tbody>
+                        <tr><td>Console</td><td><code>terraform console</code></td><td>Evaluate HCL expressions</td></tr>
+                        <tr><td>Fmt</td><td><code>terraform fmt</code></td><td>Format complex blocks</td></tr>
+                        <tr><td>Validate</td><td><code>terraform validate</code></td><td>Type checking</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="section-note">Extended reference appendix — bookmark for exam prep and on-the-job lookup.</div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Topic</th><th>Command / Pattern</th><th>Notes</th></tr></thead>
+                    <tbody>
+                        <tr><td>for_each</td><td>for_each = var.items</td><td>Lab 12</td></tr>
+                        <tr><td>length</td><td>length(var.list)</td><td>Lab 13</td></tr>
+                        <tr><td>merge tags</td><td>merge(local.common, each.value.tags)</td><td>Lab 13</td></tr>
+                        <tr><td>dynamic</td><td>dynamic ingress</td><td>Lab 14</td></tr>
+                        <tr><td>toset</td><td>toset(["a","b"])</td><td>Lab 12</td></tr>
+                    </tbody>
+                </table>
+            </div>            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Functions — reference drill 1</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Functions — reference drill 2</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Functions — reference drill 3</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="section-note">Extended reference appendix — bookmark for exam prep and on-the-job lookup.</div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Topic</th><th>Command / Pattern</th><th>Notes</th></tr></thead>
+                    <tbody>
+                        <tr><td>Review</td><td>Re-read lab manual objectives</td><td>Functions & Meta-Arguments</td></tr>
+                        <tr><td>Validate</td><td>Run syntax-check or validate</td><td>Before apply</td></tr>
+                        <tr><td>Cleanup</td><td>Destroy or remove lab changes</td><td>End of session</td></tr>
+                        <tr><td>Docs</td><td>Cross-link markdown docs</td><td>../docs/</td></tr>
+                        <tr><td>Git</td><td>Commit only safe files</td><td>No secrets/state</td></tr>
+                        <tr><td>Pair</td><td>Walk through with teammate</td><td>Teaching reinforces</td></tr>
+                        <tr><td>Notes</td><td>Document failures and fixes</td><td>Personal runbook</td></tr>
+                        <tr><td>Next</td><td>Follow learning path order</td><td>curriculum/learning-paths.md</td></tr>
+                    </tbody>
+                </table>
+            </div>            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Functions & Meta-Arguments — reference drill 1</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Functions & Meta-Arguments — reference drill 2</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Functions & Meta-Arguments — reference drill 3</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+        </section>
+        <section id="examples" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Hands-On</div>
+                    <h2>Labs 12–14</h2>
+                </div>
+            </div>
+<div class="example-stack">
+            <div class="lab-callout"><strong>Repo lab files:</strong> lab13-functions/ · lab14-dynamic-blocks/</div>
+                <section class="example-card">
+                    <div class="section-kicker">Lab 13</div>
+                    <pre><code>cd terraform/extended/labs/lab13-functions
+terraform plan</code></pre>
+                </section>
+                <section class="example-card">
+                    <div class="section-kicker">Lab 14</div>
+                    <pre><code>cd terraform/extended/labs/lab14-dynamic-blocks
+terraform plan</code></pre>
+                </section>
+            </div>
+            <div class="section-note">Extended reference appendix — bookmark for exam prep and on-the-job lookup.</div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Topic</th><th>Command / Pattern</th><th>Notes</th></tr></thead>
+                    <tbody>
+                        <tr><td>Review</td><td>Re-read lab manual objectives</td><td>Functions & Meta-Arguments</td></tr>
+                        <tr><td>Validate</td><td>Run syntax-check or validate</td><td>Before apply</td></tr>
+                        <tr><td>Cleanup</td><td>Destroy or remove lab changes</td><td>End of session</td></tr>
+                        <tr><td>Docs</td><td>Cross-link markdown docs</td><td>../docs/</td></tr>
+                        <tr><td>Git</td><td>Commit only safe files</td><td>No secrets/state</td></tr>
+                        <tr><td>Pair</td><td>Walk through with teammate</td><td>Teaching reinforces</td></tr>
+                        <tr><td>Notes</td><td>Document failures and fixes</td><td>Personal runbook</td></tr>
+                        <tr><td>Next</td><td>Follow learning path order</td><td>curriculum/learning-paths.md</td></tr>
+                    </tbody>
+                </table>
+            </div>            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Functions & Meta-Arguments — reference drill 1</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Functions & Meta-Arguments — reference drill 2</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Functions & Meta-Arguments — reference drill 3</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+        </section>
+        <section id="comparison" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Decision Guide</div>
+                    <h2>count vs for_each</h2>
+                </div>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th></th><th>count</th><th>for_each</th></tr></thead>
+                    <tbody>
+                        <tr><td>Address</td><td>aws_subnet.a[0]</td><td>aws_subnet.a["key"]</td></tr>
+                        <tr><td>Removal safety</td><td>Shifts indexes</td><td>Stable per key</td></tr>
+                        <tr><td>Input type</td><td>Integer or list</td><td>Map or set</td></tr>
+                        <tr><td>Recommendation</td><td>Legacy/simple</td><td>Preferred default</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        <section id="practice" class="view">
+            <div class="section-head">
+                <div>
+                    <div class="section-kicker">Use It Well</div>
+                    <h2>Functions Practice</h2>
+                </div>
+            </div>
+<div class="practice-grid">
+                <article class="card practice-card">
+                    <div class="card-badge">Lab 12</div>
+                    <p>Build resources from a map variable.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab12-collections.md">Open lab manual →</a></p>
+                </article>
+                <article class="card practice-card">
+                    <div class="card-badge">Lab 13</div>
+                    <p>Use merge for tags on every resource.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab13-functions.md">Open lab manual →</a></p>
+                </article>
+                <article class="card practice-card">
+                    <div class="card-badge">Lab 14</div>
+                    <p>Dynamic ingress rules from list variable.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab14-dynamic-blocks.md">Open lab manual →</a></p>
+                </article>
+                <article class="card practice-card">
+                    <div class="card-badge">Console</div>
+                    <p>Reproduce every function from lab in console.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab13-functions.md">Open lab manual →</a></p>
+                </article>
+                <article class="card practice-card">
+                    <div class="card-badge">Refactor</div>
+                    <p>Convert a count loop to for_each.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab12-collections.md">Open lab manual →</a></p>
+                </article>
+                <article class="card practice-card">
+                    <div class="card-badge">Plan count</div>
+                    <p>Verify resource count matches map length.</p>
+                    <p style="margin-top:10px;font-size:0.85rem;"><a href="../labmanuals/lab14-dynamic-blocks.md">Open lab manual →</a></p>
+                </article>
+            </div>
+            <div class="section-note">Extended reference appendix — bookmark for exam prep and on-the-job lookup.</div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Topic</th><th>Command / Pattern</th><th>Notes</th></tr></thead>
+                    <tbody>
+                        <tr><td>Review</td><td>Re-read lab manual objectives</td><td>Functions & Meta-Arguments</td></tr>
+                        <tr><td>Validate</td><td>Run syntax-check or validate</td><td>Before apply</td></tr>
+                        <tr><td>Cleanup</td><td>Destroy or remove lab changes</td><td>End of session</td></tr>
+                        <tr><td>Docs</td><td>Cross-link markdown docs</td><td>../docs/</td></tr>
+                        <tr><td>Git</td><td>Commit only safe files</td><td>No secrets/state</td></tr>
+                        <tr><td>Pair</td><td>Walk through with teammate</td><td>Teaching reinforces</td></tr>
+                        <tr><td>Notes</td><td>Document failures and fixes</td><td>Personal runbook</td></tr>
+                        <tr><td>Next</td><td>Follow learning path order</td><td>curriculum/learning-paths.md</td></tr>
+                    </tbody>
+                </table>
+            </div>            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Functions & Meta-Arguments — reference drill 1</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Functions & Meta-Arguments — reference drill 2</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+            <div class="example-card" style="margin-top:18px;">
+                <div class="section-kicker">Functions & Meta-Arguments — reference drill 3</div>
+                <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
+            </div>
+        </section>
     </div>
 
-    <div class="flow-section">
-        <div class="section-title">3. Interactive console practice</div>
-        <p style="font-size:13px;color:var(--muted);margin-bottom:8px;">Run these in any lab directory after <code>terraform init</code>:</p>
-        <div class="console-box">
-&gt; lower(replace("Payments API", " ", "-"))<br>
-"payments-api"<br><br>
-&gt; cidrsubnet("10.20.0.0/16", 8, 12)<br>
-"10.20.12.0/24"<br><br>
-&gt; jsonencode({ env = "dev", count = 3 })<br>
-"{\"count\":3,\"env\":\"dev\"}"
-        </div>
-    </div>
-
-    <div class="flow-section">
-        <div class="section-title">4. Expression evaluation flow</div>
-        <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-items:center;">
-            <div style="background:var(--purple);color:white;padding:12px 18px;border-radius:8px;font-weight:bold;font-size:12px;">Variables / locals</div>
-            <span style="font-size:20px;color:var(--muted);">→</span>
-            <div style="background:#7c3aed;color:white;padding:12px 18px;border-radius:8px;font-weight:bold;font-size:12px;">Functions &amp; operators</div>
-            <span style="font-size:20px;color:var(--muted);">→</span>
-            <div style="background:#2563eb;color:white;padding:12px 18px;border-radius:8px;font-weight:bold;font-size:12px;">Resource arguments</div>
-            <span style="font-size:20px;color:var(--muted);">→</span>
-            <div style="background:#059669;color:white;padding:12px 18px;border-radius:8px;font-weight:bold;font-size:12px;">Plan graph</div>
-        </div>
-        <p style="font-size:13px;color:var(--muted);margin-top:12px;">
-            All expressions are evaluated at plan time (except provisioners). Unknown values propagate until apply provides them.
-        </p>
-    </div>
-
-    <div class="flow-section">
-        <div class="section-title">5. Common pitfalls</div>
-        <ul style="font-size:13px;padding-left:20px;color:#3d2f4d;">
-            <li><strong>Unstable keys:</strong> Using <code>count</code> with lists that reorder destroys/recreates resources.</li>
-            <li><strong>Type coercion:</strong> <code>toset</code> requires all elements are known and unique-compatible.</li>
-            <li><strong>Sensitive propagation:</strong> <code>jsonencode</code> of sensitive values marks output sensitive.</li>
-            <li><strong>CIDR overlap:</strong> <code>cidrsubnet</code> math does not check for conflicts — validate separately.</li>
-            <li><strong>Over-nesting:</strong> Deep nested comprehensions hurt readability — use locals.</li>
-        </ul>
-    </div>
-
-    
-    <div class="flow-section">
-        <div class="section-title">6. Function quick reference</div>
-        <table style="width:100%;font-size:12px;border-collapse:collapse;">
-            <tr style="background:var(--purple-sky);"><th style="padding:6px;">Category</th><th style="padding:6px;">Functions</th></tr>
-            <tr><td style="padding:6px;border-bottom:1px solid var(--line);">String</td><td style="padding:6px;border-bottom:1px solid var(--line);">lower, upper, replace, format, trimspace, split, join, title</td></tr>
-            <tr><td style="padding:6px;border-bottom:1px solid var(--line);">Collection</td><td style="padding:6px;border-bottom:1px solid var(--line);">merge, concat, keys, values, lookup, sort, reverse, toset, tolist</td></tr>
-            <tr><td style="padding:6px;border-bottom:1px solid var(--line);">Numeric</td><td style="padding:6px;border-bottom:1px solid var(--line);">abs, ceil, floor, max, min, parseint, signum</td></tr>
-            <tr><td style="padding:6px;border-bottom:1px solid var(--line);">CIDR</td><td style="padding:6px;border-bottom:1px solid var(--line);">cidrhost, cidrnetmask, cidrsubnet, cidrsubnets</td></tr>
-            <tr><td style="padding:6px;">Encoding</td><td style="padding:6px;">jsonencode, jsondecode, yamlencode, base64encode, urlencode</td></tr>
-        </table>
-    </div>
-    <div class="flow-section">
-        <div class="section-title">7. Lab command reference</div>
-        <pre>cd terraform/extended/labs/lab12-collections && terraform apply
-cd terraform/extended/labs/lab13-functions && terraform console
-cd terraform/extended/labs/lab14-dynamic-blocks && terraform plan</pre>
-    </div>
-    <div class="flow-section">
-        <div class="section-title">8. Type conversion flow</div>
-        <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;font-size:12px;">
-            <span style="background:var(--purple-sky);padding:8px 12px;border-radius:6px;">list</span>⇄
-            <span style="background:var(--purple-sky);padding:8px 12px;border-radius:6px;">set</span>⇄
-            <span style="background:var(--purple-sky);padding:8px 12px;border-radius:6px;">map</span>
-        </div>
-        <p style="font-size:13px;color:var(--muted);margin-top:10px;">Use toset() before sort() when deduplicating. Maps use for_each with stable keys.</p>
-    </div>
-
-    <div class="flow-section">
-        <div class="section-title">9. Splat and for expressions</div>
-        <pre># Splat (legacy list resources)
-aws_instance.web[*].id
-
-# for expression — build map from another map
-{ for k, v in var.subnets : k => v.cidr }
-
-# for with filter
-[ for k, v in var.subnets : k if can(v.public) && v.public ]
-
-# merge tags pattern (Lab 15)
-merge(var.tags, { Name = "${var.project}-${each.key}" })</pre>
-    </div>
-
-    <div class="flow-section">
-        <div class="section-title">10. Function quick reference</div>
-        <table style="width:100%;font-size:12px;border-collapse:collapse;">
-            <tr style="background:var(--purple-sky);"><th style="padding:6px;">Category</th><th style="padding:6px;">Functions</th></tr>
-            <tr><td style="padding:6px;border-bottom:1px solid var(--line);">String</td><td style="padding:6px;border-bottom:1px solid var(--line);">lower, upper, replace, format, trimspace, split, join, title, substr</td></tr>
-            <tr><td style="padding:6px;border-bottom:1px solid var(--line);">Collection</td><td style="padding:6px;border-bottom:1px solid var(--line);">merge, concat, keys, values, lookup, sort, reverse, toset, tolist, contains</td></tr>
-            <tr><td style="padding:6px;border-bottom:1px solid var(--line);">Numeric</td><td style="padding:6px;border-bottom:1px solid var(--line);">abs, ceil, floor, max, min, parseint, signum, log</td></tr>
-            <tr><td style="padding:6px;border-bottom:1px solid var(--line);">CIDR</td><td style="padding:6px;border-bottom:1px solid var(--line);">cidrhost, cidrnetmask, cidrsubnet, cidrsubnets</td></tr>
-            <tr><td style="padding:6px;">Encoding</td><td style="padding:6px;">jsonencode, jsondecode, yamlencode, yamldecode, base64encode, urlencode</td></tr>
-        </table>
-    </div>
-
-    <div class="flow-section">
-        <div class="section-title">11. Lab outputs to verify</div>
-        <pre># Lab 12
-terraform output zones
-terraform output subnet_ids
-
-# Lab 13
-terraform output results
-
-# Lab 14
-terraform output security_group_id</pre>
-    </div>
-
-    <div class="flow-section">
-        <div class="section-title">12. FAQ</div>
-        <div class="card-grid">
-            <div class="card"><h3>Functions vs resources?</h3><p>Functions transform data at plan time; resources create infrastructure via providers.</p></div>
-            <div class="card"><h3>Custom functions?</h3><p>Not supported — compose locals with built-in functions instead.</p></div>
-            <div class="card"><h3>Null handling?</h3><p>Use coalesce(), try(), or nullable types with defaults in variables.</p></div>
-        </div>
-    </div>
-
-    <div class="flow-section">
-        <div class="section-title">13. Practice drill</div>
-        <p style="font-size:13px;margin-bottom:8px;">Without applying, predict the output of each expression, then verify in <code>terraform console</code>:</p>
-        <pre>upper("dev")
-length(["a", "b", "c"])
-cidrhost("10.0.0.0/24", 5)
-merge({a="1"}, {b="2"})</pre>
-    </div>
-
-    <div class="flow-section">
-        <div class="section-title">14. Version note</div>
-        <p style="font-size:13px;color:var(--muted);">This curriculum targets Terraform 1.5+. S3 native lockfiles (<code>use_lockfile = true</code>) require Terraform 1.11+ — verify with <code>terraform version</code> before Lab 09 apply exercises.</p>
-    </div>
-
-    <p class="footer-note">Deep dive: <code>terraform/extended/docs/functions/README.md</code> · Manuals: <code>lab12</code>–<code>lab14</code></p>
-</div>
-
-<script>
-const catInfo = {
-    string: 'String functions normalize names: lower(), upper(), title(), replace(), format(), trimspace(). Lab 13 slugifies "payments api" to "payments-api".',
-    collection: 'Collection functions reshape data: merge(), concat(), keys(), values(), toset(), tolist(), sort(). Lab 12 uses for_each over a map and sort() on availability zones.',
-    numeric: 'Numeric and CIDR functions: cidrsubnet(), cidrhost(), parseint(), floor(), max(). Lab 13 derives 10.20.12.0/24 from a /16 parent.',
-    encoding: 'Encoding functions serialize data: jsonencode()/jsondecode(), yamlencode(), base64encode(), urlencode(). Useful for policies and user_data payloads.'
-};
-function showCategory(type) {
-    document.querySelectorAll('.cat-card').forEach(c => c.classList.remove('active'));
-    event.currentTarget.classList.add('active');
-    document.getElementById('cat-detail').textContent = catInfo[type];
-}
-function showCode(type) {
-    document.querySelectorAll('.code-content').forEach(el => el.classList.remove('active'));
-    document.querySelectorAll('.code-tab').forEach(el => el.classList.remove('active'));
-    document.getElementById(type + '-code').classList.add('active');
-    event.target.classList.add('active');
-}
-</script>
+    <script>
+        const buttons = document.querySelectorAll('.btn');
+        const views = document.querySelectorAll('.view');
+        buttons.forEach((button) => {
+            button.addEventListener('click', () => {
+                const viewId = button.dataset.view;
+                buttons.forEach((b) => b.classList.remove('active'));
+                views.forEach((v) => v.classList.remove('active'));
+                button.classList.add('active');
+                document.getElementById(viewId).classList.add('active');
+            });
+        });
+    </script>
 </body>
 </html>

@@ -1,355 +1,133 @@
-# Custom Facts
+# Custom Ansible Facts
 
-Custom facts extend Ansible's built-in discovery with **site-specific metadata** — application tier, cost center, deployment environment, or version strings that only your organization knows. They live on managed nodes in `/etc/ansible/facts.d/` and appear under the `ansible_local` namespace after fact gathering.
+## Objective (conceptual)
 
-## Learning objectives
+**Custom facts** extend discovery with site-specific data—datacenter rack, cost center, application tier—without stuffing everything into inventory hostnames. Place executable or JSON files under `/etc/ansible/facts.d/` on managed nodes; Ansible loads them as `ansible_facts.ansible_local.*` on the next `setup` run.
 
-- Deploy INI and JSON custom fact files with Ansible
-- Execute custom fact scripts safely
-- Access `ansible_local` variables in playbooks and templates
-- Know when to use custom facts vs inventory variables vs group_vars
+The mental model: default facts describe **the machine**; custom facts describe **your organization's metadata** about that machine.
 
-## Custom facts vs other variable sources
+**Interactive reference:** [Facts and Custom Facts](../../html/facts.html)
 
-| Source | Scope | Changes when | Best for |
-|--------|-------|--------------|----------|
-| `group_vars/` | Inventory group | You edit Git | Static config per tier |
-| `host_vars/` | Single host | You edit Git | Host-specific overrides |
-| Custom facts (`ansible_local`) | Managed node | File on host changes | Data that lives on the node |
-| `setup` default facts | Managed node | Each gather | OS, hardware, network |
+## Fact file locations
 
-Use custom facts when the value is **maintained on the host** or set by another provisioning tool. Use inventory variables when the control node is the source of truth.
+| Path | Behavior |
+|------|----------|
+| `/etc/ansible/facts.d/*.fact` | Executable; stdout must be JSON |
+| `/etc/ansible/facts.d/*.json` | Static JSON read as-is |
 
-## The custom facts pipeline
+After deployment, run `setup` or start a play to refresh.
 
-```
-Deploy to /etc/ansible/facts.d/
-    │
-    ├── static_file.fact (INI or JSON)
-    │
-    └── executable_script (outputs JSON to stdout)
-    │
-    ▼
-setup module runs (play start or manual)
-    │
-    ▼
-Scripts executed; files parsed
-    │
-    ▼
-Merged into ansible_local.<filename>
-    │
-    ▼
-Available as ansible_local.section.key
-```
+## JSON custom fact example
 
-## File location and naming
-
-| Rule | Detail |
-|------|--------|
-| Directory | `/etc/ansible/facts.d/` (must exist) |
-| Extension | `.fact` for static files; executable scripts also use `.fact` |
-| Permissions | Static files: readable; scripts: executable (`0755`) |
-| Naming | Filename (without extension) becomes `ansible_local` key |
-
-Example: `/etc/ansible/facts.d/lab.fact` → `ansible_local.lab.*`
-
-## INI format facts
-
-INI is the simplest format for static metadata.
-
-### File content
-
-`/etc/ansible/facts.d/lab.fact`:
-
-```ini
-[lab]
-tier=web
-course=extended
-environment=dev
-
-[compliance]
-pci=false
-owner=platform-team
-```
-
-### Resulting variables
-
-After `ansible.builtin.setup`:
-
-```yaml
-ansible_local:
-  lab:
-    tier: web
-    course: extended
-    environment: dev
-  compliance:
-    pci: false
-    owner: platform-team
-```
-
-### Access in playbook
-
-```yaml
-- name: Show tier
-  ansible.builtin.debug:
-    msg: "Host {{ inventory_hostname }} is tier {{ ansible_local.lab.tier }}"
-
-- name: Apply web-only role
-  ansible.builtin.include_role:
-    name: webserver
-  when: ansible_local.lab.tier == "web"
-```
-
-## JSON format facts
-
-JSON files must contain valid JSON objects:
-
-`/etc/ansible/facts.d/app.fact`:
+Deploy `/etc/ansible/facts.d/site.json`:
 
 ```json
 {
-    "version": "2.4.1",
-    "build": "20240315",
-    "features": {
-        "metrics": true,
-        "tracing": false
-    }
+  "tier": "web",
+  "cost_center": "CC-4401",
+  "backup_window": "02:00-04:00 UTC"
 }
 ```
 
-Access: `ansible_local.app.version`, `ansible_local.app.features.metrics`
+Reference in playbooks:
 
-## Executable fact scripts
+```yaml
+- name: Show site tier
+  ansible.builtin.debug:
+    msg: "Tier={{ ansible_facts.ansible_local.site.tier }}"
+```
 
-Scripts run during setup and must print **valid JSON** to stdout.
+Key path includes filename (`site`) without extension.
 
-### Example script
+## Executable fact script example
 
-`/etc/ansible/facts.d/uptime.fact`:
+`/etc/ansible/facts.d/datacenter.fact` (mode `0755`):
 
 ```bash
 #!/bin/bash
-echo "{\"uptime_seconds\": $(cut -d. -f1 /proc/uptime)}"
+echo '{"dc":"us-east-1a","row":"R12"}'
 ```
 
-```bash
-chmod 0755 /etc/ansible/facts.d/uptime.fact
-```
+Must print valid JSON to stdout—no extra logging lines.
 
-### Security warning
-
-Any user who can write to `facts.d` can execute code as the user Ansible connects with during setup. Restrict directory permissions:
+## Deploying facts with Ansible
 
 ```yaml
-- ansible.builtin.file:
-    path: /etc/ansible/facts.d
-    state: directory
-    mode: "0755"
-    owner: root
-    group: root
-```
-
-## Deploying custom facts with Ansible
-
-### Lab 02 pattern — copy INI file
-
-```bash
-ansible -i inventory/hosts.ini webservers -b -m ansible.builtin.copy \
-  -a 'dest=/etc/ansible/facts.d/lab.fact mode=0755 content="[lab]\ntier=web\ncourse=extended\n"'
-```
-
-### Playbook task
-
-```yaml
----
-- name: Deploy custom facts
-  hosts: webservers
-  become: true
-  tasks:
-    - name: Ensure facts.d directory exists
-      ansible.builtin.file:
-        path: /etc/ansible/facts.d
-        state: directory
-        mode: "0755"
-
-    - name: Deploy lab metadata fact
-      ansible.builtin.copy:
-        dest: /etc/ansible/facts.d/lab.fact
-        mode: "0644"
-        content: |
-          [lab]
-          tier=web
-          course=extended
-        notify: Refresh facts
-
-  handlers:
-    - name: Refresh facts
-      ansible.builtin.setup:
-```
-
-### Template-based facts
-
-For per-host values without separate host_vars files:
-
-```yaml
-- ansible.builtin.template:
-    src: host-meta.fact.j2
-    dest: /etc/ansible/facts.d/host-meta.fact
+- name: Install custom fact file
+  ansible.builtin.copy:
+    dest: /etc/ansible/facts.d/site.json
     mode: "0644"
+    content: |
+      {
+        "tier": "web",
+        "lab": "extended"
+      }
+
+- name: Refresh facts after custom fact install
+  ansible.builtin.setup:
+    gather_subset:
+      - "!all"
+      - ansible_local
 ```
 
-`templates/host-meta.fact.j2`:
+## Custom facts vs inventory vars
 
-```ini
-[lab]
-tier={{ host_tier | default('standard') }}
-hostname={{ inventory_hostname }}
-```
+| Custom facts | Inventory / group_vars |
+|--------------|------------------------|
+| Lives on managed node | Lives on control node |
+| Survives if inventory regenerated | Requires inventory update |
+| Good for agentless metadata discovery | Good for connection vars (`ansible_host`) |
 
-## Re-gathering facts after deployment
+Use inventory for **how to connect**; custom facts for **what the node reports about itself**.
 
-Custom facts are **not** automatically refreshed when files change mid-play.
+## Custom facts vs set_fact
 
-```yaml
-# Required after deploying new fact files
-- ansible.builtin.setup:
-```
+- `ansible.builtin.set_fact` — variables for **current play** only (unless cached).
+- Custom facts in `facts.d` — persist on disk across Ansible runs.
 
-Or start a new play (automatic gather at play start).
+## Pitfalls
 
-### Ad hoc refresh
-
-```bash
-ansible -i inventory/hosts.ini webservers -m ansible.builtin.setup
-ansible -i inventory/hosts.ini webservers -m ansible.builtin.debug \
-  -a "var=ansible_local.lab"
-```
-
-Expected output:
-
-```json
-{
-    "ansible_local": {
-        "lab": {
-            "tier": "web",
-            "course": "extended"
-        }
-    }
-}
-```
-
-## Validation checklist
-
-```bash
-# 1. File exists on target
-ansible web1 -i inventory/hosts.ini -b -m ansible.builtin.command \
-  -a "cat /etc/ansible/facts.d/lab.fact"
-
-# 2. Re-gather facts
-ansible webservers -i inventory/hosts.ini -m ansible.builtin.setup
-
-# 3. Verify ansible_local
-ansible webservers -i inventory/hosts.ini -m ansible.builtin.debug \
-  -a "var=ansible_local.lab"
-
-# 4. Use in conditional (dry run)
-ansible web1 -i inventory/hosts.ini -m ansible.builtin.debug \
-  -a "msg=tier is {{ ansible_local.lab.tier | default('UNDEFINED') }}"
-```
-
-## Troubleshooting
-
-### `ansible_local` is undefined
-
-| Cause | Fix |
+| Issue | Fix |
 |-------|-----|
-| Facts not re-gathered after deploy | Run `setup` module |
-| Wrong file extension | Must be `.fact` |
-| Invalid INI/JSON syntax | Validate file content on host |
-| File in wrong directory | Must be `/etc/ansible/facts.d/` |
+| Invalid JSON | Validate with `python3 -m json.tool` |
+| Script not executable | `mode: "0755"` on `.fact` files |
+| Stale facts after edit | Re-run `setup` or play |
+| Wrong key path | Filename becomes `ansible_local.<name>` |
 
-### Script facts return nothing
+## Testing custom facts locally
 
-| Cause | Fix |
-|-------|-----|
-| Not executable | `chmod +x script.fact` |
-| Invalid JSON output | Test script manually: `./script.fact` |
-| Shebang missing | Add `#!/bin/bash` or `#!/usr/bin/python3` |
-| stderr pollution | Redirect errors; only JSON to stdout |
-
-### Permission denied deploying facts
-
-Use `become: true` — `/etc/ansible/facts.d/` is root-owned.
-
-## Custom facts vs fact modules
-
-| Approach | When to use |
-|----------|-------------|
-| Static `.fact` file | Fixed metadata (tier, env) |
-| Executable `.fact` | Dynamic values from local commands |
-| `setup` subsets | Standard OS/hardware/network |
-| `set_fact` module | Runtime variables during play (not persisted) |
-| `register` | Capture task output for later tasks |
-
-`set_fact` does not survive across plays unless cached. Custom facts persist on disk until removed.
-
-## Production patterns
-
-### Tier-based automation
-
-```yaml
-- name: Web tier hardening
-  ansible.builtin.include_tasks: harden-web.yml
-  when: ansible_local.metadata.tier | default('') == "web"
-```
-
-### Compliance tagging
-
-```ini
-[compliance]
-data_class=confidential
-retention_days=90
-```
-
-### Integration with CMDB
-
-An executable fact script queries local agent or API:
-
-```python
-#!/usr/bin/env python3
-import json, subprocess
-# Output CMDB attributes as JSON
-print(json.dumps({"cmdb_id": "SRV-12345", "owner": "team-a"}))
-```
-
-## Cleanup
-
-Remove lab facts after exercises:
+On the managed node (SSH session):
 
 ```bash
-ansible -i inventory/hosts.ini webservers -b -m ansible.builtin.file \
-  -a "path=/etc/ansible/facts.d/lab.fact state=absent"
+sudo /etc/ansible/facts.d/datacenter.fact
+python3 -m json.tool /etc/ansible/facts.d/site.json
 ```
 
-## Design guidelines
+Invalid output breaks `setup` for that host—validate before wide rollout.
 
-1. **Keep facts small** — large JSON slows setup on every host
-2. **Version schema** — add `schema_version=1` in INI for migrations
-3. **Document keys** — maintain a schema in your repo README
-4. **Prefer inventory for static fleet data** — custom facts for node-local truth
-5. **Test scripts idempotently** — same output on repeated runs
+## Combining with templates
 
-## Related resources
+Custom facts can drive Jinja in templates:
 
-- [Gathering Facts](gathering-facts.md) — setup module and default facts
-- [Lab 02 — Facts](../../labmanuals/lab02-facts.md) — deploy `lab.fact` exercise
-- [facts.html](../../html/facts.html) — interactive custom facts flow diagram
-- Ansible docs: *Local facts* in setup module documentation
+```jinja2
+Datacenter: {{ ansible_facts.ansible_local.datacenter.dc | default('unknown') }}
+```
 
-## Summary
+Use `default` when custom facts may be absent on some hosts.
 
-Custom facts in `/etc/ansible/facts.d/` extend `ansible_local` with organization-specific metadata. Deploy with `copy` or `template`, set correct permissions, re-run `setup`, and reference `ansible_local.<file>.<key>` in playbooks. Use executable scripts sparingly and securely for dynamic values.
+## Operational commands (reference)
+
+```bash
+cd ansible/extended/labs
+ansible web1 -m ansible.builtin.setup -a "filter=ansible_local*"
+ansible web1 -m ansible.builtin.command -a "cat /etc/ansible/facts.d/site.json"
+ansible-playbook playbooks/conditionals-os.yml --limit web1
+```
 
 ---
 
-*Ansible Extended Track · Lesson 3 AP-03 · Curriculum v2*
+## Hands-On Labs
+
+| Lab | Description |
+|-----|-------------|
+| [Lab 02: Working with Facts](../../labmanuals/lab02-facts.md) | Deploy custom facts to `/etc/ansible/facts.d/` and query `ansible_local` |
