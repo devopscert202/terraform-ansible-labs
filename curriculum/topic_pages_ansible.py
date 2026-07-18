@@ -66,14 +66,14 @@ def _ref_appendix(topic_name: str, cmds: list[tuple[str, str, str]]) -> str:
 ANSIBLE_ARCH_SVG = """
             <svg viewBox="0 0 950 380" style="width:100%;max-width:950px;margin:20px auto;display:block;">
                 <text x="475" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#1e293b">Ansible Push Architecture</text>
-                <rect x="40" y="60" width="180" height="70" rx="8" fill="#ffe4e6" stroke="#EE0000" stroke-width="2"/>
-                <text x="130" y="88" text-anchor="middle" font-size="13" font-weight="bold" fill="#CC0000">Control Node</text>
+                <rect x="40" y="60" width="180" height="70" rx="8" fill="#dbeafe" stroke="#326CE5" stroke-width="2"/>
+                <text x="130" y="88" text-anchor="middle" font-size="13" font-weight="bold" fill="#326CE5">Control Node</text>
                 <text x="130" y="108" text-anchor="middle" font-size="10" fill="#991b1b" font-family="monospace">ansible-playbook</text>
-                <line x1="220" y1="95" x2="280" y2="95" stroke="#EE0000" stroke-width="2" marker-end="url(#a1)"/>
-                <rect x="280" y="55" width="160" height="80" rx="10" fill="#f8fafc" stroke="#EE0000" stroke-width="3"/>
-                <text x="360" y="85" text-anchor="middle" font-size="14" font-weight="bold" fill="#CC0000">Inventory</text>
+                <line x1="220" y1="95" x2="280" y2="95" stroke="#326CE5" stroke-width="2" marker-end="url(#a1)"/>
+                <rect x="280" y="55" width="160" height="80" rx="10" fill="#f8fafc" stroke="#326CE5" stroke-width="3"/>
+                <text x="360" y="85" text-anchor="middle" font-size="14" font-weight="bold" fill="#326CE5">Inventory</text>
                 <text x="360" y="105" text-anchor="middle" font-size="10" fill="#64748b">hosts.ini · groups</text>
-                <line x1="440" y1="95" x2="500" y2="95" stroke="#EE0000" stroke-width="2" marker-end="url(#a1)"/>
+                <line x1="440" y1="95" x2="500" y2="95" stroke="#326CE5" stroke-width="2" marker-end="url(#a1)"/>
                 <rect x="500" y="55" width="180" height="80" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
                 <text x="590" y="85" text-anchor="middle" font-size="13" font-weight="bold" fill="#1e40af">SSH / WinRM</text>
                 <text x="590" y="105" text-anchor="middle" font-size="10" fill="#1e3a8a">agentless :22</text>
@@ -89,7 +89,7 @@ ANSIBLE_ARCH_SVG = """
                 <text x="475" y="310" text-anchor="middle" font-size="13" font-weight="bold" fill="#be123c">Lab 01 — ansible/essentials/labs/inventory/hosts.ini</text>
                 <text x="475" y="335" text-anchor="middle" font-size="11" fill="#9f1239">ansible all -m ansible.builtin.ping → verify SSH connectivity</text>
                 <defs>
-                    <marker id="a1" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#EE0000"/></marker>
+                    <marker id="a1" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#326CE5"/></marker>
                     <marker id="a2" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#3b82f6"/></marker>
                     <marker id="a3" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#f59e0b"/></marker>
                 </defs>
@@ -187,7 +187,7 @@ INVENTORY_FLOW = _meta("ansible/essentials", "inventory-flow.html", "Inventory F
            ("group_vars", "group_vars/webservers.yml:\n  http_port: 80\n  app_env: dev"),
          ], lab="ansible/essentials/labs/inventory/")
          + _svg("Inventory Resolution", [
-           (40, 80, 150, 55, "#ffe4e6", "#EE0000", "hosts.ini"),
+           (40, 80, 150, 55, "#dbeafe", "#326CE5", "hosts.ini"),
            (220, 80, 150, 55, "#dbeafe", "#3b82f6", "group_vars"),
            (400, 80, 150, 55, "#fef3c7", "#f59e0b", "host_vars"),
            (580, 80, 150, 55, "#dcfce7", "#22c55e", "merged vars"),
@@ -258,7 +258,7 @@ ADHOC = _meta("ansible/essentials", "adhoc-vs-playbook.html", "Ad Hoc vs Playboo
            ("Apt with become", "ansible webservers -i inventory/hosts.ini.local -b -m ansible.builtin.apt -a 'name=tree state=present'"),
          ], lab="ansible/essentials/labs/")
          + _svg("Ad Hoc vs Playbook", [
-           (60, 80, 180, 60, "#ffe4e6", "#EE0000", "ansible -m"),
+           (60, 80, 180, 60, "#dbeafe", "#326CE5", "ansible -m"),
            (280, 80, 180, 60, "#dbeafe", "#3b82f6", "one module"),
            (500, 80, 180, 60, "#dcfce7", "#22c55e", "ansible-playbook"),
            (720, 80, 160, 60, "#fef3c7", "#f59e0b", "many tasks"),
@@ -335,7 +335,7 @@ PLAYBOOK_HANDLERS = _meta("ansible/essentials", "playbook-handlers.html", "Playb
          + _svg("Handler Notify", [
            (80, 80, 160, 55, "#dbeafe", "#3b82f6", "Task changes"),
            (280, 80, 160, 55, "#fef3c7", "#f59e0b", "notify"),
-           (480, 80, 160, 55, "#ffe4e6", "#EE0000", "end of play"),
+           (480, 80, 160, 55, "#dbeafe", "#326CE5", "end of play"),
            (680, 80, 160, 55, "#dcfce7", "#22c55e", "handler runs"),
          ])),
     _tab("flow", "Flow", "Lab 04", "Apache Playbook Flow",
@@ -408,7 +408,7 @@ VARS_TEMPLATES = _meta("ansible/essentials", "variables-templates.html", "Variab
            ("Jinja2 in template", "# Managed by Ansible\nport = {{ http_port }}\nenv = {{ app_env }}"),
          ], lab="ansible/essentials/labs/playbooks/templates/")
          + _svg("Variable Precedence", [
-           (30, 80, 130, 50, "#ffe4e6", "#EE0000", "extra vars"),
+           (30, 80, 130, 50, "#dbeafe", "#326CE5", "extra vars"),
            (180, 80, 130, 50, "#fef3c7", "#f59e0b", "play vars"),
            (330, 80, 130, 50, "#dbeafe", "#3b82f6", "host_vars"),
            (480, 80, 130, 50, "#dcfce7", "#22c55e", "group_vars"),
@@ -480,7 +480,7 @@ ROLES_VAULT = _meta("ansible/essentials", "roles-and-vault.html", "Roles & Vault
            ("site.yml", "- hosts: webservers\n  roles:\n    - webserver"),
          ], lab="ansible/essentials/labs/roles/")
          + _svg("Vault Workflow", [
-           (50, 80, 150, 55, "#ffe4e6", "#EE0000", "plaintext secret"),
+           (50, 80, 150, 55, "#dbeafe", "#326CE5", "plaintext secret"),
            (230, 80, 150, 55, "#dbeafe", "#3b82f6", "ansible-vault encrypt"),
            (410, 80, 150, 55, "#dcfce7", "#22c55e", "vault file in Git"),
            (590, 80, 150, 55, "#fef3c7", "#f59e0b", "playbook --ask-vault-pass"),
@@ -557,7 +557,7 @@ FACTS = _meta("ansible/extended", "facts.html", "Ansible Facts — Interactive G
            ("custom fact script", "#!/bin/bash\necho '{\"app_version\": \"2.1.0\"}'"),
          ], lab="ansible/extended/labs/")
          + _svg("Facts Pipeline", [
-           (50, 80, 160, 55, "#ffe4e6", "#CC0000", "setup module"),
+           (50, 80, 160, 55, "#dbeafe", "#326CE5", "setup module"),
            (240, 80, 160, 55, "#dbeafe", "#3b82f6", "fact cache"),
            (430, 80, 160, 55, "#dcfce7", "#22c55e", "hostvars"),
            (620, 80, 160, 55, "#fef3c7", "#f59e0b", "when/templates"),
@@ -628,7 +628,7 @@ LOOPS = _meta("ansible/extended", "loops-conditionals.html", "Loops & Conditiona
            ("when", "when: ansible_os_family == 'Debian'"),
          ], lab="ansible/extended/labs/playbooks/")
          + _svg("Loop Execution", [
-           (60, 80, 150, 55, "#ffe4e6", "#CC0000", "loop list"),
+           (60, 80, 150, 55, "#dbeafe", "#326CE5", "loop list"),
            (240, 80, 150, 55, "#dbeafe", "#3b82f6", "item"),
            (420, 80, 150, 55, "#dcfce7", "#22c55e", "task run"),
            (600, 80, 150, 55, "#fef3c7", "#f59e0b", "next item"),
@@ -698,7 +698,7 @@ DYNAMIC_INV = _meta("ansible/extended", "dynamic-inventory.html", "Dynamic Inven
            ("Run", "ansible-inventory -i aws_ec2.yml --graph"),
          ], lab="ansible/extended/labs/dynamic_inventory/")
          + _svg("Dynamic Inventory", [
-           (40, 80, 150, 55, "#ffe4e6", "#CC0000", "aws_ec2.yml"),
+           (40, 80, 150, 55, "#dbeafe", "#326CE5", "aws_ec2.yml"),
            (220, 80, 150, 55, "#dbeafe", "#3b82f6", "EC2 API"),
            (400, 80, 150, 55, "#dcfce7", "#22c55e", "inventory graph"),
            (580, 80, 150, 55, "#fef3c7", "#f59e0b", "ansible-playbook"),
@@ -769,7 +769,7 @@ BREAK_FIX = _meta("ansible/extended", "break-fix.html", "Break-Fix Drills — In
            ("step", "ansible-playbook site.yml --step  # confirm each task"),
          ], lab="ansible/extended/labs/break-fix/")
          + _svg("Debug Workflow", [
-           (40, 80, 150, 55, "#ffe4e6", "#CC0000", "error output"),
+           (40, 80, 150, 55, "#dbeafe", "#326CE5", "error output"),
            (220, 80, 150, 55, "#dbeafe", "#3b82f6", "isolate layer"),
            (400, 80, 150, 55, "#fef3c7", "#f59e0b", "minimal repro"),
            (580, 80, 150, 55, "#dcfce7", "#22c55e", "fix + verify"),

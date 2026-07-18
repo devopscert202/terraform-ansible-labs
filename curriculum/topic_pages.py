@@ -73,7 +73,7 @@ WORKFLOW = _meta(
            ("Plan output anatomy", "# aws_instance.web will be created\n  + resource \"aws_instance\" \"web\" {\n      + ami           = \"ami-0c55b159cbfafe1f0\"\n      + instance_type = \"t3.micro\"\n    }\n\nPlan: 1 to add, 0 to change, 0 to destroy."),
          ], lab="<code>terraform/essentials/labs/lab03-plan-apply-destroy/</code>")
          + _svg("Plan → Apply Pipeline", [
-           (40, 70, 150, 60, "#ede4f7", "#7B42BC", "HCL Config"),
+           (40, 70, 150, 60, "#dbeafe", "#326CE5", "HCL Config"),
            (230, 70, 150, 60, "#dbeafe", "#3b82f6", "terraform plan"),
            (420, 70, 150, 60, "#fef3c7", "#f59e0b", "Review"),
            (610, 70, 150, 60, "#dcfce7", "#22c55e", "terraform apply"),
@@ -165,7 +165,7 @@ def _tf_essentials_variables():
              ("outputs.tf", 'output "public_ip" {\n  value = aws_instance.web.public_ip\n}'),
            ], lab="terraform/essentials/labs/lab05-variables/")
            + _svg("Variable Resolution", [
-             (30, 80, 140, 55, "#ede4f7", "#7B42BC", "tfvars"),
+             (30, 80, 140, 55, "#dbeafe", "#326CE5", "tfvars"),
              (200, 80, 140, 55, "#dbeafe", "#3b82f6", "-var flags"),
              (370, 80, 140, 55, "#fef3c7", "#f59e0b", "TF_VAR_*"),
              (540, 80, 180, 55, "#dcfce7", "#22c55e", "var.* in HCL"),
@@ -245,7 +245,7 @@ STATE_ESS = _meta("terraform/essentials", "state.html", "Terraform State — Int
          + _svg("State Read/Write Cycle", [
            (50, 80, 160, 60, "#fef3c7", "#f59e0b", "Read State"),
            (250, 80, 160, 60, "#dbeafe", "#3b82f6", "Build Graph"),
-           (450, 80, 160, 60, "#ede4f7", "#7B42BC", "Call APIs"),
+           (450, 80, 160, 60, "#dbeafe", "#326CE5", "Call APIs"),
            (650, 80, 200, 60, "#dcfce7", "#22c55e", "Write State"),
          ])),
     _tab("flow", "Flow", "Lab 06", "Local State Lab Flow",
@@ -319,7 +319,7 @@ MODULES = _meta("terraform/essentials", "modules.html", "Terraform Modules — I
            ("Child output", 'output "instance_id" {\n  value = aws_instance.this.id\n}'),
          ], lab="terraform/essentials/labs/lab07-simple-module/")
          + _svg("Module Call Graph", [
-           (80, 80, 180, 60, "#ede4f7", "#7B42BC", "Root Module"),
+           (80, 80, 180, 60, "#dbeafe", "#326CE5", "Root Module"),
            (320, 80, 180, 60, "#dbeafe", "#3b82f6", "module.web"),
            (560, 80, 180, 60, "#dcfce7", "#22c55e", "aws_instance"),
            (320, 180, 180, 60, "#fef3c7", "#f59e0b", "outputs up"),
@@ -412,7 +412,7 @@ STATE_EXT = _meta("terraform/extended", "state.html", "Remote State — Interact
            ("Init with backend file", "terraform init -backend-config=backend.hcl"),
          ], lab="terraform/extended/labs/lab07-s3-backend/")
          + _svg("Remote State Flow", [
-           (40, 80, 150, 60, "#ede4f7", "#6236a5", "Terraform CLI"),
+           (40, 80, 150, 60, "#dbeafe", "#326CE5", "Terraform CLI"),
            (220, 80, 150, 60, "#dbeafe", "#3b82f6", "S3 State"),
            (400, 80, 150, 60, "#fef3c7", "#f59e0b", "Lock"),
            (580, 80, 150, 60, "#dcfce7", "#22c55e", "AWS APIs"),
@@ -491,7 +491,7 @@ PROVISIONERS = _meta("terraform/extended", "provisioners.html", "Provisioners �
            (60, 80, 170, 60, "#dcfce7", "#22c55e", "Resource Created"),
            (280, 80, 170, 60, "#fef3c7", "#f59e0b", "Provisioner"),
            (500, 80, 170, 60, "#dbeafe", "#3b82f6", "Script Runs"),
-           (720, 80, 170, 60, "#ede4f7", "#6236a5", "Continue Graph"),
+           (720, 80, 170, 60, "#dbeafe", "#326CE5", "Continue Graph"),
          ])),
     _tab("flow", "Flow", "Labs 04–05", "Provisioner Lab Flow",
          flow_html([
@@ -561,7 +561,7 @@ FUNCTIONS = _meta("terraform/extended", "functions.html", "Terraform Functions �
            ("dynamic block", 'dynamic "ingress" {\n  for_each = var.ingress_rules\n  content {\n    from_port   = ingress.value.port\n    to_port     = ingress.value.port\n    protocol    = "tcp"\n    cidr_blocks = ingress.value.cidrs\n  }\n}'),
          ], lab="terraform/extended/labs/lab13-functions/")
          + _svg("for_each Expansion", [
-           (50, 80, 140, 55, "#ede4f7", "#6236a5", "var map"),
+           (50, 80, 140, 55, "#dbeafe", "#326CE5", "var map"),
            (220, 80, 140, 55, "#dbeafe", "#3b82f6", "for_each"),
            (390, 80, 140, 55, "#dcfce7", "#22c55e", "each.key"),
            (560, 80, 140, 55, "#fef3c7", "#f59e0b", "each.value"),
@@ -634,7 +634,7 @@ PROJECTS = _meta("terraform/extended", "projects.html", "Capstone Projects — I
            ("Lab 15 capstone", "terraform/extended/labs/lab15-capstone-projects/"),
          ], lab="lab01-console-vpc/ · lab15-capstone-projects/")
          + _svg("Capstone Stack", [
-           (40, 80, 130, 55, "#ede4f7", "#6236a5", "VPC"),
+           (40, 80, 130, 55, "#dbeafe", "#326CE5", "VPC"),
            (190, 80, 130, 55, "#dbeafe", "#3b82f6", "Subnets"),
            (340, 80, 130, 55, "#fef3c7", "#f59e0b", "SG"),
            (490, 80, 130, 55, "#dcfce7", "#22c55e", "EC2"),

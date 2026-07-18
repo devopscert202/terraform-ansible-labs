@@ -7,9 +7,9 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
-            --brand: #EE0000;
-            --brand-deep: #CC0000;
-            --brand-sky: #ffe4e6;
+            --kube-blue: #326CE5;
+            --kube-blue-deep: #1d4ed8;
+            --kube-sky: #dbeafe;
             --ink: #1a1a2e;
             --muted: #64748b;
             --surface: #ffffff;
@@ -40,7 +40,7 @@
             padding: 34px 32px 28px;
             box-shadow: 0 4px 18px rgba(15, 23, 42, 0.08);
             margin-bottom: 26px;
-            border: 1px solid color-mix(in srgb, var(--brand) 10%, transparent);
+            border: 1px solid rgba(50,108,229,0.1);
         }
         .eyebrow {
             display: inline-flex;
@@ -48,8 +48,8 @@
             gap: 8px;
             padding: 6px 12px;
             border-radius: 999px;
-            background: var(--brand-sky);
-            color: var(--brand-deep);
+            background: #e8f1ff;
+            color: var(--kube-blue-deep);
             font-size: 0.82rem;
             font-weight: 700;
             letter-spacing: 0.08em;
@@ -58,7 +58,7 @@
         }
         h1 {
             font-size: clamp(2rem, 4vw, 3rem);
-            color: var(--brand);
+            color: var(--kube-blue);
             margin-bottom: 10px;
             line-height: 1.1;
         }
@@ -69,14 +69,38 @@
             margin: 0 auto 18px;
         }
         .lead-panel {
-            background: linear-gradient(180deg, #f8fbff 0%, color-mix(in srgb, var(--brand-sky) 60%, white) 100%);
-            border: 1px solid color-mix(in srgb, var(--brand) 12%, transparent);
+            background: linear-gradient(180deg, #f8fbff 0%, #eef5ff 100%);
+            border: 1px solid rgba(50,108,229,0.12);
             border-radius: 14px;
             padding: 18px 20px;
             max-width: 980px;
             margin: 0 auto;
         }
         .lead-panel p { color: #334155; font-size: 0.98rem; }
+        .nav-links {
+            position: absolute;
+            top: 16px;
+            right: 20px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+        .nav-links a {
+            color: var(--kube-blue);
+            text-decoration: none;
+            font-size: 0.88rem;
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: 8px;
+            border: 1px solid rgba(50,108,229,0.18);
+            background: rgba(50,108,229,0.06);
+            transition: background 0.2s, color 0.2s;
+        }
+        .nav-links a:hover {
+            background: rgba(50,108,229,0.13);
+            color: var(--kube-blue-deep);
+        }
         .controls {
             display: flex;
             gap: 12px;
@@ -85,9 +109,9 @@
             margin: 0 0 24px;
         }
         .btn {
-            border: 2px solid var(--brand);
+            border: 2px solid #326CE5;
             background: white;
-            color: var(--brand-deep);
+            color: var(--kube-blue-deep);
             padding: 11px 20px;
             border-radius: 8px;
             font-weight: 700;
@@ -95,9 +119,9 @@
             transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
         }
         .btn:hover, .btn.active {
-            background: var(--brand);
+            background: var(--kube-blue);
             color: white;
-            box-shadow: 0 4px 12px color-mix(in srgb, var(--brand) 30%, transparent);
+            box-shadow: 0 4px 12px rgba(50,108,229,0.3);
             transform: translateY(-2px);
         }
         .view {
@@ -122,7 +146,7 @@
         }
         .section-head h2 { color: var(--ink); font-size: 1.45rem; }
         .section-kicker {
-            color: var(--brand-deep);
+            color: var(--kube-blue-deep);
             text-transform: uppercase;
             font-size: 0.76rem;
             font-weight: 800;
@@ -130,13 +154,14 @@
             margin-bottom: 10px;
         }
         .section-note {
-            border-left: 4px solid var(--brand);
-            background: color-mix(in srgb, var(--brand-sky) 50%, white);
-            color: var(--brand-deep);
+            border-left: 4px solid var(--kube-blue);
+            background: #eff6ff;
+            color: #1e3a8a;
             padding: 14px 16px;
             border-radius: 12px;
             margin-top: 18px;
         }
+        .section-note a { color: var(--kube-blue-deep); }
         .concept-grid, .practice-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));
@@ -145,7 +170,7 @@
         .card {
             background: linear-gradient(180deg, #ffffff, #f8fbff);
             border: 1px solid var(--line);
-            border-top: 4px solid var(--brand);
+            border-top: 4px solid #326CE5;
             border-radius: 16px;
             padding: 20px;
             min-height: 170px;
@@ -160,14 +185,15 @@
             display: inline-flex;
             padding: 6px 12px;
             border-radius: 999px;
-            background: var(--brand-sky);
-            color: var(--brand-deep);
+            background: var(--kube-sky);
+            color: var(--kube-blue-deep);
             font-weight: 700;
             margin-bottom: 14px;
         }
         .practice-card .card-badge { background: var(--mint); color: #166534; }
         .practice-card { border-top-color: #22c55e; }
         .card p { color: #475569; }
+        .card a, .practice-card a { color: var(--kube-blue); font-weight: 600; }
         .flow-track {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));
@@ -177,8 +203,8 @@
             position: relative;
             border-radius: 16px;
             padding: 22px 18px 18px;
-            border: 1px solid color-mix(in srgb, var(--brand) 18%, transparent);
-            background: linear-gradient(160deg, #ffffff 0%, color-mix(in srgb, var(--brand-sky) 40%, white) 100%);
+            border: 1px solid rgba(50,108,229,0.18);
+            background: linear-gradient(160deg, #ffffff 0%, #eff6ff 100%);
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
         .step-number {
@@ -187,11 +213,11 @@
             border-radius: 50%;
             display: grid;
             place-items: center;
-            background: var(--brand);
+            background: var(--kube-blue);
             color: white;
             font-weight: 800;
             margin-bottom: 14px;
-            box-shadow: 0 10px 20px color-mix(in srgb, var(--brand) 22%, transparent);
+            box-shadow: 0 10px 20px rgba(50,108,229,0.22);
         }
         .flow-step h3 { font-size: 1rem; margin-bottom: 10px; color: #0f172a; }
         .flow-step p { color: #475569; font-size: 0.95rem; }
@@ -204,15 +230,15 @@
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
         .lab-callout {
-            border: 1px dashed color-mix(in srgb, var(--brand) 35%, transparent);
+            border: 1px dashed rgba(50,108,229,0.35);
             border-radius: 12px;
             padding: 14px 16px;
             margin: 14px 0;
-            background: color-mix(in srgb, var(--brand-sky) 35%, white);
+            background: #eff6ff;
             color: #334155;
             font-size: 0.92rem;
         }
-        .lab-callout strong { color: var(--brand-deep); }
+        .lab-callout strong { color: var(--kube-blue-deep); }
         pre {
             margin-top: 10px;
             background: #0f172a;
@@ -242,7 +268,7 @@
             vertical-align: top;
         }
         th {
-            background: linear-gradient(180deg, var(--brand), var(--brand-deep));
+            background: linear-gradient(180deg, #326CE5, #2557be);
             color: white;
             font-weight: 700;
         }
@@ -253,38 +279,42 @@
             font-size: 0.9rem;
             margin-top: 18px;
         }
-        .footer-note a { color: var(--brand); text-decoration: none; }
+        .footer-note a { color: var(--kube-blue); text-decoration: none; }
         .footer-note a:hover { text-decoration: underline; }
         @media (max-width: 900px) {
             body { padding: 14px; }
             .hero, .view { padding: 22px; }
             .controls { justify-content: flex-start; }
             .concept-grid, .practice-grid, .flow-track { grid-template-columns: 1fr; }
+            .nav-links { position: static; justify-content: center; margin-bottom: 12px; }
         }
         .home-link {
             position: absolute;
             top: 16px;
             right: 20px;
-            color: var(--brand);
+            color: var(--kube-blue);
             text-decoration: none;
             font-size: 0.88rem;
             font-weight: 600;
             padding: 6px 14px;
             border-radius: 8px;
-            border: 1px solid color-mix(in srgb, var(--brand) 18%, transparent);
-            background: color-mix(in srgb, var(--brand) 6%, transparent);
+            border: 1px solid rgba(50,108,229,0.18);
+            background: rgba(50,108,229,0.06);
             transition: background 0.2s, color 0.2s;
         }
         .home-link:hover {
-            background: color-mix(in srgb, var(--brand) 13%, transparent);
-            color: var(--brand-deep);
+            background: rgba(50,108,229,0.13);
+            color: var(--kube-blue-deep);
         }
     </style>
 </head>
 <body>
     <div class="container">
         <header class="hero">
-            <a href="index.html" class="home-link">&#8962; Home</a>
+            <div class="nav-links">
+                <a href="../../../index.html">All Tracks</a>
+                <a href="index.html">Track Catalog</a>
+            </div>
             <div class="eyebrow">Ansible Essentials</div>
             <h1>Architecture</h1>
             <p class="subtitle">Control node, managed nodes, inventory, modules, and the agentless push model.</p>
@@ -361,14 +391,14 @@ host_key_checking = False</code></pre>
             </div>
             <svg viewBox="0 0 950 380" style="width:100%;max-width:950px;margin:20px auto;display:block;">
                 <text x="475" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#1e293b">Ansible Push Architecture</text>
-                <rect x="40" y="60" width="180" height="70" rx="8" fill="#ffe4e6" stroke="#EE0000" stroke-width="2"/>
-                <text x="130" y="88" text-anchor="middle" font-size="13" font-weight="bold" fill="#CC0000">Control Node</text>
+                <rect x="40" y="60" width="180" height="70" rx="8" fill="#dbeafe" stroke="#326CE5" stroke-width="2"/>
+                <text x="130" y="88" text-anchor="middle" font-size="13" font-weight="bold" fill="#326CE5">Control Node</text>
                 <text x="130" y="108" text-anchor="middle" font-size="10" fill="#991b1b" font-family="monospace">ansible-playbook</text>
-                <line x1="220" y1="95" x2="280" y2="95" stroke="#EE0000" stroke-width="2" marker-end="url(#a1)"/>
-                <rect x="280" y="55" width="160" height="80" rx="10" fill="#f8fafc" stroke="#EE0000" stroke-width="3"/>
-                <text x="360" y="85" text-anchor="middle" font-size="14" font-weight="bold" fill="#CC0000">Inventory</text>
+                <line x1="220" y1="95" x2="280" y2="95" stroke="#326CE5" stroke-width="2" marker-end="url(#a1)"/>
+                <rect x="280" y="55" width="160" height="80" rx="10" fill="#f8fafc" stroke="#326CE5" stroke-width="3"/>
+                <text x="360" y="85" text-anchor="middle" font-size="14" font-weight="bold" fill="#326CE5">Inventory</text>
                 <text x="360" y="105" text-anchor="middle" font-size="10" fill="#64748b">hosts.ini · groups</text>
-                <line x1="440" y1="95" x2="500" y2="95" stroke="#EE0000" stroke-width="2" marker-end="url(#a1)"/>
+                <line x1="440" y1="95" x2="500" y2="95" stroke="#326CE5" stroke-width="2" marker-end="url(#a1)"/>
                 <rect x="500" y="55" width="180" height="80" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
                 <text x="590" y="85" text-anchor="middle" font-size="13" font-weight="bold" fill="#1e40af">SSH / WinRM</text>
                 <text x="590" y="105" text-anchor="middle" font-size="10" fill="#1e3a8a">agentless :22</text>
@@ -384,7 +414,7 @@ host_key_checking = False</code></pre>
                 <text x="475" y="310" text-anchor="middle" font-size="13" font-weight="bold" fill="#be123c">Lab 01 — ansible/essentials/labs/inventory/hosts.ini</text>
                 <text x="475" y="335" text-anchor="middle" font-size="11" fill="#9f1239">ansible all -m ansible.builtin.ping → verify SSH connectivity</text>
                 <defs>
-                    <marker id="a1" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#EE0000"/></marker>
+                    <marker id="a1" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#326CE5"/></marker>
                     <marker id="a2" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#3b82f6"/></marker>
                     <marker id="a3" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#f59e0b"/></marker>
                 </defs>
@@ -652,6 +682,8 @@ ansible all -i inventory/hosts.ini.local -m ansible.builtin.ping</code></pre>
                 <p style="color:#475569;margin-bottom:8px;">Extended operator notes for classroom review and certification-style recall.</p>
             </div>
         </section>
+
+        <p class="footer-note">Ansible Essentials · <a href="../../../index.html">All tracks catalog</a> · <a href="index.html">Track index</a></p>
     </div>
 
     <script>

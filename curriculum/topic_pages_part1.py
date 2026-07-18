@@ -4,14 +4,14 @@ from html_helpers import cards_html, examples_html, flow_html, practice_html, ta
 TF_SVG_FOUNDATIONS = """
             <svg viewBox="0 0 950 380" style="width:100%;max-width:950px;margin:20px auto;display:block;">
                 <text x="475" y="28" text-anchor="middle" font-size="18" font-weight="bold" fill="#1e293b">Terraform Core Execution Model</text>
-                <rect x="40" y="60" width="180" height="70" rx="8" fill="#ede4f7" stroke="#7B42BC" stroke-width="2"/>
-                <text x="130" y="88" text-anchor="middle" font-size="13" font-weight="bold" fill="#5c2d94">Configuration</text>
-                <text x="130" y="108" text-anchor="middle" font-size="10" fill="#5c2d94" font-family="monospace">*.tf, *.tfvars</text>
-                <line x1="220" y1="95" x2="280" y2="95" stroke="#7B42BC" stroke-width="2" marker-end="url(#tf1)"/>
-                <rect x="280" y="55" width="160" height="80" rx="10" fill="#f8fafc" stroke="#7B42BC" stroke-width="3"/>
-                <text x="360" y="85" text-anchor="middle" font-size="14" font-weight="bold" fill="#5c2d94">Terraform CLI</text>
+                <rect x="40" y="60" width="180" height="70" rx="8" fill="#dbeafe" stroke="#326CE5" stroke-width="2"/>
+                <text x="130" y="88" text-anchor="middle" font-size="13" font-weight="bold" fill="#1d4ed8">Configuration</text>
+                <text x="130" y="108" text-anchor="middle" font-size="10" fill="#1d4ed8" font-family="monospace">*.tf, *.tfvars</text>
+                <line x1="220" y1="95" x2="280" y2="95" stroke="#326CE5" stroke-width="2" marker-end="url(#tf1)"/>
+                <rect x="280" y="55" width="160" height="80" rx="10" fill="#f8fafc" stroke="#326CE5" stroke-width="3"/>
+                <text x="360" y="85" text-anchor="middle" font-size="14" font-weight="bold" fill="#1d4ed8">Terraform CLI</text>
                 <text x="360" y="105" text-anchor="middle" font-size="10" fill="#64748b">init · plan · apply</text>
-                <line x1="440" y1="95" x2="500" y2="95" stroke="#7B42BC" stroke-width="2" marker-end="url(#tf1)"/>
+                <line x1="440" y1="95" x2="500" y2="95" stroke="#326CE5" stroke-width="2" marker-end="url(#tf1)"/>
                 <rect x="500" y="55" width="180" height="80" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
                 <text x="590" y="85" text-anchor="middle" font-size="13" font-weight="bold" fill="#1e40af">Providers</text>
                 <text x="590" y="105" text-anchor="middle" font-size="10" fill="#1e3a8a" font-family="monospace">aws, random, ...</text>
@@ -23,11 +23,11 @@ TF_SVG_FOUNDATIONS = """
                 <text x="380" y="210" text-anchor="middle" font-size="13" font-weight="bold" fill="#92400e">State File</text>
                 <text x="380" y="230" text-anchor="middle" font-size="10" fill="#78350f" font-family="monospace">terraform.tfstate</text>
                 <line x1="380" y1="135" x2="380" y2="180" stroke="#f59e0b" stroke-width="2" marker-end="url(#tf3)"/>
-                <rect x="40" y="280" width="870" height="80" rx="8" fill="#faf5ff" stroke="#a855f7" stroke-width="2"/>
-                <text x="475" y="310" text-anchor="middle" font-size="13" font-weight="bold" fill="#7e22ce">Lab 01 — terraform/essentials/labs/lab01-providers-init/</text>
-                <text x="475" y="335" text-anchor="middle" font-size="11" fill="#6b21a8">terraform init → terraform validate → (optional) terraform apply</text>
+                <rect x="40" y="280" width="870" height="80" rx="8" fill="#eff6ff" stroke="#326CE5" stroke-width="2"/>
+                <text x="475" y="310" text-anchor="middle" font-size="13" font-weight="bold" fill="#1d4ed8">Lab 01 — terraform/essentials/labs/lab01-providers-init/</text>
+                <text x="475" y="335" text-anchor="middle" font-size="11" fill="#1e40af">terraform init → terraform validate → (optional) terraform apply</text>
                 <defs>
-                    <marker id="tf1" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#7B42BC"/></marker>
+                    <marker id="tf1" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#326CE5"/></marker>
                     <marker id="tf2" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#3b82f6"/></marker>
                     <marker id="tf3" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#f59e0b"/></marker>
                 </defs>

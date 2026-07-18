@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ansible Extended Interactive Learning</title>
+    <title>Terraform &amp; Ansible Interactive Learning</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
@@ -177,74 +177,124 @@
 <body>
     <div class="container">
         <header>
-            <h1>Ansible Extended Interactive Learning</h1>
-            <p class="subtitle">4 visual explainers across 3 categories — facts, logic, dynamic inventory, and troubleshooting.</p>
-            <p class="subtitle" style="margin-top:8px;"><a href="../../../index.html" style="color:var(--blue);font-weight:700;text-decoration:none;">← All tracks catalog</a></p>
+            <h1>Terraform &amp; Ansible Interactive Learning</h1>
+            <p class="subtitle">23 visual explainers across 4 tracks — essentials bootcamps plus extended depth.</p>
+            <div class="stats">
+                <span>4 tracks</span>
+                <span>19 topic pages</span>
+                <span>Offline-capable HTML</span>
+            </div>
             <div class="search-bar">
-                <input type="text" id="catalog-search" placeholder="Search topics, e.g. facts, loops, dynamic inventory, break-fix..." autocomplete="off">
+                <input type="text" id="catalog-search" placeholder="Search topics, e.g. inventory, plan, vault, remote state..." autocomplete="off">
             </div>
         </header>
 
         <section class="section">
-            <div class="section-title">Browse by Category</div>
-            <div class="section-note">3 focused categories · Self-paced · Labs 01–09</div>
+            <div class="section-title">Browse by Track</div>
+            <div class="section-note">Bookmark this page — one catalog for Ansible essentials, Ansible extended, Terraform essentials, and Terraform extended.</div>
             <div class="catalog">
                 <table class="catalog-table">
                     <thead>
                         <tr>
-                            <th style="width: 20%;">Category</th>
+                            <th style="width: 20%;">Track</th>
                             <th style="width: 58%;">Pages</th>
-                            <th style="width: 22%;">Use</th>
+                            <th style="width: 22%;">Overview</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
                             <td>
-                                <span class="tag foundation">Foundation</span>
-                                <div class="category-name">Facts & Logic</div>
-                                <div class="category-copy">Gathering facts, custom facts, loops, and conditional execution.</div>
+                                <span class="tag tf-ess">Terraform Essentials</span>
+                                <div class="category-name">Terraform Essentials</div>
+                                <div class="category-copy">10-hour bootcamp · Labs 01–08</div>
+                                <a class="track-link" href="./terraform/essentials/html/index.html">Track catalog →</a>
                             </td>
                             <td>
                                 <div class="link-grid">
-                                    <div class="link-item"><a href="./facts.html">Facts</a><p>setup module and custom facts</p></div>
-                                    <div class="link-item"><a href="./loops-conditionals.html">Loops & Conditionals</a><p>loop, when, and until</p></div>
+                                    <div class="link-item"><a href="./terraform/essentials/html/foundations.html">Foundations</a><p>Providers, resources, and HCL</p></div>
+                                    <div class="link-item"><a href="./terraform/essentials/html/workflow.html">Workflow</a><p>Init, plan, apply, destroy</p></div>
+                                    <div class="link-item"><a href="./terraform/essentials/html/variables.html">Variables</a><p>Inputs, outputs, and tfvars</p></div>
+                                    <div class="link-item"><a href="./terraform/essentials/html/state.html">State</a><p>Local state and sensitivity</p></div>
+                                    <div class="link-item"><a href="./terraform/essentials/html/modules.html">Modules</a><p>Reusable root modules</p></div>
                                 </div>
                             </td>
-                            <td class="category-copy">Dynamic configuration based on host state.</td>
+                            <td class="category-copy">5 visual explainers across 3 categories — providers, workflow, variables, state, and modules.</td>
                         </tr>
                         <tr>
                             <td>
-                                <span class="tag ops">Ops</span>
-                                <div class="category-name">Inventory & Projects</div>
-                                <div class="category-copy">Dynamic inventory plugins and multi-playbook project layouts.</div>
+                                <span class="tag tf-ext">Terraform Extended</span>
+                                <div class="category-name">Terraform Extended</div>
+                                <div class="category-copy">Self-paced · Labs 01–15</div>
+                                <a class="track-link" href="./terraform/extended/html/index.html">Track catalog →</a>
                             </td>
                             <td>
                                 <div class="link-grid">
-                                    <div class="link-item"><a href="./dynamic-inventory.html">Dynamic Inventory</a><p>AWS EC2 plugin</p></div>
+                                    <div class="link-item"><a href="./terraform/extended/html/state.html">Remote State</a><p>S3, locking, and migration</p></div>
+                                    <div class="link-item"><a href="./terraform/extended/html/provisioners.html">Provisioners</a><p>local-exec and remote-exec</p></div>
+                                    <div class="link-item"><a href="./terraform/extended/html/functions.html">Functions</a><p>for_each, lookup, and collections</p></div>
+                                    <div class="link-item"><a href="./terraform/extended/html/projects.html">Capstone Projects</a><p>VPC and multi-tier patterns</p></div>
                                 </div>
                             </td>
-                            <td class="category-copy">Cloud-native inventory and team project structure.</td>
+                            <td class="category-copy">4 visual explainers across 3 categories — remote state, provisioners, functions, and capstones.</td>
                         </tr>
                         <tr>
                             <td>
-                                <span class="tag prod">Prod</span>
-                                <div class="category-name">Troubleshooting</div>
-                                <div class="category-copy">Break-fix drills, verbose output, and systematic diagnosis.</div>
+                                <span class="tag ans-ess">Ansible Essentials</span>
+                                <div class="category-name">Ansible Essentials</div>
+                                <div class="category-copy">10-hour bootcamp · Labs 01–07</div>
+                                <a class="track-link" href="./ansible/essentials/html/index.html">Track catalog →</a>
                             </td>
                             <td>
                                 <div class="link-grid">
-                                    <div class="link-item"><a href="./break-fix.html">Break-Fix Drills</a><p>Structured troubleshooting</p></div>
+                                    <div class="link-item"><a href="./ansible/essentials/html/ansible-architecture.html">Architecture</a><p>Control vs managed nodes</p></div>
+                                    <div class="link-item"><a href="./ansible/essentials/html/inventory-flow.html">Inventory Flow</a><p>INI, YAML, and group_vars</p></div>
+                                    <div class="link-item"><a href="./ansible/essentials/html/adhoc-vs-playbook.html">Ad Hoc vs Playbook</a><p>When to use each</p></div>
+                                    <div class="link-item"><a href="./ansible/essentials/html/playbook-handlers.html">Handlers</a><p>notify and service restarts</p></div>
+                                    <div class="link-item"><a href="./ansible/essentials/html/variables-templates.html">Variables & Templates</a><p>Jinja2 and facts</p></div>
+                                    <div class="link-item"><a href="./ansible/essentials/html/roles-and-vault.html">Roles & Vault</a><p>Role layout and encryption</p></div>
                                 </div>
                             </td>
-                            <td class="category-copy">Exam prep and on-call debugging practice.</td>
+                            <td class="category-copy">6 visual explainers across 3 categories — architecture, inventory, playbooks, and roles.</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span class="tag ans-ext">Ansible Extended</span>
+                                <div class="category-name">Ansible Extended</div>
+                                <div class="category-copy">Self-paced · Labs 01–09</div>
+                                <a class="track-link" href="./ansible/extended/html/index.html">Track catalog →</a>
+                            </td>
+                            <td>
+                                <div class="link-grid">
+                                    <div class="link-item"><a href="./ansible/extended/html/facts.html">Facts</a><p>setup module and custom facts</p></div>
+                                    <div class="link-item"><a href="./ansible/extended/html/loops-conditionals.html">Loops & Conditionals</a><p>loop, when, and until</p></div>
+                                    <div class="link-item"><a href="./ansible/extended/html/dynamic-inventory.html">Dynamic Inventory</a><p>AWS EC2 plugin</p></div>
+                                    <div class="link-item"><a href="./ansible/extended/html/break-fix.html">Break-Fix Drills</a><p>Structured troubleshooting</p></div>
+                                </div>
+                            </td>
+                            <td class="category-copy">4 visual explainers across 3 categories — facts, logic, dynamic inventory, and troubleshooting.</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
         </section>
 
+        <section class="section">
+            <div class="section-title">Lab manuals &amp; curriculum</div>
+            <div class="section-note">Markdown lab guides and bootcamp agenda (same repo).</div>
+            <div class="catalog" style="padding:16px;">
+                <div class="link-grid">
+                    <div class="link-item"><a href="./curriculum/20-hour-bootcamp.md">20-hour bootcamp</a><p>Full agenda</p></div>
+                    <div class="link-item"><a href="./ansible/essentials/labmanuals/">Ansible essentials labs</a><p>Labs 01–07</p></div>
+                    <div class="link-item"><a href="./ansible/extended/labmanuals/">Ansible extended labs</a><p>Advanced drills</p></div>
+                    <div class="link-item"><a href="./terraform/essentials/labmanuals/">Terraform essentials labs</a><p>Labs 01–08</p></div>
+                    <div class="link-item"><a href="./terraform/extended/labmanuals/">Terraform extended labs</a><p>Remote state &amp; more</p></div>
+                    <div class="link-item"><a href="./curriculum/setup/aws-lab-environment.md">AWS lab setup</a><p>Environment prep</p></div>
+                </div>
+            </div>
+        </section>
+
         <div class="no-results" id="no-results">No topics match your search.</div>
-        <div class="footer">4 interactive topic pages — <a href="../../../index.html" style="color:var(--blue);">All tracks</a></div>
+        <div class="footer">19 interactive topic pages across 4 tracks — open any link offline in your browser.</div>
     </div>
 
     <script>

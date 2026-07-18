@@ -11,9 +11,6 @@ TRACKS = {
     "terraform/essentials": {
         "title": "Terraform Essentials Interactive Learning",
         "subtitle": "5 visual explainers across 3 categories — providers, workflow, variables, state, and modules.",
-        "brand": "#7B42BC",
-        "brand_deep": "#5c2d94",
-        "brand_sky": "#ede4f7",
         "search_placeholder": "Search topics, e.g. init, plan, variables, modules...",
         "categories": [
             {
@@ -50,9 +47,6 @@ TRACKS = {
     "terraform/extended": {
         "title": "Terraform Extended Interactive Learning",
         "subtitle": "4 visual explainers across 3 categories — remote state, provisioners, functions, and capstones.",
-        "brand": "#6236a5",
-        "brand_deep": "#4a2878",
-        "brand_sky": "#ede4f7",
         "search_placeholder": "Search topics, e.g. S3 backend, provisioner, for_each...",
         "categories": [
             {
@@ -84,9 +78,6 @@ TRACKS = {
     "ansible/essentials": {
         "title": "Ansible Essentials Interactive Learning",
         "subtitle": "6 visual explainers across 3 categories — architecture, inventory, playbooks, and roles.",
-        "brand": "#EE0000",
-        "brand_deep": "#CC0000",
-        "brand_sky": "#ffe4e6",
         "search_placeholder": "Search topics, e.g. inventory, playbook, handlers, vault...",
         "categories": [
             {
@@ -122,9 +113,6 @@ TRACKS = {
     "ansible/extended": {
         "title": "Ansible Extended Interactive Learning",
         "subtitle": "4 visual explainers across 3 categories — facts, logic, dynamic inventory, and troubleshooting.",
-        "brand": "#CC0000",
-        "brand_deep": "#990000",
-        "brand_sky": "#ffe4e6",
         "search_placeholder": "Search topics, e.g. facts, loops, dynamic inventory, break-fix...",
         "categories": [
             {
@@ -156,12 +144,42 @@ TRACKS = {
 }
 
 
-def topic_css(brand: str, brand_deep: str, brand_sky: str) -> str:
-    return f"""        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
-        :root {{
-            --brand: {brand};
-            --brand-deep: {brand_deep};
-            --brand-sky: {brand_sky};
+# Unified k8sforbeginners palette — same on every page (see k8s/html/cronjobs-scheduling.html)
+KUBE_BLUE = "#326CE5"
+KUBE_BLUE_DEEP = "#1d4ed8"
+KUBE_SKY = "#dbeafe"
+
+TRACK_META = {
+    "terraform/essentials": {
+        "tag_class": "tf-ess",
+        "track_title": "Terraform Essentials",
+        "bootcamp": "10-hour bootcamp · Labs 01–08",
+    },
+    "terraform/extended": {
+        "tag_class": "tf-ext",
+        "track_title": "Terraform Extended",
+        "bootcamp": "Self-paced · Labs 01–15",
+    },
+    "ansible/essentials": {
+        "tag_class": "ans-ess",
+        "track_title": "Ansible Essentials",
+        "bootcamp": "10-hour bootcamp · Labs 01–07",
+    },
+    "ansible/extended": {
+        "tag_class": "ans-ext",
+        "track_title": "Ansible Extended",
+        "bootcamp": "Self-paced · Labs 01–09",
+    },
+}
+
+
+def topic_css() -> str:
+    """CSS aligned with k8sforbeginners interactive pages (kube-blue, not per-track red/purple)."""
+    return """        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --kube-blue: #326CE5;
+            --kube-blue-deep: #1d4ed8;
+            --kube-sky: #dbeafe;
             --ink: #1a1a2e;
             --muted: #64748b;
             --surface: #ffffff;
@@ -175,16 +193,16 @@ def topic_css(brand: str, brand_deep: str, brand_sky: str) -> str:
             --slate-700: #334155;
             --slate-500: #64748b;
             --slate-200: #e2e8f0;
-        }}
-        body {{
+        }
+        body {
             font-family: "Segoe UI", system-ui, sans-serif;
             background: linear-gradient(180deg, #f8fbff 0%, #eef4fb 100%);
             color: var(--ink);
             line-height: 1.6;
             padding: 20px;
-        }}
-        .container {{ max-width: 1380px; margin: 0 auto; }}
-        .hero {{
+        }
+        .container { max-width: 1380px; margin: 0 auto; }
+        .hero {
             position: relative;
             text-align: center;
             background: white;
@@ -192,67 +210,91 @@ def topic_css(brand: str, brand_deep: str, brand_sky: str) -> str:
             padding: 34px 32px 28px;
             box-shadow: 0 4px 18px rgba(15, 23, 42, 0.08);
             margin-bottom: 26px;
-            border: 1px solid color-mix(in srgb, var(--brand) 10%, transparent);
-        }}
-        .eyebrow {{
+            border: 1px solid rgba(50,108,229,0.1);
+        }
+        .eyebrow {
             display: inline-flex;
             align-items: center;
             gap: 8px;
             padding: 6px 12px;
             border-radius: 999px;
-            background: var(--brand-sky);
-            color: var(--brand-deep);
+            background: #e8f1ff;
+            color: var(--kube-blue-deep);
             font-size: 0.82rem;
             font-weight: 700;
             letter-spacing: 0.08em;
             text-transform: uppercase;
             margin-bottom: 14px;
-        }}
-        h1 {{
+        }
+        h1 {
             font-size: clamp(2rem, 4vw, 3rem);
-            color: var(--brand);
+            color: var(--kube-blue);
             margin-bottom: 10px;
             line-height: 1.1;
-        }}
-        .subtitle {{
+        }
+        .subtitle {
             font-size: 1.03rem;
             color: var(--muted);
             max-width: 980px;
             margin: 0 auto 18px;
-        }}
-        .lead-panel {{
-            background: linear-gradient(180deg, #f8fbff 0%, color-mix(in srgb, var(--brand-sky) 60%, white) 100%);
-            border: 1px solid color-mix(in srgb, var(--brand) 12%, transparent);
+        }
+        .lead-panel {
+            background: linear-gradient(180deg, #f8fbff 0%, #eef5ff 100%);
+            border: 1px solid rgba(50,108,229,0.12);
             border-radius: 14px;
             padding: 18px 20px;
             max-width: 980px;
             margin: 0 auto;
-        }}
-        .lead-panel p {{ color: #334155; font-size: 0.98rem; }}
-        .controls {{
+        }
+        .lead-panel p { color: #334155; font-size: 0.98rem; }
+        .nav-links {
+            position: absolute;
+            top: 16px;
+            right: 20px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+        .nav-links a {
+            color: var(--kube-blue);
+            text-decoration: none;
+            font-size: 0.88rem;
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: 8px;
+            border: 1px solid rgba(50,108,229,0.18);
+            background: rgba(50,108,229,0.06);
+            transition: background 0.2s, color 0.2s;
+        }
+        .nav-links a:hover {
+            background: rgba(50,108,229,0.13);
+            color: var(--kube-blue-deep);
+        }
+        .controls {
             display: flex;
             gap: 12px;
             flex-wrap: wrap;
             justify-content: center;
             margin: 0 0 24px;
-        }}
-        .btn {{
-            border: 2px solid var(--brand);
+        }
+        .btn {
+            border: 2px solid #326CE5;
             background: white;
-            color: var(--brand-deep);
+            color: var(--kube-blue-deep);
             padding: 11px 20px;
             border-radius: 8px;
             font-weight: 700;
             cursor: pointer;
             transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
-        }}
-        .btn:hover, .btn.active {{
-            background: var(--brand);
+        }
+        .btn:hover, .btn.active {
+            background: var(--kube-blue);
             color: white;
-            box-shadow: 0 4px 12px color-mix(in srgb, var(--brand) 30%, transparent);
+            box-shadow: 0 4px 12px rgba(50,108,229,0.3);
             transform: translateY(-2px);
-        }}
-        .view {{
+        }
+        .view {
             display: none;
             background: var(--panel);
             border-radius: 12px;
@@ -260,9 +302,9 @@ def topic_css(brand: str, brand_deep: str, brand_sky: str) -> str:
             padding: 30px;
             margin-bottom: 26px;
             border: 1px solid rgba(15,23,42,0.04);
-        }}
-        .view.active {{ display: block; }}
-        .section-head {{
+        }
+        .view.active { display: block; }
+        .section-head {
             display: flex;
             justify-content: space-between;
             gap: 18px;
@@ -271,101 +313,103 @@ def topic_css(brand: str, brand_deep: str, brand_sky: str) -> str:
             margin-bottom: 24px;
             padding-bottom: 14px;
             border-bottom: 1px solid #e2e8f0;
-        }}
-        .section-head h2 {{ color: var(--ink); font-size: 1.45rem; }}
-        .section-kicker {{
-            color: var(--brand-deep);
+        }
+        .section-head h2 { color: var(--ink); font-size: 1.45rem; }
+        .section-kicker {
+            color: var(--kube-blue-deep);
             text-transform: uppercase;
             font-size: 0.76rem;
             font-weight: 800;
             letter-spacing: 0.1em;
             margin-bottom: 10px;
-        }}
-        .section-note {{
-            border-left: 4px solid var(--brand);
-            background: color-mix(in srgb, var(--brand-sky) 50%, white);
-            color: var(--brand-deep);
+        }
+        .section-note {
+            border-left: 4px solid var(--kube-blue);
+            background: #eff6ff;
+            color: #1e3a8a;
             padding: 14px 16px;
             border-radius: 12px;
             margin-top: 18px;
-        }}
-        .concept-grid, .practice-grid {{
+        }
+        .section-note a { color: var(--kube-blue-deep); }
+        .concept-grid, .practice-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));
             gap: 18px;
-        }}
-        .card {{
+        }
+        .card {
             background: linear-gradient(180deg, #ffffff, #f8fbff);
             border: 1px solid var(--line);
-            border-top: 4px solid var(--brand);
+            border-top: 4px solid #326CE5;
             border-radius: 16px;
             padding: 20px;
             min-height: 170px;
             box-shadow: 0 6px 18px rgba(15,23,42,0.05);
             transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }}
-        .card:hover, .flow-step:hover, .example-card:hover {{
+        }
+        .card:hover, .flow-step:hover, .example-card:hover {
             transform: translateY(-3px);
             box-shadow: 0 10px 24px rgba(15,23,42,0.1);
-        }}
-        .card-badge {{
+        }
+        .card-badge {
             display: inline-flex;
             padding: 6px 12px;
             border-radius: 999px;
-            background: var(--brand-sky);
-            color: var(--brand-deep);
+            background: var(--kube-sky);
+            color: var(--kube-blue-deep);
             font-weight: 700;
             margin-bottom: 14px;
-        }}
-        .practice-card .card-badge {{ background: var(--mint); color: #166534; }}
-        .practice-card {{ border-top-color: #22c55e; }}
-        .card p {{ color: #475569; }}
-        .flow-track {{
+        }
+        .practice-card .card-badge { background: var(--mint); color: #166534; }
+        .practice-card { border-top-color: #22c55e; }
+        .card p { color: #475569; }
+        .card a, .practice-card a { color: var(--kube-blue); font-weight: 600; }
+        .flow-track {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));
             gap: 18px;
-        }}
-        .flow-step {{
+        }
+        .flow-step {
             position: relative;
             border-radius: 16px;
             padding: 22px 18px 18px;
-            border: 1px solid color-mix(in srgb, var(--brand) 18%, transparent);
-            background: linear-gradient(160deg, #ffffff 0%, color-mix(in srgb, var(--brand-sky) 40%, white) 100%);
+            border: 1px solid rgba(50,108,229,0.18);
+            background: linear-gradient(160deg, #ffffff 0%, #eff6ff 100%);
             transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }}
-        .step-number {{
+        }
+        .step-number {
             width: 42px;
             height: 42px;
             border-radius: 50%;
             display: grid;
             place-items: center;
-            background: var(--brand);
+            background: var(--kube-blue);
             color: white;
             font-weight: 800;
             margin-bottom: 14px;
-            box-shadow: 0 10px 20px color-mix(in srgb, var(--brand) 22%, transparent);
-        }}
-        .flow-step h3 {{ font-size: 1rem; margin-bottom: 10px; color: #0f172a; }}
-        .flow-step p {{ color: #475569; font-size: 0.95rem; }}
-        .example-stack {{ display: grid; gap: 18px; }}
-        .example-card {{
+            box-shadow: 0 10px 20px rgba(50,108,229,0.22);
+        }
+        .flow-step h3 { font-size: 1rem; margin-bottom: 10px; color: #0f172a; }
+        .flow-step p { color: #475569; font-size: 0.95rem; }
+        .example-stack { display: grid; gap: 18px; }
+        .example-card {
             border: 1px solid rgba(15,23,42,0.08);
             border-radius: 16px;
             padding: 18px;
             background: linear-gradient(180deg, #ffffff, #f8fafc);
             transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }}
-        .lab-callout {{
-            border: 1px dashed color-mix(in srgb, var(--brand) 35%, transparent);
+        }
+        .lab-callout {
+            border: 1px dashed rgba(50,108,229,0.35);
             border-radius: 12px;
             padding: 14px 16px;
             margin: 14px 0;
-            background: color-mix(in srgb, var(--brand-sky) 35%, white);
+            background: #eff6ff;
             color: #334155;
             font-size: 0.92rem;
-        }}
-        .lab-callout strong {{ color: var(--brand-deep); }}
-        pre {{
+        }
+        .lab-callout strong { color: var(--kube-blue-deep); }
+        pre {
             margin-top: 10px;
             background: #0f172a;
             color: #dbeafe;
@@ -378,65 +422,66 @@ def topic_css(brand: str, brand_deep: str, brand_sky: str) -> str:
             font-size: 0.88rem;
             line-height: 1.55;
             border: 1px solid rgba(148,163,184,0.18);
-        }}
-        code {{ font-family: Consolas, 'Cascadia Code', monospace; }}
-        .table-wrap {{
+        }
+        code { font-family: Consolas, 'Cascadia Code', monospace; }
+        .table-wrap {
             overflow-x: auto;
             border-radius: 16px;
             border: 1px solid var(--line);
             background: white;
-        }}
-        table {{ width: 100%; border-collapse: collapse; }}
-        th, td {{
+        }
+        table { width: 100%; border-collapse: collapse; }
+        th, td {
             padding: 14px 16px;
             text-align: left;
             border-bottom: 1px solid #e2e8f0;
             vertical-align: top;
-        }}
-        th {{
-            background: linear-gradient(180deg, var(--brand), var(--brand-deep));
+        }
+        th {
+            background: linear-gradient(180deg, #326CE5, #2557be);
             color: white;
             font-weight: 700;
-        }}
-        tbody tr:nth-child(even) {{ background: #f8fbff; }}
-        .footer-note {{
+        }
+        tbody tr:nth-child(even) { background: #f8fbff; }
+        .footer-note {
             text-align: center;
             color: var(--muted);
             font-size: 0.9rem;
             margin-top: 18px;
-        }}
-        .footer-note a {{ color: var(--brand); text-decoration: none; }}
-        .footer-note a:hover {{ text-decoration: underline; }}
-        @media (max-width: 900px) {{
-            body {{ padding: 14px; }}
-            .hero, .view {{ padding: 22px; }}
-            .controls {{ justify-content: flex-start; }}
-            .concept-grid, .practice-grid, .flow-track {{ grid-template-columns: 1fr; }}
-        }}
-        .home-link {{
+        }
+        .footer-note a { color: var(--kube-blue); text-decoration: none; }
+        .footer-note a:hover { text-decoration: underline; }
+        @media (max-width: 900px) {
+            body { padding: 14px; }
+            .hero, .view { padding: 22px; }
+            .controls { justify-content: flex-start; }
+            .concept-grid, .practice-grid, .flow-track { grid-template-columns: 1fr; }
+            .nav-links { position: static; justify-content: center; margin-bottom: 12px; }
+        }
+        .home-link {
             position: absolute;
             top: 16px;
             right: 20px;
-            color: var(--brand);
+            color: var(--kube-blue);
             text-decoration: none;
             font-size: 0.88rem;
             font-weight: 600;
             padding: 6px 14px;
             border-radius: 8px;
-            border: 1px solid color-mix(in srgb, var(--brand) 18%, transparent);
-            background: color-mix(in srgb, var(--brand) 6%, transparent);
+            border: 1px solid rgba(50,108,229,0.18);
+            background: rgba(50,108,229,0.06);
             transition: background 0.2s, color 0.2s;
-        }}
-        .home-link:hover {{
-            background: color-mix(in srgb, var(--brand) 13%, transparent);
-            color: var(--brand-deep);
-        }}"""
+        }
+        .home-link:hover {
+            background: rgba(50,108,229,0.13);
+            color: var(--kube-blue-deep);
+        }"""
 
 
-def index_css(brand: str) -> str:
-    return f"""        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
-        :root {{
-            --blue: {brand};
+def index_css() -> str:
+    return """        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --blue: #2563eb;
             --cyan: #06b6d4;
             --slate-900: #0f172a;
             --slate-700: #334155;
@@ -446,39 +491,46 @@ def index_css(brand: str) -> str:
             --green: #16a34a;
             --amber: #d97706;
             --rose: #e11d48;
-        }}
-        body {{
+        }
+        body {
             font-family: "Segoe UI", system-ui, sans-serif;
             background: linear-gradient(180deg, #f8fbff 0%, #eef4fb 100%);
             color: var(--slate-900);
             padding: 20px;
             line-height: 1.6;
-        }}
-        .container {{ max-width: 1380px; margin: 0 auto; }}
-        header {{
+        }
+        .container { max-width: 1380px; margin: 0 auto; }
+        header {
             margin-bottom: 22px;
             padding: 18px 24px;
             border-radius: 14px;
             background: #ffffff;
-            border: 1px solid color-mix(in srgb, var(--blue) 10%, transparent);
+            border: 1px solid rgba(37, 99, 235, 0.10);
             box-shadow: 0 2px 12px rgba(15, 23, 42, 0.06);
             text-align: center;
-        }}
-        h1 {{
+        }
+        h1 {
             font-size: 1.6rem;
             color: var(--blue);
             margin-bottom: 4px;
-        }}
-        .subtitle {{
+        }
+        .subtitle {
             color: var(--slate-500);
             font-size: 0.92rem;
-        }}
-        .search-bar {{
+        }
+        .stats {
+            display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+            margin-top: 12px; font-size: 0.82rem; color: var(--slate-700);
+        }
+        .stats span {
+            padding: 4px 10px; background: #eff6ff; border-radius: 999px;
+        }
+        .search-bar {
             margin-top: 16px;
             display: flex;
             justify-content: center;
-        }}
-        .search-bar input {{
+        }
+        .search-bar input {
             width: 100%;
             max-width: 480px;
             padding: 10px 16px 10px 40px;
@@ -490,45 +542,45 @@ def index_css(brand: str) -> str:
             background: #f8fafc url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2394a3b8' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zm-5.242.156a5 5 0 1 1 0-10 5 5 0 0 1 0 10z'/%3E%3C/svg%3E") no-repeat 14px center;
             outline: none;
             transition: border-color 0.2s, box-shadow 0.2s;
-        }}
-        .search-bar input:focus {{
+        }
+        .search-bar input:focus {
             border-color: var(--blue);
-            box-shadow: 0 0 0 3px color-mix(in srgb, var(--blue) 12%, transparent);
-        }}
-        .search-bar input::placeholder {{ color: #94a3b8; }}
-        .no-results {{
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+        }
+        .search-bar input::placeholder { color: #94a3b8; }
+        .no-results {
             text-align: center;
             color: var(--slate-500);
             padding: 24px;
             font-size: 0.92rem;
             display: none;
-        }}
-        .section {{ margin-bottom: 22px; }}
-        .section-title {{ font-size: 1.2rem; font-weight: 800; margin-bottom: 6px; }}
-        .section-note {{ color: var(--slate-500); font-size: 0.88rem; margin-bottom: 12px; }}
-        .catalog {{
+        }
+        .section { margin-bottom: 22px; }
+        .section-title { font-size: 1.2rem; font-weight: 800; margin-bottom: 6px; }
+        .section-note { color: var(--slate-500); font-size: 0.88rem; margin-bottom: 12px; }
+        .catalog {
             background: rgba(255,255,255,0.92);
             border: 1px solid var(--slate-200);
             border-radius: 16px;
             padding: 8px;
             box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
-        }}
-        table.catalog-table {{ width: 100%; border-collapse: collapse; }}
-        .catalog-table th, .catalog-table td {{
+        }
+        table.catalog-table { width: 100%; border-collapse: collapse; }
+        .catalog-table th, .catalog-table td {
             padding: 12px;
             text-align: left;
             vertical-align: top;
             border-bottom: 1px solid var(--slate-200);
-        }}
-        .catalog-table th {{
+        }
+        .catalog-table th {
             font-size: 0.78rem;
             text-transform: uppercase;
             letter-spacing: 0.04em;
             color: var(--slate-500);
             background: rgba(248, 250, 252, 0.9);
-        }}
-        .catalog-table tr:last-child td {{ border-bottom: none; }}
-        .tag {{
+        }
+        .catalog-table tr:last-child td { border-bottom: none; }
+        .tag {
             display: inline-block;
             margin-bottom: 6px;
             padding: 4px 8px;
@@ -536,51 +588,64 @@ def index_css(brand: str) -> str:
             font-size: 0.68rem;
             font-weight: 800;
             letter-spacing: 0.03em;
-        }}
-        .tag.foundation {{ background: #dbeafe; color: #1d4ed8; }}
-        .tag.ops {{ background: #dcfce7; color: #166534; }}
-        .tag.prod {{ background: #fef3c7; color: #92400e; }}
-        .tag.ref {{ background: #ffe4e6; color: #be123c; }}
-        .category-name {{ font-size: 0.94rem; font-weight: 800; margin-bottom: 4px; }}
-        .category-copy {{ color: var(--slate-500); font-size: 0.84rem; }}
-        .link-grid {{
+        }
+        .tag.foundation { background: #dbeafe; color: #1d4ed8; }
+        .tag.ops { background: #dcfce7; color: #166534; }
+        .tag.prod { background: #fef3c7; color: #92400e; }
+        .tag.ref { background: #ffe4e6; color: #be123c; }
+        .tag.tf-ess { background: #dbeafe; color: #1d4ed8; }
+        .tag.tf-ext { background: #e0e7ff; color: #3730a3; }
+        .tag.ans-ess { background: #dbeafe; color: #1e40af; }
+        .tag.ans-ext { background: #e0f2fe; color: #0369a1; }
+        .category-name { font-size: 0.94rem; font-weight: 800; margin-bottom: 4px; }
+        .category-copy { color: var(--slate-500); font-size: 0.84rem; }
+        .track-link {
+            display: inline-block;
+            margin-top: 6px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--blue);
+            text-decoration: none;
+        }
+        .track-link:hover { text-decoration: underline; }
+        .link-grid {
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
             gap: 8px 12px;
-        }}
-        .link-item {{
+        }
+        .link-item {
             padding: 7px 9px;
             border: 1px solid var(--slate-200);
             border-radius: 10px;
             background: linear-gradient(180deg, #fff 0%, #f8fbff 100%);
             transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-        }}
-        .link-item:hover {{
+        }
+        .link-item:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
-            border-color: color-mix(in srgb, var(--blue) 30%, transparent);
-        }}
-        .link-item a {{ text-decoration: none; color: var(--blue); font-weight: 700; font-size: 0.84rem; }}
-        .link-item p {{ color: var(--slate-500); font-size: 0.76rem; margin-top: 2px; }}
-        .footer {{
+            border-color: #bfdbfe;
+        }
+        .link-item a { text-decoration: none; color: var(--blue); font-weight: 700; font-size: 0.84rem; }
+        .link-item p { color: var(--slate-500); font-size: 0.76rem; margin-top: 2px; }
+        .footer {
             margin-top: 24px;
             text-align: center;
             color: var(--slate-500);
             font-size: 0.84rem;
             padding-bottom: 12px;
-        }}
-        @media (max-width: 1200px) {{
-            .link-grid {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
-        }}
-        @media (max-width: 768px) {{
-            body {{ padding: 12px; }}
-            h1 {{ font-size: 1.3rem; }}
-            .link-grid {{ grid-template-columns: 1fr; }}
-            .catalog-table, .catalog-table thead, .catalog-table tbody, .catalog-table th, .catalog-table td, .catalog-table tr {{ display: block; }}
-            .catalog-table thead {{ display: none; }}
-            .catalog-table td {{ border-bottom: none; padding-top: 6px; padding-bottom: 6px; }}
-            .catalog-table tr {{ border-bottom: 1px solid var(--slate-200); padding: 8px 0; }}
-        }}"""
+        }
+        @media (max-width: 1200px) {
+            .link-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+        @media (max-width: 768px) {
+            body { padding: 12px; }
+            h1 { font-size: 1.3rem; }
+            .link-grid { grid-template-columns: 1fr; }
+            .catalog-table, .catalog-table thead, .catalog-table tbody, .catalog-table th, .catalog-table td, .catalog-table tr { display: block; }
+            .catalog-table thead { display: none; }
+            .catalog-table td { border-bottom: none; padding-top: 6px; padding-bottom: 6px; }
+            .catalog-table tr { border-bottom: 1px solid var(--slate-200); padding: 8px 0; }
+        }"""
 
 
 TAB_JS = """
@@ -630,7 +695,12 @@ def view_section(vid: str, kicker: str, title: str, body: str, active: bool = Fa
         </section>"""
 
 
-def render_topic(topic: dict, track: dict) -> str:
+def rel_to_root(track_key: str) -> str:
+    depth = len(Path(track_key).parts) + 1
+    return "/".join([".."] * depth) + "/index.html"
+
+
+def render_topic(topic: dict, track_key: str) -> str:
     tabs = topic["tabs"]
     tab_buttons = "\n".join(
         f'            <button class="btn{" active" if i == 0 else ""}" data-view="{t["id"]}">{t["label"]}</button>'
@@ -639,7 +709,9 @@ def render_topic(topic: dict, track: dict) -> str:
     sections = []
     for i, t in enumerate(tabs):
         sections.append(view_section(t["id"], t["kicker"], t["title"], t["body"], active=(i == 0)))
-    css = topic_css(track["brand"], track["brand_deep"], track["brand_sky"])
+    css = topic_css()
+    root_href = rel_to_root(track_key)
+    meta = TRACK_META[track_key]
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -653,7 +725,10 @@ def render_topic(topic: dict, track: dict) -> str:
 <body>
     <div class="container">
         <header class="hero">
-            <a href="index.html" class="home-link">&#8962; Home</a>
+            <div class="nav-links">
+                <a href="{root_href}">All Tracks</a>
+                <a href="index.html">Track Catalog</a>
+            </div>
             <div class="eyebrow">{topic["eyebrow"]}</div>
             <h1>{topic["h1"]}</h1>
             <p class="subtitle">{topic["subtitle"]}</p>
@@ -667,6 +742,8 @@ def render_topic(topic: dict, track: dict) -> str:
         </div>
 
 {chr(10).join(sections)}
+
+        <p class="footer-note">{meta["track_title"]} · <a href="{root_href}">All tracks catalog</a> · <a href="index.html">Track index</a></p>
     </div>
 {TAB_JS}
 </body>
@@ -676,6 +753,8 @@ def render_topic(topic: dict, track: dict) -> str:
 
 def render_index(track_key: str, track: dict) -> str:
     page_count = sum(len(c["pages"]) for c in track["categories"])
+    meta = TRACK_META[track_key]
+    root_href = rel_to_root(track_key)
     rows = []
     for cat in track["categories"]:
         links = "\n".join(
@@ -697,7 +776,7 @@ def render_index(track_key: str, track: dict) -> str:
                             <td class="category-copy">{cat["use"]}</td>
                         </tr>"""
         )
-    css = index_css(track["brand"])
+    css = index_css()
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -713,6 +792,7 @@ def render_index(track_key: str, track: dict) -> str:
         <header>
             <h1>{track["title"]}</h1>
             <p class="subtitle">{track["subtitle"]}</p>
+            <p class="subtitle" style="margin-top:8px;"><a href="{root_href}" style="color:var(--blue);font-weight:700;text-decoration:none;">← All tracks catalog</a></p>
             <div class="search-bar">
                 <input type="text" id="catalog-search" placeholder="{track["search_placeholder"]}" autocomplete="off">
             </div>
@@ -720,7 +800,7 @@ def render_index(track_key: str, track: dict) -> str:
 
         <section class="section">
             <div class="section-title">Browse by Category</div>
-            <div class="section-note">{len(track["categories"])} focused categories following the essentials learning path.</div>
+            <div class="section-note">{len(track["categories"])} focused categories · {meta["bootcamp"]}</div>
             <div class="catalog">
                 <table class="catalog-table">
                     <thead>
@@ -738,7 +818,103 @@ def render_index(track_key: str, track: dict) -> str:
         </section>
 
         <div class="no-results" id="no-results">No topics match your search.</div>
-        <div class="footer">{page_count} interactive topic pages — open any link offline in your browser.</div>
+        <div class="footer">{page_count} interactive topic pages — <a href="{root_href}" style="color:var(--blue);">All tracks</a></div>
+    </div>
+{INDEX_JS}
+</body>
+</html>
+"""
+
+
+def render_root_index() -> str:
+    total_pages = sum(len(c["pages"]) for t in TRACKS.values() for c in t["categories"])
+    rows = []
+    for track_key, track in TRACKS.items():
+        meta = TRACK_META[track_key]
+        prefix = f"{track_key}/html"
+        links = "\n".join(
+            f'                                    <div class="link-item"><a href="./{prefix}/{href}">{title}</a><p>{desc}</p></div>'
+            for cat in track["categories"]
+            for href, title, desc in cat["pages"]
+        )
+        rows.append(
+            f"""                        <tr>
+                            <td>
+                                <span class="tag {meta["tag_class"]}">{meta["track_title"]}</span>
+                                <div class="category-name">{meta["track_title"]}</div>
+                                <div class="category-copy">{meta["bootcamp"]}</div>
+                                <a class="track-link" href="./{prefix}/index.html">Track catalog →</a>
+                            </td>
+                            <td>
+                                <div class="link-grid">
+{links}
+                                </div>
+                            </td>
+                            <td class="category-copy">{track["subtitle"]}</td>
+                        </tr>"""
+        )
+    css = index_css()
+    return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terraform &amp; Ansible Interactive Learning</title>
+    <style>
+{css}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Terraform &amp; Ansible Interactive Learning</h1>
+            <p class="subtitle">23 visual explainers across 4 tracks — essentials bootcamps plus extended depth.</p>
+            <div class="stats">
+                <span>4 tracks</span>
+                <span>{total_pages} topic pages</span>
+                <span>Offline-capable HTML</span>
+            </div>
+            <div class="search-bar">
+                <input type="text" id="catalog-search" placeholder="Search topics, e.g. inventory, plan, vault, remote state..." autocomplete="off">
+            </div>
+        </header>
+
+        <section class="section">
+            <div class="section-title">Browse by Track</div>
+            <div class="section-note">Bookmark this page — one catalog for Ansible essentials, Ansible extended, Terraform essentials, and Terraform extended.</div>
+            <div class="catalog">
+                <table class="catalog-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 20%;">Track</th>
+                            <th style="width: 58%;">Pages</th>
+                            <th style="width: 22%;">Overview</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+{chr(10).join(rows)}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-title">Lab manuals &amp; curriculum</div>
+            <div class="section-note">Markdown lab guides and bootcamp agenda (same repo).</div>
+            <div class="catalog" style="padding:16px;">
+                <div class="link-grid">
+                    <div class="link-item"><a href="./curriculum/20-hour-bootcamp.md">20-hour bootcamp</a><p>Full agenda</p></div>
+                    <div class="link-item"><a href="./ansible/essentials/labmanuals/">Ansible essentials labs</a><p>Labs 01–07</p></div>
+                    <div class="link-item"><a href="./ansible/extended/labmanuals/">Ansible extended labs</a><p>Advanced drills</p></div>
+                    <div class="link-item"><a href="./terraform/essentials/labmanuals/">Terraform essentials labs</a><p>Labs 01–08</p></div>
+                    <div class="link-item"><a href="./terraform/extended/labmanuals/">Terraform extended labs</a><p>Remote state &amp; more</p></div>
+                    <div class="link-item"><a href="./curriculum/setup/aws-lab-environment.md">AWS lab setup</a><p>Environment prep</p></div>
+                </div>
+            </div>
+        </section>
+
+        <div class="no-results" id="no-results">No topics match your search.</div>
+        <div class="footer">{total_pages} interactive topic pages across 4 tracks — open any link offline in your browser.</div>
     </div>
 {INDEX_JS}
 </body>
@@ -785,6 +961,10 @@ def main() -> None:
     from topic_pages import TOPICS
 
     results: list[tuple[str, int]] = []
+    root_path = ROOT / "index.html"
+    n = write_file(root_path, render_root_index())
+    results.append((str(root_path.relative_to(ROOT)), n))
+
     for track_key, track in TRACKS.items():
         index_path = ROOT / track_key / "html" / "index.html"
         n = write_file(index_path, render_index(track_key, track))
@@ -795,7 +975,7 @@ def main() -> None:
             if topic["track"] != track_key:
                 continue
             out = ROOT / track_key / "html" / topic["filename"]
-            n = write_file(out, render_topic(topic, track))
+            n = write_file(out, render_topic(topic, track_key))
             results.append((str(out.relative_to(ROOT)), n))
             topic_files.append(topic["filename"])
 

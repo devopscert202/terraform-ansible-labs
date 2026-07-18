@@ -31,6 +31,7 @@ titles_from_headings:
 
 # Ensure lab content is published (HTML is copied as static files without Liquid)
 include:
+  - index.html
   - ansible/essentials/docs
   - ansible/essentials/html
   - ansible/essentials/labmanuals
@@ -53,6 +54,7 @@ exclude:
   - node_modules
   - vendor
   - README.md
+  - index.md
   - ansible/**/labs
   - terraform/**/labs
   - ansible/projects
