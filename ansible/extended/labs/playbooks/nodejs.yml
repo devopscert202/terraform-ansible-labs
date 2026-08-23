@@ -1,9 +1,12 @@
 ---
-# Install Node.js 20 LTS and deploy a sample app (Lesson 5 LEP)
+# Install Node.js and deploy a sample app (Lesson 5 LEP)
+
 - name: Install Node.js and deploy lab application
-  hosts: appservers
+  hosts: webservers
   become: true
+
   tasks:
+
     - name: Install prerequisite packages
       ansible.builtin.apt:
         name:
@@ -17,28 +20,42 @@
       ansible.builtin.file:
         path: /etc/apt/keyrings
         state: directory
+        owner: root
+        group: root
         mode: "0755"
 
-    - name: Add NodeSource GPG key
+    - name: Download NodeSource GPG key
       ansible.builtin.get_url:
         url: https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key
-        dest: /etc/apt/keyrings/nodesource.gpg
+        dest: /tmp/nodesource-repo.gpg.key
+        owner: root
+        group: root
         mode: "0644"
+
+    - name: Convert NodeSource GPG key to keyring format
+      ansible.builtin.command:
+        cmd: >
+          gpg --dearmor
+          --yes
+          --output /etc/apt/keyrings/nodesource.gpg
+          /tmp/nodesource-repo.gpg.key
+      changed_when: false
 
     - name: Add NodeSource apt repository
       ansible.builtin.apt_repository:
         repo: "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_{{ nodejs_version }}.x nodistro main"
         filename: nodesource
         state: present
+        update_cache: true
 
     - name: Install Node.js
       ansible.builtin.apt:
         name: nodejs
         state: present
-        update_cache: true
 
     - name: Verify Node.js version
-      ansible.builtin.command: node --version
+      ansible.builtin.command:
+        cmd: node --version
       register: node_version
       changed_when: false
 
@@ -48,7 +65,7 @@
 
     - name: Create application directory
       ansible.builtin.file:
-        path: /opt/{{ nodejs_app_name }}
+        path: "/opt/{{ nodejs_app_name }}"
         state: directory
         owner: ubuntu
         group: ubuntu
@@ -57,7 +74,7 @@
     - name: Deploy application file
       ansible.builtin.template:
         src: app.js.j2
-        dest: /opt/{{ nodejs_app_name }}/app.js
+        dest: "/opt/{{ nodejs_app_name }}/app.js"
         owner: ubuntu
         group: ubuntu
         mode: "0644"
@@ -66,7 +83,9 @@
     - name: Deploy systemd unit
       ansible.builtin.template:
         src: nodejs-app.service.j2
-        dest: /etc/systemd/system/{{ nodejs_app_name }}.service
+        dest: "/etc/systemd/system/{{ nodejs_app_name }}.service"
+        owner: root
+        group: root
         mode: "0644"
       notify:
         - Reload systemd
@@ -80,6 +99,7 @@
         daemon_reload: true
 
   handlers:
+
     - name: Reload systemd
       ansible.builtin.systemd:
         daemon_reload: true
