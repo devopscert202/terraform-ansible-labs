@@ -59,7 +59,7 @@
 9. **Expected result**
 
    ```text
-   managed1 | SUCCESS => {
+   web1 | SUCCESS => {
        "changed": false,
        "ping": "pong"
    }
