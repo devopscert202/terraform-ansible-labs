@@ -46,8 +46,8 @@
 7. **Create Ansible inventory**
 
    ```ini
-   [managed]
-   managed1 ansible_host=localhost ansible_user=labuser
+   [webservers]
+   web1 ansible_host=localhost ansible_user=labuser
    ```
 
 8. **Test Ansible**
