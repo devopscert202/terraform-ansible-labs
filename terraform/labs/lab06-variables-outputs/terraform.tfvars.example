@@ -1,0 +1,11 @@
+# Copy this file to terraform.tfvars and edit the values.
+# terraform.tfvars is gitignored; this .example file is committed.
+
+aws_region    = "us-east-1"
+server_name   = "lab06-custom-web"
+instance_type = "t3.micro"
+
+tags = {
+  Environment = "training"
+  Owner       = "student-team"
+}

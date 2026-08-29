@@ -1,4 +1,9 @@
 <!DOCTYPE html>
+<!--
+    All-tracks catalog. Hand-maintained: no generator writes this file.
+    Terraform pages come from curriculum/gen_terraform_html.py and gen_aws_primer.py.
+    Ansible pages come from curriculum/build_k8s_style_html.py.
+-->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -119,8 +124,7 @@
         .tag.ops { background: #dcfce7; color: #166534; }
         .tag.prod { background: #fef3c7; color: #92400e; }
         .tag.ref { background: #ffe4e6; color: #be123c; }
-        .tag.tf-ess { background: #dbeafe; color: #1d4ed8; }
-        .tag.tf-ext { background: #e0e7ff; color: #3730a3; }
+        .tag.tf { background: #dbeafe; color: #1d4ed8; }
         .tag.ans-ess { background: #dbeafe; color: #1e40af; }
         .tag.ans-ext { background: #e0f2fe; color: #0369a1; }
         .category-name { font-size: 0.94rem; font-weight: 800; margin-bottom: 4px; }
@@ -178,10 +182,11 @@
     <div class="container">
         <header>
             <h1>Terraform &amp; Ansible Interactive Learning</h1>
-            <p class="subtitle">23 visual explainers across 4 tracks — essentials bootcamps plus extended depth.</p>
+            <p class="subtitle">16 offline pages across 3 tracks — a 20-hour bootcamp plus self-paced depth.</p>
             <div class="stats">
-                <span>4 tracks</span>
-                <span>19 topic pages</span>
+                <span>3 tracks</span>
+                <span>16 topic pages</span>
+                <span>22 Terraform labs</span>
                 <span>Offline-capable HTML</span>
             </div>
             <div class="search-bar">
@@ -191,7 +196,7 @@
 
         <section class="section">
             <div class="section-title">Browse by Track</div>
-            <div class="section-note">Bookmark this page — one catalog for Ansible essentials, Ansible extended, Terraform essentials, and Terraform extended.</div>
+            <div class="section-note">Bookmark this page — one catalog for the Terraform track, Ansible essentials, and Ansible extended.</div>
             <div class="catalog">
                 <table class="catalog-table">
                     <thead>
@@ -204,38 +209,21 @@
                     <tbody>
                         <tr>
                             <td>
-                                <span class="tag tf-ess">Terraform Essentials</span>
-                                <div class="category-name">Terraform Essentials</div>
-                                <div class="category-copy">10-hour bootcamp · Labs 01–08</div>
-                                <a class="track-link" href="./terraform/essentials/html/index.html">Track catalog →</a>
+                                <span class="tag tf">Terraform</span>
+                                <div class="category-name">Terraform</div>
+                                <div class="category-copy">22 labs · lab00–lab21 · Basic, Intermediate, Advanced</div>
+                                <a class="track-link" href="./terraform/html/index.html">Track catalog →</a>
                             </td>
                             <td>
                                 <div class="link-grid">
-                                    <div class="link-item"><a href="./terraform/essentials/html/foundations.html">Foundations</a><p>Providers, resources, and HCL</p></div>
-                                    <div class="link-item"><a href="./terraform/essentials/html/workflow.html">Workflow</a><p>Init, plan, apply, destroy</p></div>
-                                    <div class="link-item"><a href="./terraform/essentials/html/variables.html">Variables</a><p>Inputs, outputs, and tfvars</p></div>
-                                    <div class="link-item"><a href="./terraform/essentials/html/state.html">State</a><p>Local state and sensitivity</p></div>
-                                    <div class="link-item"><a href="./terraform/essentials/html/modules.html">Modules</a><p>Reusable root modules</p></div>
+                                    <div class="link-item"><a href="./terraform/html/terraform-101.html">Terraform 101</a><p>Read first — what Terraform is</p></div>
+                                    <div class="link-item"><a href="./terraform/html/aws-primer.html">AWS Primer</a><p>Read second — what a VPC is</p></div>
+                                    <div class="link-item"><a href="./terraform/html/basic.html">Basic</a><p>Credentials, providers, first EC2, workflow</p></div>
+                                    <div class="link-item"><a href="./terraform/html/intermediate.html">Intermediate</a><p>Variables, state, modules, collections</p></div>
+                                    <div class="link-item"><a href="./terraform/html/advanced.html">Advanced</a><p>Remote state, provisioners, capstone</p></div>
                                 </div>
                             </td>
-                            <td class="category-copy">5 visual explainers across 3 categories — providers, workflow, variables, state, and modules.</td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <span class="tag tf-ext">Terraform Extended</span>
-                                <div class="category-name">Terraform Extended</div>
-                                <div class="category-copy">Self-paced · Labs 01–15</div>
-                                <a class="track-link" href="./terraform/extended/html/index.html">Track catalog →</a>
-                            </td>
-                            <td>
-                                <div class="link-grid">
-                                    <div class="link-item"><a href="./terraform/extended/html/state.html">Remote State</a><p>S3, locking, and migration</p></div>
-                                    <div class="link-item"><a href="./terraform/extended/html/provisioners.html">Provisioners</a><p>local-exec and remote-exec</p></div>
-                                    <div class="link-item"><a href="./terraform/extended/html/functions.html">Functions</a><p>for_each, lookup, and collections</p></div>
-                                    <div class="link-item"><a href="./terraform/extended/html/projects.html">Capstone Projects</a><p>VPC and multi-tier patterns</p></div>
-                                </div>
-                            </td>
-                            <td class="category-copy">4 visual explainers across 3 categories — remote state, provisioners, functions, and capstones.</td>
+                            <td class="category-copy">One flat track of 22 labs in three tiers. Every topic gives the concept, a real example, a line-by-line explanation, and the lab that practises it.</td>
                         </tr>
                         <tr>
                             <td>
@@ -284,17 +272,18 @@
             <div class="catalog" style="padding:16px;">
                 <div class="link-grid">
                     <div class="link-item"><a href="./curriculum/20-hour-bootcamp.md">20-hour bootcamp</a><p>Full agenda</p></div>
+                    <div class="link-item"><a href="./curriculum/learning-paths.md">Learning paths</a><p>Instructor-led vs self-paced</p></div>
                     <div class="link-item"><a href="./ansible/essentials/labmanuals/">Ansible essentials labs</a><p>Labs 01–07</p></div>
                     <div class="link-item"><a href="./ansible/extended/labmanuals/">Ansible extended labs</a><p>Advanced drills</p></div>
-                    <div class="link-item"><a href="./terraform/essentials/labmanuals/">Terraform essentials labs</a><p>Labs 01–08</p></div>
-                    <div class="link-item"><a href="./terraform/extended/labmanuals/">Terraform extended labs</a><p>Remote state &amp; more</p></div>
+                    <div class="link-item"><a href="./terraform/labmanuals/README.md">Terraform lab index</a><p>All 22 labs, lab00–lab21</p></div>
+                    <div class="link-item"><a href="./terraform/README.md">Terraform track</a><p>Tiers, requirements, quick start</p></div>
                     <div class="link-item"><a href="./curriculum/setup/aws-lab-environment.md">AWS lab setup</a><p>Environment prep</p></div>
                 </div>
             </div>
         </section>
 
         <div class="no-results" id="no-results">No topics match your search.</div>
-        <div class="footer">19 interactive topic pages across 4 tracks — open any link offline in your browser.</div>
+        <div class="footer">16 interactive topic pages across 3 tracks — open any link offline in your browser.</div>
     </div>
 
     <script>

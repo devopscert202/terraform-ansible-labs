@@ -1,6 +1,6 @@
 # Terraform & Ansible Labs
 
-Hands-on curriculum for **configuration management** and **infrastructure as code**: a **20-hour essentials bootcamp** (10 h Ansible + 10 h Terraform) plus optional extended tracks for self-paced depth.
+Hands-on curriculum for **configuration management** and **infrastructure as code**: a **20-hour bootcamp** (10 h Ansible + 10 h Terraform) plus self-paced depth in both tracks.
 
 **Repository:** [github.com/devopscert202/terraform-ansible-labs](https://github.com/devopscert202/terraform-ansible-labs)
 
@@ -10,8 +10,9 @@ Hands-on curriculum for **configuration management** and **infrastructure as cod
 |--------------|-----------|
 | Ansible essentials | [open](https://devopscert202.github.io/terraform-ansible-labs/ansible/essentials/html/index.html) |
 | Ansible extended | [open](https://devopscert202.github.io/terraform-ansible-labs/ansible/extended/html/index.html) |
-| Terraform essentials | [open](https://devopscert202.github.io/terraform-ansible-labs/terraform/essentials/html/index.html) |
-| Terraform extended | [open](https://devopscert202.github.io/terraform-ansible-labs/terraform/extended/html/index.html) |
+| Terraform track (22 labs) | [open](https://devopscert202.github.io/terraform-ansible-labs/terraform/html/index.html) |
+| Terraform 101 (read first) | [open](https://devopscert202.github.io/terraform-ansible-labs/terraform/html/terraform-101.html) |
+| Terraform AWS primer (read second) | [open](https://devopscert202.github.io/terraform-ansible-labs/terraform/html/aws-primer.html) |
 
 ---
 
@@ -22,9 +23,12 @@ You are learning to automate servers with **Ansible** and provision cloud resour
 | Track | Time | Labs | Outcome |
 |-------|------|------|---------|
 | [Ansible essentials](ansible/essentials/labmanuals/) | 10 h | 7 | Inventory, playbooks, roles, vault |
-| [Terraform essentials](terraform/essentials/labmanuals/) | 10 h | 8 | Init, EC2, variables, state, modules |
+| [Terraform Basic](terraform/labmanuals/README.md#tier-1--basic-lab00lab05) | 10 h (with early Intermediate) | 6 | Credentials, providers, first EC2, the core workflow, `fmt` and `validate` |
 | [Ansible extended](ansible/extended/labmanuals/) | self-paced | 9 | Facts, loops, dynamic inventory, drills |
-| [Terraform extended](terraform/extended/labmanuals/) | self-paced | 15 | Provisioners, remote state, capstones |
+| [Terraform Intermediate](terraform/labmanuals/README.md#tier-2--intermediate-lab06lab12) | self-paced | 7 | Variables, tfvars and secrets, state, modules, collections, functions, dynamic blocks |
+| [Terraform Advanced](terraform/labmanuals/README.md#tier-3--advanced-lab13lab21) | self-paced | 9 | Multiple providers, provisioners, workspaces, S3 backend with locking, migration, capstone |
+
+New to Terraform? Two primers come before lab00, in this order: **[Terraform 101](terraform/html/terraform-101.html)** (what Terraform is, HCL, providers, version constraints, state, drift), then the **[AWS primer](terraform/html/aws-primer.html)** (region, VPC, subnet, gateway, security group, EC2, IAM keys).
 
 ---
 
@@ -62,7 +66,7 @@ aws sts get-caller-identity
 
 1. Read [curriculum/20-hour-bootcamp.md](curriculum/20-hour-bootcamp.md)
 2. Open [Ansible essentials lab 01](ansible/essentials/labmanuals/lab01-inventory-static-hosts.md)
-3. After Ansible lab 07, continue with [Terraform essentials lab 01](terraform/essentials/labmanuals/lab01-providers-init.md)
+3. After Ansible lab 07, continue with [Terraform lab 00](terraform/labmanuals/lab00-aws-setup-and-init.md)
 
 ---
 
@@ -77,12 +81,14 @@ flowchart LR
   docs --> html[html — optional visual review]
 ```
 
-| Pillar | Path pattern | What you do |
-|--------|--------------|-------------|
-| **Concept docs** | `{ansible,terraform}/{essentials,extended}/docs/` | Read theory, diagrams, and prerequisites **before** the matching lab |
-| **Lab manuals** | `*/labmanuals/labNN-*.md` | Follow step-by-step instructions; each step has a **Validate** block |
-| **Lab code** | `*/labs/` | Runnable playbooks, roles, inventory, and `.tf` files — **do not paste long configs from the manual**; edit files here |
-| **HTML guides** | `*/html/index.html` | Offline interactive pages — open in a browser for visual learners |
+| Pillar | Ansible path | Terraform path | What you do |
+|--------|--------------|----------------|-------------|
+| **Concept docs** | `ansible/{essentials,extended}/docs/` | `terraform/docs/{basic,intermediate,advanced}/` | Read theory before the matching lab |
+| **Lab manuals** | `ansible/*/labmanuals/labNN-*.md` | `terraform/labmanuals/labNN-*.md` | Follow the steps; every command has expected output |
+| **Lab code** | `ansible/*/labs/` | `terraform/labs/labNN-*/` | Runnable playbooks, roles, inventory, and `.tf` files — edit files here rather than pasting from the manual |
+| **HTML guides** | `ansible/*/html/index.html` | `terraform/html/index.html` | Offline self-contained pages for visual learners. The Terraform set is six pages: two primers, the catalog, and one per tier |
+
+The Terraform track is **flat**: one `labmanuals/`, one `labs/`, one `html/`, and `docs/` split into the three tiers. The old essentials-and-extended split under `terraform/` is gone, so `terraform/html/` is now two levels below the repo root rather than three.
 
 **Curriculum** (agendas, setup, QA): [curriculum/](curriculum/)
 
@@ -90,7 +96,7 @@ flowchart LR
 
 ## How to use lab manuals
 
-Lab manuals are Markdown files under `labmanuals/`. Each essentials lab is **300–500+ lines** — step-by-step with validation after every command.
+Lab manuals are Markdown files under `labmanuals/`. Terraform manuals are deliberately short — 150–200 lines, step-by-step, with the real expected output after every command.
 
 ### Typical workflow
 
@@ -120,7 +126,7 @@ ansible-playbook -i inventory/hosts.ini.local playbooks/apache.yml
 ### Terraform-specific
 
 ```bash
-cd ~/terraform-ansible-labs/terraform/essentials/labs/lab02-ec2
+cd ~/terraform-ansible-labs/terraform/labs/lab03-first-ec2
 
 cp terraform.tfvars.example terraform.tfvars   # when provided
 # edit terraform.tfvars — set ssh_cidr to your IP/32
@@ -133,8 +139,9 @@ terraform apply
 terraform destroy
 ```
 
-- **Never** put AWS access keys in `.tf` files — use `AWS_PROFILE` or an IAM role
-- Do not commit `.terraform/`, `terraform.tfstate*`, or private `*.tfvars`
+- **Never** put AWS access keys in `.tf` files — export them, or use `AWS_PROFILE` or an IAM role
+- Do not commit `.terraform/`, `.terraform.lock.hcl`, `terraform.tfstate*`, or real `*.tfvars`
+- Region `us-east-1`, instance type `t3.micro`, AMIs resolved via `data "aws_ami"` — never a hardcoded ID
 
 ---
 
@@ -159,8 +166,12 @@ Use HTML **before or after** the matching lab — not instead of doing the hands
 |---------|--------|
 | [Ansible essentials HTML](ansible/essentials/html/index.html) | Architecture, inventory, playbooks, variables, roles, vault |
 | [Ansible extended HTML](ansible/extended/html/index.html) | Loops, facts, dynamic inventory, break-fix |
-| [Terraform essentials HTML](terraform/essentials/html/index.html) | Workflow, variables, state, modules |
-| [Terraform extended HTML](terraform/extended/html/index.html) | Provisioners, state, functions, capstones |
+| [Terraform track catalog](terraform/html/index.html) | Tier cards, all 22 labs, searchable lab table |
+| [Terraform 101](terraform/html/terraform-101.html) | **Read first.** What Terraform is and who owns it, HCL and block anatomy, providers, every version-constraint operator, the CLI and plan symbols, state, drift |
+| [Terraform AWS primer](terraform/html/aws-primer.html) | **Read second.** AWS concepts from scratch plus the capstone architecture diagram |
+| [Terraform Basic](terraform/html/basic.html) | Credentials, providers, resources, the core workflow, quality gates |
+| [Terraform Intermediate](terraform/html/intermediate.html) | Variables, tfvars, state, modules, collections, functions, dynamic blocks |
+| [Terraform Advanced](terraform/html/advanced.html) | Multiple providers, provisioners, workspaces, remote state, capstone |
 
 ---
 
@@ -200,42 +211,50 @@ Use HTML **before or after** the matching lab — not instead of doing the hands
 
 ## Full index — Terraform
 
-### Essentials (10-hour bootcamp)
+**22 labs, `lab00`–`lab21`.** Full table with tier and topic columns: [terraform/labmanuals/README.md](terraform/labmanuals/README.md). Track landing page: [terraform/README.md](terraform/README.md).
+
+### Tier 1 — Basic (lab00–lab05, instructor-led)
 
 | Lab | Manual | Lab directory | Topic |
 |-----|--------|---------------|-------|
-| 01 | [lab01-providers-init.md](terraform/essentials/labmanuals/lab01-providers-init.md) | [lab01-providers-init/](terraform/essentials/labs/lab01-providers-init/) | Providers + init |
-| 02 | [lab02-ec2.md](terraform/essentials/labmanuals/lab02-ec2.md) | [lab02-ec2/](terraform/essentials/labs/lab02-ec2/) | EC2 instance |
-| 03 | [lab03-plan-apply-destroy.md](terraform/essentials/labmanuals/lab03-plan-apply-destroy.md) | [lab03-plan-apply-destroy/](terraform/essentials/labs/lab03-plan-apply-destroy/) | Plan / apply / destroy |
-| 04 | [lab04-fmt-validate.md](terraform/essentials/labmanuals/lab04-fmt-validate.md) | [lab04-fmt-validate/](terraform/essentials/labs/lab04-fmt-validate/) | fmt + validate |
-| 05 | [lab05-variables.md](terraform/essentials/labmanuals/lab05-variables.md) | [lab05-variables/](terraform/essentials/labs/lab05-variables/) | Variables + outputs |
-| 06 | [lab06-local-state.md](terraform/essentials/labmanuals/lab06-local-state.md) | [lab06-local-state/](terraform/essentials/labs/lab06-local-state/) | Local state |
-| 07 | [lab07-simple-module.md](terraform/essentials/labmanuals/lab07-simple-module.md) | [lab07-simple-module/](terraform/essentials/labs/lab07-simple-module/) | Simple module |
-| 08 | [lab08-tfvars-secrets.md](terraform/essentials/labmanuals/lab08-tfvars-secrets.md) | [lab08-tfvars-secrets/](terraform/essentials/labs/lab08-tfvars-secrets/) | tfvars + secrets |
+| 00 | [lab00-aws-setup-and-init.md](terraform/labmanuals/lab00-aws-setup-and-init.md) | [lab00-aws-setup-and-init/](terraform/labs/lab00-aws-setup-and-init/) | AWS credentials, provider block, first `init` |
+| 01 | [lab01-providers-init.md](terraform/labmanuals/lab01-providers-init.md) | [lab01-providers-init/](terraform/labs/lab01-providers-init/) | `required_providers`, lock file, `validate` |
+| 02 | [lab02-console-vpc.md](terraform/labmanuals/lab02-console-vpc.md) | [lab02-console-vpc/](terraform/labs/lab02-console-vpc/) | Console build, contrasted with IaC (no `.tf`) |
+| 03 | [lab03-first-ec2.md](terraform/labmanuals/lab03-first-ec2.md) | [lab03-first-ec2/](terraform/labs/lab03-first-ec2/) | AMI data source, security group, instance |
+| 04 | [lab04-plan-apply-destroy.md](terraform/labmanuals/lab04-plan-apply-destroy.md) | [lab04-plan-apply-destroy/](terraform/labs/lab04-plan-apply-destroy/) | The core workflow, no cloud cost |
+| 05 | [lab05-fmt-validate.md](terraform/labmanuals/lab05-fmt-validate.md) | [lab05-fmt-validate/](terraform/labs/lab05-fmt-validate/) | `fmt`, `validate`, CI-style gates |
 
-**Docs:** [terraform/essentials/docs/](terraform/essentials/docs/01-getting-started/README.md) · **HTML:** [terraform/essentials/html/index.html](terraform/essentials/html/index.html)
+**Docs:** [terraform/docs/basic/](terraform/docs/README.md) · **Concepts:** [terraform/html/basic.html](terraform/html/basic.html)
 
-### Extended (optional)
+### Tier 2 — Intermediate (lab06–lab12)
 
-| Lab | Manual | Lab directory |
-|-----|--------|---------------|
-| 01 | [lab01-console-vpc.md](terraform/extended/labmanuals/lab01-console-vpc.md) | [lab01-console-vpc/](terraform/extended/labs/lab01-console-vpc/) (reference) |
-| 02 | [lab02-validate-only.md](terraform/extended/labmanuals/lab02-validate-only.md) | [lab02-validate-only/](terraform/extended/labs/lab02-validate-only/) |
-| 03 | [lab03-multi-cloud-providers.md](terraform/extended/labmanuals/lab03-multi-cloud-providers.md) | [lab03-multi-cloud-providers/](terraform/extended/labs/lab03-multi-cloud-providers/) |
-| 04 | [lab04-local-exec-provisioner.md](terraform/extended/labmanuals/lab04-local-exec-provisioner.md) | [lab04-local-exec-provisioner/](terraform/extended/labs/lab04-local-exec-provisioner/) |
-| 05 | [lab05-remote-exec-provisioner.md](terraform/extended/labmanuals/lab05-remote-exec-provisioner.md) | [lab05-remote-exec-provisioner/](terraform/extended/labs/lab05-remote-exec-provisioner/) |
-| 06 | [lab06-workspaces.md](terraform/extended/labmanuals/lab06-workspaces.md) | [lab06-workspaces/](terraform/extended/labs/lab06-workspaces/) |
-| 07 | [lab07-s3-backend.md](terraform/extended/labmanuals/lab07-s3-backend.md) | [lab07-s3-backend/](terraform/extended/labs/lab07-s3-backend/) |
-| 08 | [lab08-state-keys.md](terraform/extended/labmanuals/lab08-state-keys.md) | [lab08-state-keys/](terraform/extended/labs/lab08-state-keys/) |
-| 09 | [lab09-state-locking.md](terraform/extended/labmanuals/lab09-state-locking.md) | [lab09-state-locking/](terraform/extended/labs/lab09-state-locking/) |
-| 10 | [lab10-state-migration.md](terraform/extended/labmanuals/lab10-state-migration.md) | [lab10-state-migration/](terraform/extended/labs/lab10-state-migration/) |
-| 11 | [lab11-remote-state-consumer.md](terraform/extended/labmanuals/lab11-remote-state-consumer.md) | [lab11-remote-state-consumer/](terraform/extended/labs/lab11-remote-state-consumer/) |
-| 12 | [lab12-collections.md](terraform/extended/labmanuals/lab12-collections.md) | [lab12-collections/](terraform/extended/labs/lab12-collections/) |
-| 13 | [lab13-functions.md](terraform/extended/labmanuals/lab13-functions.md) | [lab13-functions/](terraform/extended/labs/lab13-functions/) |
-| 14 | [lab14-dynamic-blocks.md](terraform/extended/labmanuals/lab14-dynamic-blocks.md) | [lab14-dynamic-blocks/](terraform/extended/labs/lab14-dynamic-blocks/) |
-| 15 | [lab15-capstone-projects.md](terraform/extended/labmanuals/lab15-capstone-projects.md) | [lab15-capstone-projects/](terraform/extended/labs/lab15-capstone-projects/) |
+| Lab | Manual | Lab directory | Topic |
+|-----|--------|---------------|-------|
+| 06 | [lab06-variables-outputs.md](terraform/labmanuals/lab06-variables-outputs.md) | [lab06-variables-outputs/](terraform/labs/lab06-variables-outputs/) | Typed inputs, locals, outputs |
+| 07 | [lab07-tfvars-secrets.md](terraform/labmanuals/lab07-tfvars-secrets.md) | [lab07-tfvars-secrets/](terraform/labs/lab07-tfvars-secrets/) | tfvars, precedence, `sensitive` |
+| 08 | [lab08-local-state.md](terraform/labmanuals/lab08-local-state.md) | [lab08-local-state/](terraform/labs/lab08-local-state/) | `terraform.tfstate`, refresh, drift |
+| 09 | [lab09-modules.md](terraform/labmanuals/lab09-modules.md) | [lab09-modules/](terraform/labs/lab09-modules/) | Child modules, inputs, outputs |
+| 10 | [lab10-collections.md](terraform/labmanuals/lab10-collections.md) | [lab10-collections/](terraform/labs/lab10-collections/) | `for_each` over maps and sets |
+| 11 | [lab11-functions.md](terraform/labmanuals/lab11-functions.md) | [lab11-functions/](terraform/labs/lab11-functions/) | String, collection, CIDR, encoding |
+| 12 | [lab12-dynamic-blocks.md](terraform/labmanuals/lab12-dynamic-blocks.md) | [lab12-dynamic-blocks/](terraform/labs/lab12-dynamic-blocks/) | Generated nested blocks |
 
-**Docs:** [terraform/extended/docs/](terraform/extended/docs/state/README.md) · **HTML:** [terraform/extended/html/index.html](terraform/extended/html/index.html)
+**Docs:** [terraform/docs/intermediate/](terraform/docs/README.md) · **Concepts:** [terraform/html/intermediate.html](terraform/html/intermediate.html)
+
+### Tier 3 — Advanced (lab13–lab21)
+
+| Lab | Manual | Lab directory | Topic |
+|-----|--------|---------------|-------|
+| 13 | [lab13-multi-provider.md](terraform/labmanuals/lab13-multi-provider.md) | [lab13-multi-provider/](terraform/labs/lab13-multi-provider/) | Two providers, aliases |
+| 14 | [lab14-local-exec-provisioner.md](terraform/labmanuals/lab14-local-exec-provisioner.md) | [lab14-local-exec-provisioner/](terraform/labs/lab14-local-exec-provisioner/) | Command on the Terraform host |
+| 15 | [lab15-remote-exec-provisioner.md](terraform/labmanuals/lab15-remote-exec-provisioner.md) | [lab15-remote-exec-provisioner/](terraform/labs/lab15-remote-exec-provisioner/) | SSH `connection`, inline commands |
+| 16 | [lab16-workspaces.md](terraform/labmanuals/lab16-workspaces.md) | [lab16-workspaces/](terraform/labs/lab16-workspaces/) | `terraform.workspace` |
+| 17 | [lab17-s3-backend.md](terraform/labmanuals/lab17-s3-backend.md) | [lab17-s3-backend/](terraform/labs/lab17-s3-backend/) | Remote state in S3 |
+| 18 | [lab18-state-keys-locking.md](terraform/labmanuals/lab18-state-keys-locking.md) | [lab18-state-keys-locking/](terraform/labs/lab18-state-keys-locking/) | Key conventions, DynamoDB locking |
+| 19 | [lab19-state-migration.md](terraform/labmanuals/lab19-state-migration.md) | [lab19-state-migration/](terraform/labs/lab19-state-migration/) | `init -migrate-state` |
+| 20 | [lab20-remote-state-consumer.md](terraform/labmanuals/lab20-remote-state-consumer.md) | [lab20-remote-state-consumer/](terraform/labs/lab20-remote-state-consumer/) | `terraform_remote_state` |
+| 21 | [lab21-capstone-vpc-ec2.md](terraform/labmanuals/lab21-capstone-vpc-ec2.md) | [lab21-capstone-vpc-ec2/](terraform/labs/lab21-capstone-vpc-ec2/) | VPC, IGW, subnet, route table, SG, EC2 |
+
+**Docs:** [terraform/docs/advanced/](terraform/docs/README.md) · **Concepts:** [terraform/html/advanced.html](terraform/html/advanced.html)
 
 ---
 
@@ -245,7 +264,7 @@ Use HTML **before or after** the matching lab — not instead of doing the hands
 |----------|---------|
 | [20-hour bootcamp agenda](curriculum/20-hour-bootcamp.md) | Minute-by-minute instructor schedule |
 | [Day-wise LVC agenda](curriculum/day-wise-agenda.md) | Full 4-day reference |
-| [Learning paths](curriculum/learning-paths.md) | Essentials vs extended routes |
+| [Learning paths](curriculum/learning-paths.md) | Instructor-led vs self-paced routes |
 | [AWS lab environment](curriculum/setup/aws-lab-environment.md) | EC2 setup (read first) |
 | [WebApp Co scenario](ansible/projects/webapp-co/README.md) | Shared narrative across tracks |
 | [QA report](curriculum/qa-report.md) | Validation sign-off |
@@ -257,7 +276,7 @@ Use HTML **before or after** the matching lab — not instead of doing the hands
 ```
 terraform-ansible-labs/
 ├── README.md                 ← you are here
-├── curriculum/               Agendas, AWS setup, QA
+├── curriculum/               Agendas, AWS setup, HTML generators, QA
 ├── ansible/
 │   ├── essentials/           10-hour track (lab01–07)
 │   │   ├── docs/             Concept reading
@@ -266,10 +285,14 @@ terraform-ansible-labs/
 │   │   └── html/             Offline interactive guides
 │   ├── extended/             Optional depth (lab01–09)
 │   └── projects/webapp-co/   Shared scenario
-└── terraform/
-    ├── essentials/           10-hour track (lab01–08)
-    └── extended/             Optional depth (lab01–15)
+└── terraform/                One flat track, 22 labs in 3 tiers
+    ├── labmanuals/           lab00–lab21 + README.md (the lab index)
+    ├── labs/                 lab00-*/ … lab21-*/, one root module each
+    ├── docs/                 basic/ intermediate/ advanced/
+    └── html/                 index, terraform-101, aws-primer, basic, intermediate, advanced
 ```
+
+Terraform tiers: **Basic** `lab00`–`lab05`, **Intermediate** `lab06`–`lab12`, **Advanced** `lab13`–`lab21`.
 
 ---
 

@@ -1,0 +1,9 @@
+# Copy to terraform.tfvars, then edit. terraform.tfvars is gitignored.
+# This .example file is committed, so it must never contain a real secret.
+
+project     = "platform"
+environment = "dev"
+cost_code   = "123"
+
+# db_password is deliberately absent. Supply it at runtime:
+#   export TF_VAR_db_password='not-a-real-password'

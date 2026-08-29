@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terraform Track</title>
+    <style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+    --blue: #2563eb; --cyan: #06b6d4;
+    --slate-900: #0f172a; --slate-700: #334155; --slate-500: #64748b; --slate-200: #e2e8f0;
+    --bg: #f8fafc; --green: #16a34a; --amber: #d97706; --rose: #e11d48;
+}
+body {
+    font-family: "Segoe UI", system-ui, sans-serif;
+    background: linear-gradient(180deg, #f8fbff 0%, #eef4fb 100%);
+    color: var(--slate-900); padding: 20px; line-height: 1.6;
+}
+.container { max-width: 1380px; margin: 0 auto; }
+header {
+    margin-bottom: 22px; padding: 18px 24px; border-radius: 14px; background: #fff;
+    border: 1px solid rgba(37, 99, 235, 0.10);
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.06); text-align: center;
+}
+h1 { font-size: 1.6rem; color: var(--blue); margin-bottom: 4px; }
+.subtitle { color: var(--slate-500); font-size: 0.92rem; }
+.backlink { color: var(--blue); font-weight: 700; text-decoration: none; }
+.backlink:hover { text-decoration: underline; }
+.stats { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+         margin-top: 12px; font-size: 0.82rem; color: var(--slate-700); }
+.stats span { padding: 4px 10px; background: #eff6ff; border-radius: 999px; }
+
+/* tier nav */
+.tiernav { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 14px; }
+.tiernav a {
+    padding: 6px 14px; border-radius: 999px; text-decoration: none; font-size: 0.84rem;
+    font-weight: 700; color: var(--blue); background: #eff6ff;
+    border: 1px solid rgba(37,99,235,0.18);
+}
+.tiernav a.active { background: var(--blue); color: #fff; }
+
+/* cards */
+.card {
+    background: #fff; border: 1px solid var(--slate-200); border-radius: 14px;
+    padding: 18px 20px; margin-bottom: 18px; box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+}
+.card h2 { font-size: 1.18rem; color: var(--slate-900); margin-bottom: 4px; }
+.card h3 { font-size: 0.98rem; color: var(--slate-700); margin: 14px 0 6px; }
+.concept { color: var(--slate-700); font-size: 0.94rem; margin-bottom: 12px; }
+.eyebrow {
+    display: inline-block; font-size: 0.68rem; font-weight: 800; letter-spacing: 0.05em;
+    text-transform: uppercase; color: var(--cyan); margin-bottom: 6px;
+}
+
+/* code */
+pre {
+    background: var(--slate-900); color: #e2e8f0; padding: 14px 16px; border-radius: 10px;
+    overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.82rem; line-height: 1.55; margin: 8px 0 12px;
+}
+pre.output { background: #0b1220; color: #86efac; }
+code.inline {
+    background: #eff6ff; color: #1d4ed8; padding: 1px 6px; border-radius: 5px;
+    font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.86em;
+}
+
+/* explanation + generic tables */
+table { width: 100%; border-collapse: collapse; margin: 8px 0 12px; }
+th, td { padding: 9px 12px; text-align: left; vertical-align: top;
+         border-bottom: 1px solid var(--slate-200); font-size: 0.88rem; }
+th { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.04em;
+     color: var(--slate-500); background: rgba(248, 250, 252, 0.9); }
+tr:last-child td { border-bottom: none; }
+td.lineref { white-space: nowrap; font-family: "SF Mono", Menlo, monospace;
+             font-size: 0.8rem; color: var(--blue); font-weight: 700; }
+
+/* tags */
+.tag { display: inline-block; padding: 3px 9px; border-radius: 999px;
+       font-size: 0.68rem; font-weight: 800; letter-spacing: 0.03em; }
+.tag.basic { background: #dbeafe; color: #1d4ed8; }
+.tag.intermediate { background: #dcfce7; color: #166534; }
+.tag.advanced { background: #fef3c7; color: #92400e; }
+.tag.aws { background: #ffe4e6; color: #be123c; }
+
+/* callouts */
+.note, .warn {
+    border-left: 3px solid var(--blue); background: #f8fbff; padding: 10px 14px;
+    border-radius: 0 8px 8px 0; font-size: 0.88rem; margin: 10px 0;
+}
+.warn { border-left-color: var(--amber); background: #fffbeb; }
+
+/* lab link */
+.lablink {
+    display: inline-block; margin-top: 6px; font-size: 0.82rem; font-weight: 700;
+    color: var(--blue); text-decoration: none;
+}
+.lablink:hover { text-decoration: underline; }
+
+/* diagram */
+.diagram { background: #fff; border: 1px solid var(--slate-200); border-radius: 14px;
+           padding: 16px; margin: 14px 0; overflow-x: auto; }
+.diagram svg { width: 100%; height: auto; display: block; }
+
+.footer { margin-top: 24px; text-align: center; color: var(--slate-500);
+          font-size: 0.84rem; padding-bottom: 12px; }
+
+@media (max-width: 1200px) { .container { max-width: 100%; } }
+@media (max-width: 768px) {
+    body { padding: 12px; }
+    h1 { font-size: 1.3rem; }
+    pre { font-size: 0.76rem; }
+}
+
+.search-bar { margin: 4px 0 14px; }
+.search-bar input {
+    width: 100%; max-width: 480px; padding: 10px 14px; font-family: inherit;
+    font-size: 0.92rem; color: var(--slate-900); background: #f8fafc;
+    border: 1px solid var(--slate-200); border-radius: 10px; outline: none;
+}
+.search-bar input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37,99,235,0.12); }
+.tiergrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px;
+            margin-bottom: 18px; }
+.tiercard {
+    background: #fff; border: 1px solid var(--slate-200); border-radius: 14px;
+    padding: 16px 18px; box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+}
+.tiercard h2 { font-size: 1.05rem; margin: 6px 0 4px; }
+.tiercard p { color: var(--slate-700); font-size: 0.88rem; margin-bottom: 8px; }
+.tiercard .range { display: block; color: var(--slate-500); font-size: 0.78rem;
+                   font-family: "SF Mono", Menlo, monospace; margin-bottom: 8px; }
+/* entry-point sequence: Terraform 101 -> AWS primer -> lab00 */
+.startcard {
+    background: #fff; border: 2px solid var(--blue); border-radius: 14px;
+    padding: 18px 20px; margin-bottom: 18px; box-shadow: 0 4px 16px rgba(37, 99, 235, 0.10);
+}
+.seq { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px;
+       margin-top: 12px; }
+.seq > div {
+    position: relative; padding: 14px 16px 14px 18px; border-radius: 12px;
+    border: 1px solid var(--slate-200); background: linear-gradient(180deg, #fff, #f8fbff);
+}
+.seq > div.first { border-color: var(--blue); background: #eff6ff; }
+.seq .step {
+    display: inline-block; width: 22px; height: 22px; line-height: 22px; text-align: center;
+    border-radius: 999px; background: var(--blue); color: #fff; font-size: 0.74rem;
+    font-weight: 800; margin-bottom: 6px;
+}
+.seq h3 { margin: 0 0 4px; font-size: 1rem; }
+.seq h3 a { color: var(--blue); text-decoration: none; }
+.seq h3 a:hover { text-decoration: underline; }
+.seq p { color: var(--slate-700); font-size: 0.86rem; }
+.seq .q { display: block; color: var(--slate-500); font-size: 0.78rem; font-style: italic;
+          margin-top: 6px; }
+.arrow { color: var(--slate-500); font-weight: 800; }
+.no-results { display: none; padding: 14px; color: var(--slate-500); font-size: 0.9rem; }
+@media (max-width: 768px) { .tiergrid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Terraform Track</h1>
+            <p class="subtitle">22 labs across three tiers &mdash; from your first <code class="inline">terraform init</code> to a working public web server built entirely in code.</p>
+            <p class="subtitle" style="margin-top:8px;">
+                <a class="backlink" href="../../index.html">&larr; All tracks catalog</a>
+            </p>
+            <div class="stats"><span>22 labs</span><span>3 tiers</span><span>6 HTML pages</span><span>Terraform &gt;= 1.5.0</span><span>AWS provider ~&gt; 5.0</span><span>Region us-east-1</span><span>Offline</span></div>
+            <nav class="tiernav">
+            <a href="./index.html" class="active">Track Home</a>
+            <a href="./terraform-101.html">Terraform 101</a>
+            <a href="./aws-primer.html">AWS Primer</a>
+            <a href="./basic.html">Basic</a>
+            <a href="./intermediate.html">Intermediate</a>
+            <a href="./advanced.html">Advanced</a>
+            </nav>
+        </header>
+
+        <div class="startcard">
+            <span class="tag basic">Start here</span>
+            <h2>Never used Terraform before? Read these two pages first, in this order</h2>
+            <p class="concept">Both primers assume you know nothing. The first explains the tool,
+                the second explains the cloud it will be talking to. Together they take about
+                forty minutes, and they are the difference between following lab00 and
+                understanding it.</p>
+            <div class="seq">
+                <div class="first">
+                    <span class="step">1</span>
+                    <h3><a href="terraform-101.html">Terraform 101 &rarr;</a></h3>
+                    <p>What Terraform is and who owns it, what HCL is and the anatomy of a block,
+                        what a provider is and how to add one, every version-constraint operator
+                        including <code class="inline">~&gt;</code>, the CLI commands and the plan
+                        symbols, what state is, and what drift means.</p>
+                    <span class="q">Answers: what am I actually running?</span>
+                </div>
+                <div>
+                    <span class="step">2</span>
+                    <h3><a href="aws-primer.html">AWS Primer &rarr;</a></h3>
+                    <p>Region and availability zone, VPC and CIDR, public and private subnets,
+                        internet gateway, route table, security group, EC2 instance, key pair, and
+                        IAM access keys &mdash; each with its Terraform resource type, plus the
+                        diagram of what Lab 21 builds.</p>
+                    <span class="q">Answers: what is a VPC?</span>
+                </div>
+                <div>
+                    <span class="step">3</span>
+                    <h3><a href="../labmanuals/lab00-aws-setup-and-init.md">Lab 00 &rarr;</a></h3>
+                    <p>Now start typing. Verify your Terraform and AWS CLI versions, export your
+                        access keys, write your first provider block, and run
+                        <code class="inline">terraform init</code>. Creates nothing billable.</p>
+                    <span class="q">Answers: does my setup work?</span>
+                </div>
+            </div>
+            <div class="note">Already comfortable with Terraform and AWS? Skip straight to the
+                <a href="basic.html">Basic tier concepts</a> or to
+                <a href="../labmanuals/lab00-aws-setup-and-init.md">Lab 00</a>.</div>
+        </div>
+
+        <div class="tiergrid">
+            <div class="tiercard">
+                <span class="tag basic">Basic</span>
+                <h2><a class="backlink" href="basic.html">Basic &rarr;</a></h2>
+                <span class="range">lab00-lab05 &middot; 6 labs</span>
+                <p>Install, authenticate, declare a provider, create your first resource, and learn the init / plan / apply / destroy loop.</p>
+            </div>
+            <div class="tiercard">
+                <span class="tag intermediate">Intermediate</span>
+                <h2><a class="backlink" href="intermediate.html">Intermediate &rarr;</a></h2>
+                <span class="range">lab06-lab12 &middot; 7 labs</span>
+                <p>Parameterise configuration with variables and tfvars, read state, extract modules, and generate resources from collections.</p>
+            </div>
+            <div class="tiercard">
+                <span class="tag advanced">Advanced</span>
+                <h2><a class="backlink" href="advanced.html">Advanced &rarr;</a></h2>
+                <span class="range">lab13-lab21 &middot; 9 labs</span>
+                <p>Multiple providers, provisioners, workspaces, remote state in S3 with locking, state migration, and the end-to-end capstone.</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <span class="eyebrow">All 22 labs</span>
+            <h2>Lab sequence</h2>
+            <p class="concept">Work through them in order: each lab assumes the one before it.
+                Every manual links to its runnable code under
+                <code class="inline">terraform/labs/</code>.</p>
+            <div class="search-bar">
+                <input type="text" id="lab-search" autocomplete="off"
+                       placeholder="Filter labs, e.g. state, modules, for_each, backend...">
+            </div>
+            <table id="lab-table">
+                <thead><tr>
+                    <th style="width:8%;">Lab</th>
+                    <th style="width:24%;">Manual</th>
+                    <th style="width:12%;">Tier</th>
+                    <th>Topic</th>
+                    <th style="width:16%;">Concepts</th>
+                </tr></thead>
+                <tbody>
+                    <tr><td class="lineref">lab00</td><td><a href="../labmanuals/lab00-aws-setup-and-init.md">AWS Setup and Init</a></td><td><span class="tag basic">Basic</span></td><td>Credentials, provider block, first init</td><td><a href="basic.html">Basic concepts</a></td></tr>
+                    <tr><td class="lineref">lab01</td><td><a href="../labmanuals/lab01-providers-init.md">Providers and Init</a></td><td><span class="tag basic">Basic</span></td><td>required_providers, lock file, validate</td><td><a href="basic.html">Basic concepts</a></td></tr>
+                    <tr><td class="lineref">lab02</td><td><a href="../labmanuals/lab02-console-vpc.md">Console VPC</a></td><td><span class="tag basic">Basic</span></td><td>Manual console build, contrasted with IaC</td><td><a href="basic.html">Basic concepts</a></td></tr>
+                    <tr><td class="lineref">lab03</td><td><a href="../labmanuals/lab03-first-ec2.md">First EC2 Instance</a></td><td><span class="tag basic">Basic</span></td><td>AMI data source, security group, instance</td><td><a href="basic.html">Basic concepts</a></td></tr>
+                    <tr><td class="lineref">lab04</td><td><a href="../labmanuals/lab04-plan-apply-destroy.md">Plan, Apply, Destroy</a></td><td><span class="tag basic">Basic</span></td><td>The core workflow with no cloud cost</td><td><a href="basic.html">Basic concepts</a></td></tr>
+                    <tr><td class="lineref">lab05</td><td><a href="../labmanuals/lab05-fmt-validate.md">Format and Validate</a></td><td><span class="tag basic">Basic</span></td><td>fmt, validate, CI-style quality gates</td><td><a href="basic.html">Basic concepts</a></td></tr>
+                    <tr><td class="lineref">lab06</td><td><a href="../labmanuals/lab06-variables-outputs.md">Variables and Outputs</a></td><td><span class="tag intermediate">Intermediate</span></td><td>Typed inputs, locals, outputs</td><td><a href="intermediate.html">Intermediate concepts</a></td></tr>
+                    <tr><td class="lineref">lab07</td><td><a href="../labmanuals/lab07-tfvars-secrets.md">tfvars and Secrets</a></td><td><span class="tag intermediate">Intermediate</span></td><td>tfvars files, precedence, sensitive</td><td><a href="intermediate.html">Intermediate concepts</a></td></tr>
+                    <tr><td class="lineref">lab08</td><td><a href="../labmanuals/lab08-local-state.md">Local State</a></td><td><span class="tag intermediate">Intermediate</span></td><td>terraform.tfstate, refresh, drift</td><td><a href="intermediate.html">Intermediate concepts</a></td></tr>
+                    <tr><td class="lineref">lab09</td><td><a href="../labmanuals/lab09-modules.md">Modules</a></td><td><span class="tag intermediate">Intermediate</span></td><td>Child modules, inputs, outputs</td><td><a href="intermediate.html">Intermediate concepts</a></td></tr>
+                    <tr><td class="lineref">lab10</td><td><a href="../labmanuals/lab10-collections.md">Collections</a></td><td><span class="tag intermediate">Intermediate</span></td><td>for_each over maps and sets</td><td><a href="intermediate.html">Intermediate concepts</a></td></tr>
+                    <tr><td class="lineref">lab11</td><td><a href="../labmanuals/lab11-functions.md">Functions</a></td><td><span class="tag intermediate">Intermediate</span></td><td>String, collection, CIDR, encoding</td><td><a href="intermediate.html">Intermediate concepts</a></td></tr>
+                    <tr><td class="lineref">lab12</td><td><a href="../labmanuals/lab12-dynamic-blocks.md">Dynamic Blocks</a></td><td><span class="tag intermediate">Intermediate</span></td><td>Generated nested blocks from data</td><td><a href="intermediate.html">Intermediate concepts</a></td></tr>
+                    <tr><td class="lineref">lab13</td><td><a href="../labmanuals/lab13-multi-provider.md">Multiple Providers</a></td><td><span class="tag advanced">Advanced</span></td><td>Two providers, provider aliases</td><td><a href="advanced.html">Advanced concepts</a></td></tr>
+                    <tr><td class="lineref">lab14</td><td><a href="../labmanuals/lab14-local-exec-provisioner.md">local-exec Provisioner</a></td><td><span class="tag advanced">Advanced</span></td><td>Run a command on the Terraform host</td><td><a href="advanced.html">Advanced concepts</a></td></tr>
+                    <tr><td class="lineref">lab15</td><td><a href="../labmanuals/lab15-remote-exec-provisioner.md">remote-exec Provisioner</a></td><td><span class="tag advanced">Advanced</span></td><td>SSH connection block, inline commands</td><td><a href="advanced.html">Advanced concepts</a></td></tr>
+                    <tr><td class="lineref">lab16</td><td><a href="../labmanuals/lab16-workspaces.md">Workspaces</a></td><td><span class="tag advanced">Advanced</span></td><td>terraform.workspace, per-env naming</td><td><a href="advanced.html">Advanced concepts</a></td></tr>
+                    <tr><td class="lineref">lab17</td><td><a href="../labmanuals/lab17-s3-backend.md">S3 Backend</a></td><td><span class="tag advanced">Advanced</span></td><td>Remote state in S3, backend config files</td><td><a href="advanced.html">Advanced concepts</a></td></tr>
+                    <tr><td class="lineref">lab18</td><td><a href="../labmanuals/lab18-state-keys-locking.md">State Keys and Locking</a></td><td><span class="tag advanced">Advanced</span></td><td>Key conventions, S3 native lockfile</td><td><a href="advanced.html">Advanced concepts</a></td></tr>
+                    <tr><td class="lineref">lab19</td><td><a href="../labmanuals/lab19-state-migration.md">State Migration</a></td><td><span class="tag advanced">Advanced</span></td><td>init -migrate-state, backups</td><td><a href="advanced.html">Advanced concepts</a></td></tr>
+                    <tr><td class="lineref">lab20</td><td><a href="../labmanuals/lab20-remote-state-consumer.md">Remote State Consumer</a></td><td><span class="tag advanced">Advanced</span></td><td>terraform_remote_state data source</td><td><a href="advanced.html">Advanced concepts</a></td></tr>
+                    <tr><td class="lineref">lab21</td><td><a href="../labmanuals/lab21-capstone-vpc-ec2.md">Capstone: VPC and EC2</a></td><td><span class="tag advanced">Advanced</span></td><td>VPC, IGW, subnet, route table, SG, EC2</td><td><a href="advanced.html">Advanced concepts</a></td></tr>
+                </tbody>
+            </table>
+            <div class="no-results" id="no-results">No labs match that filter.</div>
+        </div>
+
+        <div class="card">
+            <span class="eyebrow">All 6 pages</span>
+            <h2>The HTML set</h2>
+            <p class="concept">Six self-contained pages. No CDN, no external fonts, no build step
+                &mdash; open any of them offline, or print them.</p>
+            <table>
+                <thead><tr><th style="width:22%;">Page</th><th style="width:14%;">Read it</th><th>Contents</th></tr></thead>
+                <tbody>
+                <tr><td class="lineref"><a href="terraform-101.html">terraform-101.html</a></td><td><strong>1st</strong></td><td>Terraform fundamentals from absolute zero: the tool, HCL, providers, version constraints, the CLI, state, drift.</td></tr>
+                <tr><td class="lineref"><a href="aws-primer.html">aws-primer.html</a></td><td><strong>2nd</strong></td><td>AWS concepts from absolute zero, each with its Terraform resource type, plus the capstone architecture diagram.</td></tr>
+                <tr><td class="lineref">index.html</td><td>as needed</td><td>This page: the entry-point sequence, the tier cards, and the searchable table of all 22 labs.</td></tr>
+                <tr><td class="lineref"><a href="basic.html">basic.html</a></td><td>with lab00&ndash;05</td><td>Tier 1 concepts.</td></tr>
+                <tr><td class="lineref"><a href="intermediate.html">intermediate.html</a></td><td>with lab06&ndash;12</td><td>Tier 2 concepts.</td></tr>
+                <tr><td class="lineref"><a href="advanced.html">advanced.html</a></td><td>with lab13&ndash;21</td><td>Tier 3 concepts.</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card">
+            <span class="eyebrow">How to use this track</span>
+            <h2>Read, then do, then run</h2>
+            <table>
+                <thead><tr><th style="width:26%;">Where</th><th>What it is for</th></tr></thead>
+                <tbody>
+                <tr><td class="lineref">html/</td><td>The 6 pages above. Concept, example, line-by-line explanation, and a link to the matching lab.</td></tr>
+                <tr><td class="lineref">labmanuals/</td><td>The step-by-step manual you follow at the keyboard, with expected output after every command.</td></tr>
+                <tr><td class="lineref">labs/</td><td>The runnable <code class="inline">.tf</code> code, one root module per lab. Edit files here rather than pasting from the manual.</td></tr>
+                <tr><td class="lineref">docs/</td><td>Longer written deep dives per tier, for after the lab.</td></tr>
+                </tbody>
+            </table>
+            <div class="warn">Every AWS lab costs money while it is running. Finish with
+                <code class="inline">terraform destroy</code>, every time.</div>
+        </div>
+        <script>
+        (function () {
+            var box = document.getElementById('lab-search');
+            var rows = document.querySelectorAll('#lab-table tbody tr');
+            var empty = document.getElementById('no-results');
+            if (!box) { return; }
+            box.addEventListener('input', function () {
+                var q = box.value.toLowerCase().trim();
+                var shown = 0;
+                for (var i = 0; i < rows.length; i++) {
+                    var hit = !q || rows[i].textContent.toLowerCase().indexOf(q) !== -1;
+                    rows[i].style.display = hit ? '' : 'none';
+                    if (hit) { shown++; }
+                }
+                empty.style.display = shown ? 'none' : 'block';
+            });
+        })();
+        </script>
+
+
+        <div class="footer">
+            Terraform track &middot; <a class="backlink" href="../../index.html">All tracks</a>
+        </div>
+    </div>
+</body>
+</html>

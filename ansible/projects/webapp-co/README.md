@@ -16,11 +16,12 @@ Fictional company used across Ansible and Terraform labs. Learners configure **w
 
 ## Terraform assets
 
-- EC2 pattern: [terraform/essentials/labs/lab02-ec2](../../essentials/labs/lab02-ec2)
-- Module capstone: [terraform/extended/labmanuals/lab15-capstone-projects.md](../../extended/labmanuals/lab15-capstone-projects.md)
+- EC2 pattern: [terraform/labs/lab03-first-ec2](../../../terraform/labs/lab03-first-ec2)
+- VPC + EC2 capstone: [terraform/labmanuals/lab21-capstone-vpc-ec2.md](../../../terraform/labmanuals/lab21-capstone-vpc-ec2.md)
 
 ## Suggested flow
 
 1. Ansible essentials lab01–lab07 (configure web tier)
-2. Terraform essentials lab01–lab08 (provision infra)
-3. Optional extended tracks for depth
+2. Terraform Basic tier lab00–lab05 (credentials, providers, first EC2)
+3. Terraform Intermediate tier lab06–lab12 (variables, state, modules)
+4. Terraform Advanced tier lab13–lab21 (remote state, capstone VPC + EC2)

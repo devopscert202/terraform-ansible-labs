@@ -679,7 +679,7 @@ ansible-vault decrypt vault/secrets.yml --vault-password-file ~/.vault_pass
 - [Vault documentation](https://docs.ansible.com/ansible/latest/vault_guide/index.html)
 - [NodeSource distributions](https://github.com/nodesource/distributions)
 - [20-hour bootcamp](../../../curriculum/20-hour-bootcamp.md)
-- [Terraform essentials next](../../../terraform/essentials/labmanuals/)
+- [Terraform track next](../../../terraform/labmanuals/)
 
 ## Bootcamp completion
 
