@@ -14,10 +14,21 @@
 **/crash.log
 **/override.tf
 
+# Terraform backend config (only the .example is tracked)
+**/backend.hcl
+!**/backend.hcl.example
+
 # Secrets
 .env
 *.pem
 **/credentials*
+
+# Python
+__pycache__/
+*.pyc
+
+# Authoring scaffolding: spec, migration script, merge references, retired HTML
+_working/
 
 # OS
 .DS_Store

@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terraform 101</title>
+    <style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+    --blue: #2563eb; --cyan: #06b6d4;
+    --slate-900: #0f172a; --slate-700: #334155; --slate-500: #64748b; --slate-200: #e2e8f0;
+    --bg: #f8fafc; --green: #16a34a; --amber: #d97706; --rose: #e11d48;
+}
+body {
+    font-family: "Segoe UI", system-ui, sans-serif;
+    background: linear-gradient(180deg, #f8fbff 0%, #eef4fb 100%);
+    color: var(--slate-900); padding: 20px; line-height: 1.6;
+}
+.container { max-width: 1380px; margin: 0 auto; }
+header {
+    margin-bottom: 22px; padding: 18px 24px; border-radius: 14px; background: #fff;
+    border: 1px solid rgba(37, 99, 235, 0.10);
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.06); text-align: center;
+}
+h1 { font-size: 1.6rem; color: var(--blue); margin-bottom: 4px; }
+.subtitle { color: var(--slate-500); font-size: 0.92rem; }
+.backlink { color: var(--blue); font-weight: 700; text-decoration: none; }
+.backlink:hover { text-decoration: underline; }
+.stats { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+         margin-top: 12px; font-size: 0.82rem; color: var(--slate-700); }
+.stats span { padding: 4px 10px; background: #eff6ff; border-radius: 999px; }
+
+/* tier nav */
+.tiernav { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 14px; }
+.tiernav a {
+    padding: 6px 14px; border-radius: 999px; text-decoration: none; font-size: 0.84rem;
+    font-weight: 700; color: var(--blue); background: #eff6ff;
+    border: 1px solid rgba(37,99,235,0.18);
+}
+.tiernav a.active { background: var(--blue); color: #fff; }
+
+/* cards */
+.card {
+    background: #fff; border: 1px solid var(--slate-200); border-radius: 14px;
+    padding: 18px 20px; margin-bottom: 18px; box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+}
+.card h2 { font-size: 1.18rem; color: var(--slate-900); margin-bottom: 4px; }
+.card h3 { font-size: 0.98rem; color: var(--slate-700); margin: 14px 0 6px; }
+.concept { color: var(--slate-700); font-size: 0.94rem; margin-bottom: 12px; }
+.eyebrow {
+    display: inline-block; font-size: 0.68rem; font-weight: 800; letter-spacing: 0.05em;
+    text-transform: uppercase; color: var(--cyan); margin-bottom: 6px;
+}
+
+/* code */
+pre {
+    background: var(--slate-900); color: #e2e8f0; padding: 14px 16px; border-radius: 10px;
+    overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.82rem; line-height: 1.55; margin: 8px 0 12px;
+}
+pre.output { background: #0b1220; color: #86efac; }
+code.inline {
+    background: #eff6ff; color: #1d4ed8; padding: 1px 6px; border-radius: 5px;
+    font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.86em;
+}
+
+/* explanation + generic tables */
+table { width: 100%; border-collapse: collapse; margin: 8px 0 12px; }
+th, td { padding: 9px 12px; text-align: left; vertical-align: top;
+         border-bottom: 1px solid var(--slate-200); font-size: 0.88rem; }
+th { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.04em;
+     color: var(--slate-500); background: rgba(248, 250, 252, 0.9); }
+tr:last-child td { border-bottom: none; }
+td.lineref { white-space: nowrap; font-family: "SF Mono", Menlo, monospace;
+             font-size: 0.8rem; color: var(--blue); font-weight: 700; }
+
+/* tags */
+.tag { display: inline-block; padding: 3px 9px; border-radius: 999px;
+       font-size: 0.68rem; font-weight: 800; letter-spacing: 0.03em; }
+.tag.basic { background: #dbeafe; color: #1d4ed8; }
+.tag.intermediate { background: #dcfce7; color: #166534; }
+.tag.advanced { background: #fef3c7; color: #92400e; }
+.tag.aws { background: #ffe4e6; color: #be123c; }
+
+/* callouts */
+.note, .warn {
+    border-left: 3px solid var(--blue); background: #f8fbff; padding: 10px 14px;
+    border-radius: 0 8px 8px 0; font-size: 0.88rem; margin: 10px 0;
+}
+.warn { border-left-color: var(--amber); background: #fffbeb; }
+
+/* lab link */
+.lablink {
+    display: inline-block; margin-top: 6px; font-size: 0.82rem; font-weight: 700;
+    color: var(--blue); text-decoration: none;
+}
+.lablink:hover { text-decoration: underline; }
+
+/* diagram */
+.diagram { background: #fff; border: 1px solid var(--slate-200); border-radius: 14px;
+           padding: 16px; margin: 14px 0; overflow-x: auto; }
+.diagram svg { width: 100%; height: auto; display: block; }
+
+.footer { margin-top: 24px; text-align: center; color: var(--slate-500);
+          font-size: 0.84rem; padding-bottom: 12px; }
+
+@media (max-width: 1200px) { .container { max-width: 100%; } }
+@media (max-width: 768px) {
+    body { padding: 12px; }
+    h1 { font-size: 1.3rem; }
+    pre { font-size: 0.76rem; }
+}
+</style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Terraform 101</h1>
+            <p class="subtitle">Infrastructure as code from absolute zero — read this before anything else</p>
+            <p class="subtitle" style="margin-top:8px;">
+                <a class="backlink" href="../../index.html">&larr; All tracks catalog</a>
+            </p>
+            <div class="stats"><span>12 sections</span><span>Targets Terraform &gt;= 1.5.0</span><span>AWS provider ~&gt; 5.0</span><span>No prior knowledge assumed</span></div>
+            <nav class="tiernav">
+            <a href="./index.html">Track Home</a>
+            <a href="./terraform-101.html" class="active">Terraform 101</a>
+            <a href="./aws-primer.html">AWS Primer</a>
+            <a href="./basic.html">Basic</a>
+            <a href="./intermediate.html">Intermediate</a>
+            <a href="./advanced.html">Advanced</a>
+            </nav>
+        </header>
+
+        <div class="card">
+            <span class="eyebrow">Start here</span>
+            <h2>Terraform 101 — the page before every other page</h2>
+            <p class="concept">This page assumes you have never run Terraform, never seen a <code class="inline">.tf</code> file, and have no cloud experience. Every term is defined the first time it appears, and nothing later in the page is assumed earlier. Read it top to bottom once, then start <a class="lablink" style="margin:0;" href="../labmanuals/lab00-aws-setup-and-init.md">Lab 00</a>.</p>
+
+            <p class="concept">Two words are used constantly and are worth pinning down before anything else. A <strong>binary</strong> is a single ready-to-run program file; <code class="inline">terraform</code> is one file you download and put on your computer, not an application you install with a wizard. A <strong>CLI</strong> (command-line interface) is a program you drive by typing commands into a terminal instead of clicking buttons. Terraform is a CLI binary.</p>
+
+            <div class="note">This track targets Terraform <strong>&gt;= 1.5.0</strong> and the AWS provider <strong>~&gt; 5.0</strong>, in region <code class="inline">us-east-1</code>. Section 9 explains exactly what those two version strings permit.</div>
+        </div>
+        <div class="card">
+            <span class="eyebrow">1 &middot; The idea</span>
+            <h2>What Terraform is</h2>
+            <p class="concept">Terraform is an <strong>infrastructure as code</strong> tool. Infrastructure means the servers, networks, databases and permissions your software runs on. Infrastructure as code means you write those things down in text files, keep the files like any other source code, and let a program build the real thing from them.</p>
+
+            <p class="concept">Terraform is <strong>declarative</strong>: you describe the end result you want, and the tool works out the steps. The opposite is <strong>imperative</strong>, where you write the steps yourself and the end result is whatever the steps happen to produce. A shopping list is declarative; turn-by-turn driving directions are imperative.</p>
+
+            <h3>The same job, three ways</h3>
+
+            <table>
+                <thead><tr><th style="width:16%;">Approach</th><th>How you express it</th><th>What happens on the second run</th></tr></thead>
+                <tbody>
+                    <tr><td class="lineref">Web console</td><td>You click through forms in a browser to create one server.</td><td>You click through them again, from memory, and get something slightly different. Nothing recorded what you did.</td></tr>
+                    <tr><td class="lineref">Shell script</td><td>You write <code class="inline">aws ec2 run-instances ...</code> — the exact command to create a server. Imperative.</td><td>It creates a <em>second</em> server, because the script says &quot;create&quot;, not &quot;make sure one exists&quot;. You must hand-write the checks yourself.</td></tr>
+                    <tr><td class="lineref">Terraform</td><td>You write &quot;there is one server, of this size, with these tags&quot;. Declarative.</td><td>Nothing happens. Reality already matches the file, so there is nothing to do.</td></tr>
+                </tbody>
+            </table>
+
+            <p class="concept">That last row is <strong>idempotence</strong>: running the same operation again produces the same end state instead of stacking up duplicates. It is the single most useful property Terraform gives you, and it is why the declarative style is worth learning.</p>
+
+            <h3>A whole Terraform file</h3>
+
+<pre># main.tf
+
+resource "random_pet" "example" {
+  length = 2
+}
+</pre>
+
+            <p class="concept">That is a complete, valid configuration. It says: a random two-word name exists. It does not say how to generate one, when to generate one, or what to do if one already exists — Terraform decides all of that. The example deliberately creates nothing in any cloud, so it costs nothing and needs no account.</p>
+
+            <a class="lablink" href="../labmanuals/lab04-plan-apply-destroy.md">Practise it in Lab 04 — plan, apply, destroy &rarr;</a>
+        </div>
+        <div class="card">
+            <span class="eyebrow">2 &middot; The payoff</span>
+            <h2>What it does for you</h2>
+            <p class="concept">Every benefit below follows from one fact: your infrastructure is now a text file, and text files can be copied, compared, reviewed and deleted.</p>
+
+            <table>
+                <thead><tr><th style="width:18%;">Benefit</th><th>What it means in practice</th></tr></thead>
+                <tbody>
+                    <tr><td class="lineref">Repeatability</td><td>The same files build the same environment in a test account and a production account. New joiners run one command instead of following a wiki page of screenshots.</td></tr>
+                    <tr><td class="lineref">Review</td><td>A change to a firewall rule arrives as a change to a line of text. A colleague can read it, question it and approve it before it reaches the real network.</td></tr>
+                    <tr><td class="lineref">Versioning</td><td>The files live in version control, so you can see who changed the server size, when, and why, and you can go back to last week's definition.</td></tr>
+                    <tr><td class="lineref">Teardown</td><td>One command destroys everything the files created — and only that. Manually built environments linger for years because nobody is sure what is safe to delete.</td></tr>
+                    <tr><td class="lineref">A dry run</td><td>Terraform can show you exactly what it intends to change before it changes anything. No web console offers that.</td></tr>
+                </tbody>
+            </table>
+
+            <div class="note">The dry run is the habit that separates confident Terraform users from nervous ones. Section 10 introduces the command that produces it.</div>
+        </div>
+        <div class="card">
+            <span class="eyebrow">3 &middot; Provenance</span>
+            <h2>Who owns Terraform, and what happened to its licence</h2>
+            <p class="concept">Terraform was created by HashiCorp in 2014. HashiCorp is now a wholly owned subsidiary of <strong>IBM</strong>: IBM announced the acquisition on 24 April 2024 and completed it on <strong>27 February 2025</strong>, at an enterprise value of 6.4 billion US dollars. The products kept their names, and the <code class="inline">terraform</code> binary is still published by HashiCorp.</p>
+
+            <h3>The licence change</h3>
+
+            <p class="concept">A <strong>licence</strong> is the legal document saying what you are allowed to do with someone else's code. From its first release up to and including version 1.5.7, Terraform used the Mozilla Public License 2.0 (MPL 2.0), a recognised open-source licence with essentially no restrictions on use. On 10 August 2023 HashiCorp announced that all future releases would move to the <strong>Business Source License 1.1 (BSL)</strong>. That change took effect from <strong>Terraform 1.6.0</strong>.</p>
+
+            <p class="concept">BSL is <em>source-available</em>, not open-source: you can read and modify the code, but there is a restriction attached. The restriction is narrow. The additional use grant in Terraform's licence file permits production use outright, and only forbids offering Terraform to third parties on a hosted or embedded basis in a paid product that competes with IBM's own paid Terraform offerings. It states explicitly that using Terraform for internal purposes within an organisation is not a competitive offering. Each individual release reverts to MPL 2.0 four years after it was published.</p>
+
+            <div class="note"><strong>What this means for you on this track:</strong> nothing. Learning Terraform, running it in a training account, and using it to manage your own employer's infrastructure are all permitted without payment. The restriction only bites if you sell a competing Terraform-based service.</div>
+
+            <h3>Why OpenTofu exists</h3>
+
+            <p class="concept">The licence change was unpopular with users who had built businesses around the previously open-source code. A group of companies and individuals published a manifesto asking for the change to be reverted; when it was not, they <strong>forked</strong> the project — took a copy of the last MPL 2.0 release, 1.5.7, and continued it independently. That fork is <strong>OpenTofu</strong>, accepted by the Linux Foundation on 20 September 2023, with OpenTofu 1.6 shipping in January 2024 as a drop-in replacement for Terraform 1.6.</p>
+
+            <p class="concept">OpenTofu is a separate project today with its own release schedule and some features Terraform does not have, but it still uses the same configuration language and the same state file format, and its command is <code class="inline">tofu</code> instead of <code class="inline">terraform</code>. Most material written for Terraform 1.x applies to it unchanged. <strong>This track teaches Terraform</strong>, so every command on these pages starts with <code class="inline">terraform</code>. You will hear the name OpenTofu; now you know what it is.</p>
+
+            <h3>Verify these facts yourself</h3>
+
+            <table>
+                <thead><tr><th style="width:42%;">Claim</th><th>Primary source</th></tr></thead>
+                <tbody>
+                    <tr><td class="lineref">IBM completed the acquisition on 27 Feb 2025</td><td><a class="lablink" style="margin:0;" href="https://newsroom.ibm.com/2025-02-27-ibm-completes-acquisition-of-hashicorp,-creates-comprehensive,-end-to-end-hybrid-cloud-platform">IBM newsroom announcement</a></td></tr>
+                    <tr><td class="lineref">BSL 1.1 applies from Terraform 1.6.0; licensor is IBM</td><td><a class="lablink" style="margin:0;" href="https://github.com/hashicorp/terraform/blob/main/LICENSE">hashicorp/terraform LICENSE</a></td></tr>
+                    <tr><td class="lineref">Licence interpretation guidance</td><td><a class="lablink" style="margin:0;" href="https://www.hashicorp.com/license-faq">HashiCorp licence FAQ</a></td></tr>
+                    <tr><td class="lineref">OpenTofu, the fork of Terraform 1.5.7</td><td><a class="lablink" style="margin:0;" href="https://opentofu.org/">opentofu.org</a></td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="card">
+            <span class="eyebrow">4 &middot; Versions</span>
+            <h2>Terraform version numbers, and which one this track wants</h2>
+            <p class="concept">Terraform version numbers have three parts separated by dots — <code class="inline">MAJOR.MINOR.PATCH</code>, for example <code class="inline">1.16.0</code>. This is the <strong>semantic versioning</strong> convention: the major number changes when something old stops working, the minor number changes when features are added, and the patch number changes for bug fixes only.</p>
+
+            <p class="concept">Terraform reached 1.0 in June 2021 and has stayed on major version 1 ever since, with a promise that configuration written for one 1.x release keeps working on later 1.x releases. In practice that means the gap between your version and this track's floor rarely matters, as long as yours is newer.</p>
+
+            <h3>Ask your own installation</h3>
+
+<pre>terraform version</pre>
+
+            <h3>Expected output</h3>
+
+<pre class="output">Terraform v1.14.8
+on darwin_arm64
+
+Your version of Terraform is out of date! The latest version
+is 1.16.0.
+</pre>
+
+            <p class="concept">The first line is your installed version. The second is the operating system and processor architecture the binary was built for. The third line appears only when a newer release exists — Terraform checks the public release index when you run this command.</p>
+
+            <table>
+                <thead><tr><th style="width:18%;">Version</th><th>Status</th></tr></thead>
+                <tbody>
+                    <tr><td class="lineref">1.16.0</td><td>The current release at the time this page was generated, published 26 August 2026. Verified against <a class="lablink" style="margin:0;" href="https://developer.hashicorp.com/terraform/install">developer.hashicorp.com/terraform/install</a>.</td></tr>
+                    <tr><td class="lineref">1.5.7</td><td>The last MPL 2.0 release, and the point OpenTofu forked from. Also the last release before this track's floor.</td></tr>
+                    <tr><td class="lineref">&gt;= 1.5.0</td><td><strong>What this track requires.</strong> Every lab is written against this floor. Anything from 1.5.0 upwards, including the current release, will work.</td></tr>
+                </tbody>
+            </table>
+
+            <div class="note">If your version is older than 1.5.0, download a newer one before Lab 00. If it is newer than 1.16.0 by the time you read this, that is fine — the floor is a minimum, not a target.</div>
+
+            <a class="lablink" href="../labmanuals/lab00-aws-setup-and-init.md">Practise it in Lab 00 — AWS setup and init &rarr;</a>
+        </div>
+        <div class="card">
+            <span class="eyebrow">5 &middot; The language</span>
+            <h2>What HCL is, and the anatomy of a block</h2>
+            <p class="concept"><strong>HCL</strong> is the HashiCorp Configuration Language — the language you write Terraform in. You put it in plain text files whose names end in <code class="inline">.tf</code>, and Terraform reads <em>every</em> <code class="inline">.tf</code> file in the directory you run it from and treats them as one configuration. File names carry no meaning to Terraform; <code class="inline">main.tf</code> is a convention, not a rule. HCL is built from just two things: <strong>blocks</strong>, which are named containers written with braces, and <strong>arguments</strong>, which are name-equals-value pairs inside them. The example below is one block, and the table names every part of it.</p>
+            <h3>Example</h3>
+<pre>resource "aws_instance" "web" {
+  ami           = data.aws_ami.al2023.id
+  instance_type = "t3.micro"
+
+  tags = {
+    Name = "tflabs-web"
+    Lab  = "lab03"
+  }
+}</pre>
+            <h3>Line by line</h3>
+            <table>
+                <thead><tr><th style="width:30%;">Line</th><th>What it does</th></tr></thead>
+                <tbody>
+                <tr><td class="lineref"><code>resource</code></td><td>The <strong>block type</strong>. It says what kind of thing this block declares. Terraform has a fixed set of block types: <code>resource</code>, <code>data</code>, <code>variable</code>, <code>output</code>, <code>provider</code>, <code>terraform</code>, <code>locals</code>, <code>module</code>.</td></tr>
+                <tr><td class="lineref"><code>&quot;aws_instance&quot;</code></td><td>The first <strong>block label</strong>. For a resource block this is the resource type — the exact kind of real-world thing to create. The name is fixed by the provider, so you cannot invent it.</td></tr>
+                <tr><td class="lineref"><code>&quot;web&quot;</code></td><td>The second block label: the <strong>local name</strong>. You choose this freely. It is how you refer to this block elsewhere in your own configuration, and it never appears in AWS.</td></tr>
+                <tr><td class="lineref"><code>{ ... }</code></td><td>The <strong>body</strong>: everything between the braces. It holds arguments and sometimes nested blocks.</td></tr>
+                <tr><td class="lineref"><code>instance_type</code></td><td>An <strong>argument name</strong>. Which arguments are valid, and which are required, is decided by the resource type.</td></tr>
+                <tr><td class="lineref"><code>&quot;t3.micro&quot;</code></td><td>An <strong>argument value</strong>. Here a literal piece of text in double quotes.</td></tr>
+                <tr><td class="lineref"><code>data.aws_ami.al2023.id</code></td><td>Also an argument value, but an <strong>expression</strong> rather than a literal: it reads a value out of another block instead of stating one. Sections 6 and 7 cover expressions and <code>data</code> blocks.</td></tr>
+                <tr><td class="lineref"><code>tags</code></td><td>An argument whose value is a group of key/value pairs in braces. Nesting is normal in HCL and the indentation is purely for humans.</td></tr>
+                </tbody>
+            </table>
+            <div class="note"><strong>How the parts become an address.</strong> The two labels combine into a <strong>reference address</strong> you use to point at this block from anywhere else: <code class="inline">aws_instance.web.id</code> means resource type <code class="inline">aws_instance</code>, local name <code class="inline">web</code>, attribute <code class="inline">id</code> — the instance ID that AWS assigns after creation. Blocks declared with <code class="inline">data</code> instead of <code class="inline">resource</code> take a <code class="inline">data.</code> prefix, which is why the AMI above is <code class="inline">data.aws_ami.al2023.id</code> and not <code class="inline">aws_ami.al2023.id</code>.</div>
+            <a class="lablink" href="../labmanuals/lab01-providers-init.md">Practise it in Lab 01 — providers and init &rarr;</a>
+        </div>
+        <div class="card">
+            <span class="eyebrow">6 &middot; The language</span>
+            <h2>HCL basics: types, comments, references and formatting</h2>
+            <p class="concept">Every argument value in HCL has a <strong>type</strong>. There are three simple types — string, number and bool — and three collection types — list, map and object. You will also write <strong>expressions</strong>: values computed from other values rather than typed out literally. Two blocks below are new: <code class="inline">variable</code> declares an input someone can set from outside, and <code class="inline">locals</code> names values used repeatedly inside the configuration. Both are covered properly later in the track; here they are just convenient places to show the types.</p>
+            <h3>Example</h3>
+<pre># A comment starts with a hash. // also works for one line,
+/* and this form spans
+   several lines. */
+
+variable "environment" {
+  type        = string
+  description = "Deployment environment name."
+  default     = "dev"
+}
+
+locals {
+  instance_count = 2                            # number
+  enable_logging = true                         # bool
+  zones          = ["us-east-1a", "us-east-1b"] # list of string
+
+  # map of string
+  common_tags = {
+    Project = "tflabs"
+    Env     = var.environment
+  }
+
+  name_prefix = "tflabs-${var.environment}-web" # interpolation: needed
+  env_name    = var.environment                 # no interpolation: not needed
+}</pre>
+            <h3>Line by line</h3>
+            <table>
+                <thead><tr><th style="width:30%;">Line</th><th>What it does</th></tr></thead>
+                <tbody>
+                <tr><td class="lineref"><code>#</code> <code>//</code> <code>/* */</code></td><td>The three comment forms. Terraform ignores them. <code>#</code> is the conventional one and <code>terraform fmt</code> rewrites <code>//</code> to <code>#</code>.</td></tr>
+                <tr><td class="lineref"><code>type = string</code></td><td>A <strong>string</strong> is text in double quotes. Declaring the type makes Terraform reject a wrong value early with a clear error instead of a confusing one later.</td></tr>
+                <tr><td class="lineref"><code>2</code></td><td>A <strong>number</strong>. Written bare, with no quotes. <code>&quot;2&quot;</code> would be a string that happens to contain a digit.</td></tr>
+                <tr><td class="lineref"><code>true</code></td><td>A <strong>bool</strong> — either <code>true</code> or <code>false</code>, lower case, no quotes.</td></tr>
+                <tr><td class="lineref"><code>[ ... ]</code></td><td>A <strong>list</strong>: ordered values in square brackets, reached by position starting at zero, so <code>local.zones[0]</code> is <code>&quot;us-east-1a&quot;</code>.</td></tr>
+                <tr><td class="lineref"><code>{ ... }</code></td><td>A <strong>map</strong>: values reached by key rather than position, so <code>local.common_tags[&quot;Project&quot;]</code> is <code>&quot;tflabs&quot;</code>. An <strong>object</strong> is the same shape with a fixed set of keys whose types are declared individually.</td></tr>
+                <tr><td class="lineref"><code>var.environment</code></td><td>A <strong>reference</strong>. The address form is source, then name, then attribute: <code>var.NAME</code> for a variable, <code>local.NAME</code> for a local value, <code>RESOURCE_TYPE.NAME.ATTRIBUTE</code> for a resource.</td></tr>
+                <tr><td class="lineref"><code>&quot;tflabs-${var.environment}-web&quot;</code></td><td><strong>Interpolation</strong>: <code>${ }</code> inside a quoted string means &quot;evaluate this and paste the result here&quot;. Needed here because the value is glued between two pieces of literal text.</td></tr>
+                <tr><td class="lineref"><code>= var.environment</code></td><td>The same value with <strong>no</strong> interpolation, because it is the whole value. Writing <code>&quot;${var.environment}&quot;</code> would work but is redundant, and Terraform warns about it.</td></tr>
+                </tbody>
+            </table>
+            <div class="note"><strong>Formatting is automatic.</strong> The <code class="inline">=</code> signs above line up in columns. Nobody does that by hand — running <code class="inline">terraform fmt</code> rewrites every <code class="inline">.tf</code> file in the directory to the canonical style: standard indentation, aligned equals signs, consistent comment markers. It changes layout only, never meaning. Run it before every commit, and use <code class="inline">terraform fmt -check</code> in automation to fail a build that was not formatted.</div>
+            <a class="lablink" href="../labmanuals/lab05-fmt-validate.md">Practise it in Lab 05 — fmt and validate &rarr;</a>
+        </div>
+        <div class="card">
+            <span class="eyebrow">7 &middot; Plugins</span>
+            <h2>What a provider is</h2>
+            <p class="concept">Terraform itself knows nothing about AWS. It does not know what an EC2 instance is, which API endpoint creates one, or how to authenticate. All of that lives in a <strong>provider</strong>.</p>
+
+            <p class="concept">A provider is a <strong>plugin</strong> — a separate program that Terraform downloads and runs alongside itself to add a capability it does not have built in. Each provider translates your HCL into calls against one specific API. The <code class="inline">aws</code> provider defines the resource types whose names begin <code class="inline">aws_</code>; the <code class="inline">random</code> provider defines <code class="inline">random_pet</code> and its siblings and talks to no API at all. There are thousands of others.</p>
+
+            <h3>Where providers come from</h3>
+
+            <p class="concept">The <strong>Terraform Registry</strong> at <a class="lablink" style="margin:0;" href="https://registry.terraform.io/">registry.terraform.io</a> is the public catalogue Terraform downloads providers from. Every provider has a two-part source address, <code class="inline">NAMESPACE/NAME</code>. In <code class="inline">hashicorp/aws</code>, <code class="inline">hashicorp</code> is the namespace — the organisation that publishes it — and <code class="inline">aws</code> is the provider name. The namespace matters: it is what distinguishes the official AWS provider from a third party's fork of it. The registry is also where the documentation for every resource type lives, and it is the reference you will use most often once you start writing real configurations.</p>
+
+            <h3>Where the plugin lands on your disk</h3>
+
+            <p class="concept">You never download a provider by hand. The <code class="inline">terraform init</code> command reads your configuration, works out which providers it needs, fetches them, and unpacks them into a hidden <code class="inline">.terraform</code> directory next to your <code class="inline">.tf</code> files:</p>
+
+<pre>.terraform/
+└── providers/
+    └── registry.terraform.io/
+        └── hashicorp/
+            └── aws/
+                └── 5.31.0/
+                    └── darwin_arm64/
+                        └── terraform-provider-aws_v5.31.0_x5
+</pre>
+
+            <p class="concept">That last file is the provider binary. The path records the registry it came from, the namespace, the name, the exact version and the platform it was built for. The whole <code class="inline">.terraform</code> directory is disposable — it is rebuilt by <code class="inline">terraform init</code> and is never committed to version control, because it contains large platform-specific binaries rather than anything you wrote.</p>
+
+            <div class="note">Provider version numbers are independent of Terraform's. AWS provider 5.31.0 has nothing to do with Terraform 1.16.0; they are different pieces of software on different release schedules.</div>
+
+            <a class="lablink" href="../labmanuals/lab01-providers-init.md">Practise it in Lab 01 — providers and init &rarr;</a>
+        </div>
+        <div class="card">
+            <span class="eyebrow">8 &middot; Plugins</span>
+            <h2>How to add a provider, and why it takes two blocks</h2>
+            <p class="concept">Adding a provider is always two separate declarations, and beginners reliably confuse them. The <code class="inline">required_providers</code> entry says <em>which plugin to install and which versions are acceptable</em>. The <code class="inline">provider</code> block says <em>how to configure the plugin once it is installed</em>. They are separate because they answer different questions at different times: Terraform must resolve and download the plugin before it can hand it any settings, and a configuration can install one plugin but configure it several times over — one AWS provider, configured for two regions, is a normal thing to want. Put both in a file and run <code class="inline">terraform init</code> to make it real.</p>
+            <h3>Example</h3>
+<pre>terraform {
+  required_version = "&gt;= 1.5.0"
+
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~&gt; 5.0"
+    }
+  }
+}
+
+provider "aws" {
+  region = "us-east-1"
+}</pre>
+            <h3>Line by line</h3>
+            <table>
+                <thead><tr><th style="width:30%;">Line</th><th>What it does</th></tr></thead>
+                <tbody>
+                <tr><td class="lineref"><code>terraform { }</code></td><td>A block that configures Terraform itself rather than any infrastructure. It takes no labels, and a configuration has at most one of them.</td></tr>
+                <tr><td class="lineref"><code>required_version</code></td><td>The versions of the <strong>Terraform CLI</strong> this configuration accepts. Terraform checks its own version against this and refuses to run if it does not match. It cannot upgrade itself.</td></tr>
+                <tr><td class="lineref"><code>required_providers</code></td><td>The <strong>declaration</strong> block: which plugins this configuration needs, where to get them, and which versions are acceptable.</td></tr>
+                <tr><td class="lineref"><code>aws = { ... }</code></td><td>The <strong>local name</strong> for this provider inside your configuration. It is what makes <code>aws_instance</code> resolve to this provider.</td></tr>
+                <tr><td class="lineref"><code>source</code></td><td>The registry address, <code>NAMESPACE/NAME</code>. <code>&quot;hashicorp/aws&quot;</code> is the official AWS provider. Omitting <code>source</code> is a bug waiting to happen; always state it.</td></tr>
+                <tr><td class="lineref"><code>version = &quot;~&gt; 5.0&quot;</code></td><td>A <strong>version constraint</strong>: a rule saying which releases are acceptable. This one accepts any 5.x release — 5.0.1, 5.31.0, 5.99.0 — and refuses 6.0.0 and newer, and anything older than 5.0. Section 9 decodes every operator in full.</td></tr>
+                <tr><td class="lineref"><code>provider &quot;aws&quot;</code></td><td>The <strong>configuration</strong> block: settings passed to the plugin once it is installed. Its label matches the local name declared above.</td></tr>
+                <tr><td class="lineref"><code>region</code></td><td>An AWS-provider-specific setting. Every AWS resource in this configuration is created in <code>us-east-1</code>. Different providers take completely different settings.</td></tr>
+                </tbody>
+            </table>
+            <div class="note">The <code class="inline">terraform</code> block is the one place where you cannot use variables or expressions. Its contents must be literal values, because Terraform reads it before it has evaluated anything else.</div>
+            <a class="lablink" href="../labmanuals/lab01-providers-init.md">Practise it in Lab 01 — providers and init &rarr;</a>
+        </div>
+        <div class="card">
+            <span class="eyebrow">9 &middot; Version constraints</span>
+            <h2>Every version constraint operator, and what each one really allows</h2>
+            <p class="concept">A <strong>version constraint</strong> is a string that says which releases of something are acceptable. The same syntax is used in three places: <code class="inline">required_version</code> for Terraform itself, the <code class="inline">version</code> argument inside <code class="inline">required_providers</code> for a plugin, and the <code class="inline">version</code> argument on a module. Learn it once and it applies everywhere.</p>
+
+            <p class="concept">The syntax is an operator, a space, and a version number. Terraform installs the <strong>newest</strong> published version that satisfies every constraint that applies. If no published version satisfies them, it stops with an error rather than guessing.</p>
+
+            <table>
+                <thead><tr><th style="width:20%;">Constraint</th><th>What the operator means</th><th>Exactly which versions</th></tr></thead>
+                <tbody>
+                    <tr><td class="lineref"><code>= 5.31.0</code><br><code>5.31.0</code></td><td>Exactly one version. The operator is optional, so the bare number means the same thing. This is the only form that cannot be combined with other conditions, and the only form that will select a pre-release such as <code>6.0.0-beta1</code>.</td><td><strong>Allows:</strong> 5.31.0 only.<br><strong>Excludes:</strong> everything else, including 5.31.1 and 5.30.9.</td></tr>
+                    <tr><td class="lineref"><code>!= 5.31.0</code></td><td>Excludes one exact version. Used to skip a single known-bad release while staying open to the rest. Almost always paired with another condition.</td><td><strong>Allows:</strong> 5.30.9, 5.31.1, 6.0.0 — every published version except one.<br><strong>Excludes:</strong> 5.31.0.</td></tr>
+                    <tr><td class="lineref"><code>&gt; 5.31.0</code></td><td>Strictly newer than the stated version.</td><td><strong>Allows:</strong> 5.31.1, 5.32.0, 6.0.0, 7.4.2.<br><strong>Excludes:</strong> 5.31.0 itself, and anything older.</td></tr>
+                    <tr><td class="lineref"><code>&gt;= 5.31.0</code></td><td>The stated version or newer. The usual choice for a shared module, which should set a floor but not a ceiling.</td><td><strong>Allows:</strong> 5.31.0, 5.31.1, 6.0.0, 7.4.2.<br><strong>Excludes:</strong> 5.30.9 and anything older.</td></tr>
+                    <tr><td class="lineref"><code>&lt; 6.0.0</code></td><td>Strictly older than the stated version. A ceiling, normally used to stay off a major release that contains breaking changes.</td><td><strong>Allows:</strong> 5.99.0, 5.31.0, 1.0.0.<br><strong>Excludes:</strong> 6.0.0 itself, and anything newer.</td></tr>
+                    <tr><td class="lineref"><code>&lt;= 6.0.0</code></td><td>The stated version or older.</td><td><strong>Allows:</strong> 6.0.0, 5.99.0, 5.31.0.<br><strong>Excludes:</strong> 6.0.1 and anything newer.</td></tr>
+                    <tr><td class="lineref"><code>~&gt; 5.0</code></td><td>The <strong>pessimistic constraint</strong>. It allows the right-most component you wrote to increase, and nothing to its left. You wrote two components, so the right-most is the <em>minor</em> number: minor and patch may both rise, major may not.</td><td><strong>Allows:</strong> 5.0.0, 5.0.1, 5.1.0, 5.31.0, 5.99.9 — any 5.x.<br><strong>Excludes:</strong> 6.0.0 and newer; 4.67.0 and older.</td></tr>
+                    <tr><td class="lineref"><code>~&gt; 5.1.2</code></td><td>The same operator with three components, which means something genuinely different. The right-most is now the <em>patch</em> number, so only the patch may rise. This is the form to use when you want bug fixes and nothing else.</td><td><strong>Allows:</strong> 5.1.2, 5.1.3, 5.1.9, 5.1.40.<br><strong>Excludes:</strong> 5.2.0 (minor rose), 5.1.1 (older), 6.0.0.</td></tr>
+                    <tr><td class="lineref"><code>&gt;= 5.20.0, &lt; 6.0.0</code></td><td>A <strong>compound constraint</strong>: several conditions in one string, separated by commas. A version must satisfy <em>all</em> of them. This is how you express a range that no single operator can.</td><td><strong>Allows:</strong> 5.20.0, 5.31.0, 5.99.9.<br><strong>Excludes:</strong> 5.19.9, 6.0.0, 6.1.0.</td></tr>
+                    <tr><td class="lineref"><code>&gt;= 5.0.0, != 5.31.0, &lt; 6.0.0</code></td><td>Three conditions at once — a floor, a ceiling, and one bad release cut out of the middle. There is no limit on how many you combine.</td><td><strong>Allows:</strong> 5.0.0, 5.30.9, 5.31.1, 5.99.9.<br><strong>Excludes:</strong> 4.99.0, 5.31.0, 6.0.0.</td></tr>
+                </tbody>
+            </table>
+
+            <div class="note"><strong>Pre-releases are special.</strong> A version with a dash suffix, such as <code class="inline">6.0.0-beta1</code>, is never matched by <code class="inline">&gt;</code>, <code class="inline">&gt;=</code>, <code class="inline">&lt;</code>, <code class="inline">&lt;=</code> or <code class="inline">~&gt;</code>. To use one you must name it exactly with <code class="inline">=</code> or with no operator at all. This is why <code class="inline">&gt;= 5.0.0</code> will not quietly drag a beta into your build.</div>
+
+            <h3>Two different things get versioned, and they are not the same</h3>
+
+            <table>
+                <thead><tr><th style="width:26%;">Setting</th><th>Constrains</th><th>If the constraint is not met</th></tr></thead>
+                <tbody>
+                    <tr><td class="lineref"><code>required_version</code></td><td>The <strong>Terraform CLI binary</strong> on the machine running the command. One per configuration, inside the <code>terraform</code> block.</td><td>Terraform refuses to run and tells you to change your Terraform installation. It cannot fix this itself — you download a different binary.</td></tr>
+                    <tr><td class="lineref"><code>version</code> in <code>required_providers</code></td><td>A <strong>provider plugin</strong>. One per provider. Completely independent of the Terraform version.</td><td><code>terraform init</code> downloads a version that does satisfy it. Terraform fixes this itself, automatically.</td></tr>
+                </tbody>
+            </table>
+
+            <h3>What the constraint permits, and what the lock file pins</h3>
+
+            <p class="concept">A constraint describes a <em>range</em>. It does not decide anything on its own. The decision is recorded in a file called <code class="inline">.terraform.lock.hcl</code>, which <code class="inline">terraform init</code> creates in your working directory the first time it installs a provider.</p>
+
+<pre># .terraform.lock.hcl  (generated by terraform init - do not hand-edit)
+
+provider "registry.terraform.io/hashicorp/aws" {
+  version     = "5.31.0"
+  constraints = "~&gt; 5.0"
+  hashes = [
+    "h1:cIUS0MSHV3JQyDb1UDXWvVHmp0IuZ8y7WPMSVJvhBg8=",
+  ]
+}
+</pre>
+
+            <table>
+                <thead><tr><th style="width:18%;">Line</th><th>What it records</th></tr></thead>
+                <tbody>
+                    <tr><td class="lineref"><code>version</code></td><td>The one exact release Terraform actually chose. This is the pin.</td></tr>
+                    <tr><td class="lineref"><code>constraints</code></td><td>A copy of what your configuration asked for, kept so you can see why that version was chosen.</td></tr>
+                    <tr><td class="lineref"><code>hashes</code></td><td>Checksums of the downloaded package. On later runs Terraform verifies the file it fetched matches, so a tampered or substituted plugin fails loudly.</td></tr>
+                </tbody>
+            </table>
+
+            <p class="concept">Once a version is recorded, <code class="inline">terraform init</code> re-selects <em>that</em> version on every subsequent run, even when a newer one exists inside the constraint. The only way to move it is <code class="inline">terraform init -upgrade</code>, which discards the recorded selection and picks the newest version the constraint still allows. Commit the lock file to version control: it is the difference between everyone on the team running the same plugin and everyone running whatever was newest on the day they cloned.</p>
+
+            <div class="note"><strong>Why a colleague got a different provider version from the same repository.</strong> You cloned in March, ran <code class="inline">terraform init</code> against <code class="inline">version = "~&gt; 5.0"</code>, and got 5.31.0. Your colleague cloned in September and got 5.94.0. Both are correct: the constraint permits every 5.x, and each of you took the newest available on your own day. The lock file is what removes the ambiguity — if you had committed it, their <code class="inline">terraform init</code> would have installed 5.31.0 too. A constraint permits a range; the lock file records the choice.</div>
+
+            <div class="warn">The lock file covers providers only. It does <strong>not</strong> pin the Terraform CLI version, and it does not pin module versions — Terraform always takes the newest module version the constraint allows.</div>
+
+            <a class="lablink" href="../labmanuals/lab01-providers-init.md">Practise it in Lab 01 — providers and init &rarr;</a>
+        </div>
+        <div class="card">
+            <span class="eyebrow">10 &middot; The command line</span>
+            <h2>The commands you will actually type</h2>
+            <p class="concept">Terraform is one binary with subcommands. You run them from inside the directory that holds your <code class="inline">.tf</code> files, in roughly the order below. The first three are safe — they change nothing in any cloud.</p>
+
+            <table>
+                <thead><tr><th style="width:24%;">Command</th><th>What it does</th></tr></thead>
+                <tbody>
+                    <tr><td class="lineref"><code>terraform init</code></td><td>Prepares the directory: reads your configuration, downloads the providers it needs, and writes the lock file. Run it first, and again any time you add or change a provider.</td></tr>
+                    <tr><td class="lineref"><code>terraform fmt</code></td><td>Rewrites your files into the canonical layout. Changes formatting only.</td></tr>
+                    <tr><td class="lineref"><code>terraform validate</code></td><td>Checks the configuration is internally consistent — no syntax errors, no unknown arguments, no references to blocks that do not exist. It does not contact any cloud, so it cannot tell you whether AWS will accept the request.</td></tr>
+                    <tr><td class="lineref"><code>terraform plan</code></td><td>The dry run. Compares what you asked for against what exists and prints the changes it <em>would</em> make. Changes nothing.</td></tr>
+                    <tr><td class="lineref"><code>terraform apply</code></td><td>Makes the changes. Shows the same plan first and waits for you to type <code>yes</code>. This is the command that creates real, billable resources.</td></tr>
+                    <tr><td class="lineref"><code>terraform destroy</code></td><td>Deletes everything this configuration created. Also asks for confirmation. Run it at the end of every lab so nothing keeps costing money.</td></tr>
+                    <tr><td class="lineref"><code>terraform output</code></td><td>Prints the values the configuration chose to publish, such as a server's public address.</td></tr>
+                    <tr><td class="lineref"><code>terraform show</code></td><td>Prints everything Terraform currently knows about what it manages, in readable form.</td></tr>
+                    <tr><td class="lineref"><code>terraform state list</code></td><td>Lists the addresses of everything Terraform is tracking, one per line — the quickest way to see what a configuration owns.</td></tr>
+                    <tr><td class="lineref"><code>terraform console</code></td><td>An interactive prompt for trying out expressions against your real values. Type an expression, see what it evaluates to, change nothing.</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Reading a plan: the four symbols</h3>
+
+            <p class="concept"><code class="inline">terraform plan</code> marks every proposed change with a symbol in the left margin. Four symbols cover everything you will see, and they are worth learning now because the rest of this page uses them.</p>
+
+            <table>
+                <thead><tr><th style="width:12%;">Symbol</th><th>Meaning</th><th>Why it happens</th></tr></thead>
+                <tbody>
+                    <tr><td class="lineref"><code>+</code></td><td><strong>create</strong></td><td>The resource is in your configuration but does not exist yet.</td></tr>
+                    <tr><td class="lineref"><code>-</code></td><td><strong>destroy</strong></td><td>The resource exists but you removed it from your configuration.</td></tr>
+                    <tr><td class="lineref"><code>~</code></td><td><strong>update in place</strong></td><td>The resource exists but one of its settings differs. The change can be made without deleting anything — for example editing a tag.</td></tr>
+                    <tr><td class="lineref"><code>-/+</code></td><td><strong>replace</strong></td><td>A setting differs that cannot be changed on a live resource, so Terraform must destroy it and create a new one. Changing an EC2 instance's <code>ami</code> does this. Read these carefully — the old resource and anything on it is gone.</td></tr>
+                </tbody>
+            </table>
+
+            <div class="note">The last line of every plan is a count: <code class="inline">Plan: 1 to add, 0 to change, 0 to destroy.</code> If that line surprises you, do not type <code class="inline">yes</code>.</div>
+
+            <a class="lablink" href="../labmanuals/lab04-plan-apply-destroy.md">Practise it in Lab 04 — plan, apply, destroy &rarr;</a>
+        </div>
+        <div class="card">
+            <span class="eyebrow">11 &middot; State</span>
+            <h2>What state is, and why Terraform cannot work without it</h2>
+            <p class="concept">Your configuration says a server should exist. AWS says a server with ID <code class="inline">i-0a1b2c3d4e5f6a7b8</code> exists. Nothing so far connects the two. Terraform needs a record saying &quot;the block I call <code class="inline">aws_instance.web</code> is that specific machine&quot;. That record is the <strong>state</strong>.</p>
+
+            <p class="concept">By default it is a single file in your working directory called <code class="inline">terraform.tfstate</code>, written in JSON. Terraform creates it on the first <code class="inline">terraform apply</code> and updates it on every run afterwards.</p>
+
+            <h3>What it looks like inside</h3>
+
+<pre>{
+  "version": 4,
+  "terraform_version": "1.14.8",
+  "serial": 3,
+  "resources": [
+    {
+      "mode": "managed",
+      "type": "aws_instance",
+      "name": "web",
+      "instances": [
+        {
+          "attributes": {
+            "id": "i-0a1b2c3d4e5f6a7b8",
+            "instance_type": "t3.micro",
+            "tags": { "Name": "tflabs-web", "Lab": "lab03" }
+          }
+        }
+      ]
+    }
+  ]
+}
+</pre>
+
+            <table>
+                <thead><tr><th style="width:24%;">Field</th><th>What it is for</th></tr></thead>
+                <tbody>
+                    <tr><td class="lineref"><code>type</code> + <code>name</code></td><td>The two labels from your <code>resource</code> block. Together they form the address <code>aws_instance.web</code>.</td></tr>
+                    <tr><td class="lineref"><code>id</code></td><td>The real identifier AWS assigned. This is the link between your text file and the running machine.</td></tr>
+                    <tr><td class="lineref"><code>attributes</code></td><td>Everything Terraform knew about the resource at the end of the last run — both what you set and what AWS filled in.</td></tr>
+                    <tr><td class="lineref"><code>serial</code></td><td>Increments on every write. Used to detect two people writing the same state at once.</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Three consequences you need to know now</h3>
+
+            <table>
+                <thead><tr><th style="width:24%;">Consequence</th><th>Detail</th></tr></thead>
+                <tbody>
+                    <tr><td class="lineref">State is the source of identity</td><td>Delete the state file and Terraform forgets it ever built anything. Your next <code>plan</code> shows <code>+</code> for everything and <code>apply</code> builds a second copy, while the first keeps running and billing. Back it up; never delete it to &quot;start clean&quot;.</td></tr>
+                    <tr><td class="lineref">State holds secrets in plaintext</td><td><strong>Plaintext</strong> means readable text with no encryption. If a resource has a generated database password, that password is sitting in <code>terraform.tfstate</code> in readable form, even if you marked the variable sensitive. Never commit a state file to git and never put one in a public bucket.</td></tr>
+                    <tr><td class="lineref">Local state is single-player</td><td>The default file lives on your laptop, so nobody else can see it. Two people running <code>apply</code> against the same infrastructure from two laptops will corrupt each other's work. Teams therefore move state to a shared <strong>remote backend</strong> — a bucket or service that holds one copy for everyone and locks it during a run. The advanced tier of this track covers that; the basic and intermediate labs all use local state, which is correct for one person learning alone.</td></tr>
+                </tbody>
+            </table>
+
+            <div class="note">State is Terraform's memory of the last run, not a live view of AWS. Keeping the two in agreement is the whole subject of the next section.</div>
+
+            <a class="lablink" href="../labmanuals/lab08-local-state.md">Practise it in Lab 08 — local state &rarr;</a>
+        </div>
+        <div class="card">
+            <span class="eyebrow">12 &middot; Drift</span>
+            <h2>Drift: when reality stops matching the file</h2>
+            <p class="concept"><strong>Drift</strong> is any difference between what your configuration says and what actually exists, caused by something other than Terraform. Someone edits a setting in the web console. An automated script changes a tag. A colleague deletes a resource by hand at 2am to stop an alert. The file did not change; the world did.</p>
+
+            <h3>Step 1 — the state you applied</h3>
+
+            <p class="concept">You wrote this and ran <code class="inline">terraform apply</code>. Terraform created the instance and recorded its ID and attributes in state.</p>
+
+<pre>resource "aws_instance" "web" {
+  ami           = data.aws_ami.al2023.id
+  instance_type = "t3.micro"
+
+  tags = {
+    Name = "tflabs-web"
+    Lab  = "lab03"
+  }
+}</pre>
+
+            <h3>Step 2 — someone changes it by hand</h3>
+
+            <p class="concept">A colleague opens the AWS console, finds the instance, and edits its <code class="inline">Name</code> tag from <code class="inline">tflabs-web</code> to <code class="inline">prod-web-DO-NOT-DELETE</code>. They do not tell you. Three facts now disagree:</p>
+
+            <table>
+                <thead><tr><th style="width:24%;">Source</th><th>Value of the Name tag</th></tr></thead>
+                <tbody>
+                    <tr><td class="lineref">Your <code>.tf</code> file</td><td><code>tflabs-web</code> — unchanged.</td></tr>
+                    <tr><td class="lineref">Terraform state</td><td><code>tflabs-web</code> — still recording what was true at the last apply.</td></tr>
+                    <tr><td class="lineref">AWS, right now</td><td><code>prod-web-DO-NOT-DELETE</code> — the only one of the three that is actually true.</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Step 3 — plan detects it by refreshing</h3>
+
+            <p class="concept">Before comparing anything, <code class="inline">terraform plan</code> <strong>refreshes</strong>: it asks the provider for the current attributes of every resource in state and updates its in-memory picture. That is the step that finds drift. The plan then reports it in two parts — first what changed outside Terraform, then what Terraform intends to do about it.</p>
+
+<pre class="output">aws_instance.web: Refreshing state... [id=i-0a1b2c3d4e5f6a7b8]
+
+Note: Objects have changed outside of Terraform
+
+Terraform detected the following changes made outside of Terraform since the
+last "terraform apply" which may have affected this plan:
+
+  # aws_instance.web has been changed
+  ~ resource "aws_instance" "web" {
+        id            = "i-0a1b2c3d4e5f6a7b8"
+      ~ tags          = {
+          ~ "Name" = "tflabs-web" -&gt; "prod-web-DO-NOT-DELETE"
+        }
+        # (28 unchanged attributes hidden)
+    }
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  ~ update in-place
+
+Terraform will perform the following actions:
+
+  # aws_instance.web will be updated in-place
+  ~ resource "aws_instance" "web" {
+        id            = "i-0a1b2c3d4e5f6a7b8"
+      ~ tags          = {
+          ~ "Name" = "prod-web-DO-NOT-DELETE" -&gt; "tflabs-web"
+        }
+        # (28 unchanged attributes hidden)
+    }
+
+Plan: 0 to add, 1 to change, 0 to destroy.</pre>
+
+            <table>
+                <thead><tr><th style="width:30%;">Part of the output</th><th>How to read it</th></tr></thead>
+                <tbody>
+                    <tr><td class="lineref"><code>Refreshing state...</code></td><td>Terraform asking AWS what is true now. Nothing is changed by this.</td></tr>
+                    <tr><td class="lineref"><code>Objects have changed outside of Terraform</code></td><td>The drift report. Reading right to left in this block: the tag <em>was</em> <code>tflabs-web</code> in state and <em>is now</em> <code>prod-web-DO-NOT-DELETE</code> in AWS.</td></tr>
+                    <tr><td class="lineref"><code>will be updated in-place</code></td><td>The proposed fix, marked with the <code>~</code> symbol from section 10. The arrow now points the other way: from what AWS has back to what your file says.</td></tr>
+                    <tr><td class="lineref"><code>Plan: 0 to add, 1 to change, 0 to destroy.</code></td><td>One resource modified, nothing created or deleted. Exactly what a tag edit should cost.</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Step 4 — what apply does about it</h3>
+
+            <p class="concept"><code class="inline">terraform apply</code> sets the tag back to <code class="inline">tflabs-web</code> and updates state. The configuration always wins: Terraform's job is to make reality match the file, so a hand-made change is treated as a mistake to be corrected, not as a new intention to be adopted. If the colleague's change was actually right, the fix is to edit the <code class="inline">.tf</code> file and apply that — never to edit the console again.</p>
+
+            <div class="note">Drift is why state alone is not enough, and why it works. State remembers what Terraform did; refresh discovers what is true; the configuration says what should be true. The plan is the difference between the last two, expressed as the change needed to satisfy the third.</div>
+
+            <div class="warn">Not all drift is a cheap fix. If someone changes something that cannot be altered on a live resource, the plan shows <code class="inline">-/+</code> replace instead of <code class="inline">~</code>, and applying it destroys the resource and builds a new one. Always read the symbols before confirming.</div>
+
+            <a class="lablink" href="../labmanuals/lab08-local-state.md">Practise it in Lab 08 — local state &rarr;</a>
+        </div>
+        <div class="card">
+            <span class="eyebrow">Next</span>
+            <h2>Where to go next</h2>
+            <p class="concept">You now know what Terraform is, what HCL looks like, what a provider is, how to read a version constraint, what the core commands do, what state is and why drift matters. That is everything the labs assume. Two steps remain before you write your first configuration.</p>
+
+            <table>
+                <thead><tr><th style="width:34%;">Go here</th><th>Why</th></tr></thead>
+                <tbody>
+                    <tr><td class="lineref"><a class="lablink" style="margin:0;" href="./aws-primer.html">AWS Primer</a></td><td>The same treatment for AWS: region, VPC, subnet, internet gateway, route table, security group, EC2 instance, key pair and access keys, each with its Terraform resource type. Read it next if you have never opened the AWS console.</td></tr>
+                    <tr><td class="lineref"><a class="lablink" style="margin:0;" href="../labmanuals/lab00-aws-setup-and-init.md">Lab 00 — AWS setup and init</a></td><td>Hands on. Check your Terraform version, set up AWS credentials safely, write your first <code class="inline">terraform</code> and <code class="inline">provider</code> block, and run <code class="inline">terraform init</code> successfully. It creates nothing billable.</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Reference for later</h3>
+
+            <table>
+                <thead><tr><th style="width:34%;">Lab</th><th>Covers the section</th></tr></thead>
+                <tbody>
+                    <tr><td class="lineref"><a class="lablink" style="margin:0;" href="../labmanuals/lab01-providers-init.md">Lab 01 — providers and init</a></td><td>Sections 7, 8 and 9 — providers, the registry, and version constraints.</td></tr>
+                    <tr><td class="lineref"><a class="lablink" style="margin:0;" href="../labmanuals/lab04-plan-apply-destroy.md">Lab 04 — plan, apply, destroy</a></td><td>Sections 1 and 10 — the declarative workflow and the plan symbols, using a provider that costs nothing.</td></tr>
+                    <tr><td class="lineref"><a class="lablink" style="margin:0;" href="../labmanuals/lab05-fmt-validate.md">Lab 05 — fmt and validate</a></td><td>Section 6 — <code class="inline">terraform fmt</code> and <code class="inline">terraform validate</code>.</td></tr>
+                    <tr><td class="lineref"><a class="lablink" style="margin:0;" href="../labmanuals/lab08-local-state.md">Lab 08 — local state</a></td><td>Sections 11 and 12 — the state file and drift.</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+
+        <div class="footer">
+            Terraform track &middot; <a class="backlink" href="../../index.html">All tracks</a>
+        </div>
+    </div>
+</body>
+</html>

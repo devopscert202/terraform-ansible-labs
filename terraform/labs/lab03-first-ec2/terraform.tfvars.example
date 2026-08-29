@@ -1,0 +1,6 @@
+# Every variable in this lab already has a default, so this file is optional.
+# Copy it to terraform.tfvars to override any of them. Lab 07 covers tfvars in
+# detail. Never put secrets in this file.
+aws_region    = "us-east-1"
+instance_type = "t3.micro"
+instance_name = "tf-lab03-web"

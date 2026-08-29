@@ -1,6 +1,6 @@
 # GitHub Pages — https://devopscert202.github.io/terraform-ansible-labs/
 title: Terraform & Ansible Labs
-description: Hands-on Ansible and Terraform labs — essentials bootcamp plus extended tracks
+description: Hands-on Ansible and Terraform labs — a 20-hour bootcamp plus self-paced depth
 baseurl: "/terraform-ansible-labs"
 url: "https://devopscert202.github.io"
 
@@ -38,12 +38,9 @@ include:
   - ansible/extended/docs
   - ansible/extended/html
   - ansible/extended/labmanuals
-  - terraform/essentials/docs
-  - terraform/essentials/html
-  - terraform/essentials/labmanuals
-  - terraform/extended/docs
-  - terraform/extended/html
-  - terraform/extended/labmanuals
+  - terraform/docs
+  - terraform/html
+  - terraform/labmanuals
   - curriculum
 
 exclude:
@@ -56,11 +53,10 @@ exclude:
   - README.md
   - index.md
   - ansible/**/labs
-  - terraform/**/labs
+  - terraform/labs
   - ansible/projects
 
 keep_files:
   - ansible/essentials/html
   - ansible/extended/html
-  - terraform/essentials/html
-  - terraform/extended/html
+  - terraform/html

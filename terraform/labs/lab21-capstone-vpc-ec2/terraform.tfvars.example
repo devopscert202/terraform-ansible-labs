@@ -1,0 +1,16 @@
+aws_region = "us-east-1"
+project    = "tflabs"
+
+# The availability zone is not settable: it is read from
+# data.aws_availability_zones.available so the lab works in any account.
+
+vpc_cidr           = "10.0.0.0/16"
+public_subnet_cidr = "10.0.1.0/24"
+
+instance_type = "t3.micro"
+ingress_ports = [80]
+
+# Narrow this to YOUR_IP/32 in any account that is not a throwaway lab account.
+allowed_cidr = "0.0.0.0/0"
+
+# Never place AWS credentials here. Use environment variables (lab00) or a named profile.

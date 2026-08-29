@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AWS Primer</title>
+    <style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+    --blue: #2563eb; --cyan: #06b6d4;
+    --slate-900: #0f172a; --slate-700: #334155; --slate-500: #64748b; --slate-200: #e2e8f0;
+    --bg: #f8fafc; --green: #16a34a; --amber: #d97706; --rose: #e11d48;
+}
+body {
+    font-family: "Segoe UI", system-ui, sans-serif;
+    background: linear-gradient(180deg, #f8fbff 0%, #eef4fb 100%);
+    color: var(--slate-900); padding: 20px; line-height: 1.6;
+}
+.container { max-width: 1380px; margin: 0 auto; }
+header {
+    margin-bottom: 22px; padding: 18px 24px; border-radius: 14px; background: #fff;
+    border: 1px solid rgba(37, 99, 235, 0.10);
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.06); text-align: center;
+}
+h1 { font-size: 1.6rem; color: var(--blue); margin-bottom: 4px; }
+.subtitle { color: var(--slate-500); font-size: 0.92rem; }
+.backlink { color: var(--blue); font-weight: 700; text-decoration: none; }
+.backlink:hover { text-decoration: underline; }
+.stats { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+         margin-top: 12px; font-size: 0.82rem; color: var(--slate-700); }
+.stats span { padding: 4px 10px; background: #eff6ff; border-radius: 999px; }
+
+/* tier nav */
+.tiernav { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 14px; }
+.tiernav a {
+    padding: 6px 14px; border-radius: 999px; text-decoration: none; font-size: 0.84rem;
+    font-weight: 700; color: var(--blue); background: #eff6ff;
+    border: 1px solid rgba(37,99,235,0.18);
+}
+.tiernav a.active { background: var(--blue); color: #fff; }
+
+/* cards */
+.card {
+    background: #fff; border: 1px solid var(--slate-200); border-radius: 14px;
+    padding: 18px 20px; margin-bottom: 18px; box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+}
+.card h2 { font-size: 1.18rem; color: var(--slate-900); margin-bottom: 4px; }
+.card h3 { font-size: 0.98rem; color: var(--slate-700); margin: 14px 0 6px; }
+.concept { color: var(--slate-700); font-size: 0.94rem; margin-bottom: 12px; }
+.eyebrow {
+    display: inline-block; font-size: 0.68rem; font-weight: 800; letter-spacing: 0.05em;
+    text-transform: uppercase; color: var(--cyan); margin-bottom: 6px;
+}
+
+/* code */
+pre {
+    background: var(--slate-900); color: #e2e8f0; padding: 14px 16px; border-radius: 10px;
+    overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.82rem; line-height: 1.55; margin: 8px 0 12px;
+}
+pre.output { background: #0b1220; color: #86efac; }
+code.inline {
+    background: #eff6ff; color: #1d4ed8; padding: 1px 6px; border-radius: 5px;
+    font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.86em;
+}
+
+/* explanation + generic tables */
+table { width: 100%; border-collapse: collapse; margin: 8px 0 12px; }
+th, td { padding: 9px 12px; text-align: left; vertical-align: top;
+         border-bottom: 1px solid var(--slate-200); font-size: 0.88rem; }
+th { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.04em;
+     color: var(--slate-500); background: rgba(248, 250, 252, 0.9); }
+tr:last-child td { border-bottom: none; }
+td.lineref { white-space: nowrap; font-family: "SF Mono", Menlo, monospace;
+             font-size: 0.8rem; color: var(--blue); font-weight: 700; }
+
+/* tags */
+.tag { display: inline-block; padding: 3px 9px; border-radius: 999px;
+       font-size: 0.68rem; font-weight: 800; letter-spacing: 0.03em; }
+.tag.basic { background: #dbeafe; color: #1d4ed8; }
+.tag.intermediate { background: #dcfce7; color: #166534; }
+.tag.advanced { background: #fef3c7; color: #92400e; }
+.tag.aws { background: #ffe4e6; color: #be123c; }
+
+/* callouts */
+.note, .warn {
+    border-left: 3px solid var(--blue); background: #f8fbff; padding: 10px 14px;
+    border-radius: 0 8px 8px 0; font-size: 0.88rem; margin: 10px 0;
+}
+.warn { border-left-color: var(--amber); background: #fffbeb; }
+
+/* lab link */
+.lablink {
+    display: inline-block; margin-top: 6px; font-size: 0.82rem; font-weight: 700;
+    color: var(--blue); text-decoration: none;
+}
+.lablink:hover { text-decoration: underline; }
+
+/* diagram */
+.diagram { background: #fff; border: 1px solid var(--slate-200); border-radius: 14px;
+           padding: 16px; margin: 14px 0; overflow-x: auto; }
+.diagram svg { width: 100%; height: auto; display: block; }
+
+.footer { margin-top: 24px; text-align: center; color: var(--slate-500);
+          font-size: 0.84rem; padding-bottom: 12px; }
+
+@media (max-width: 1200px) { .container { max-width: 100%; } }
+@media (max-width: 768px) {
+    body { padding: 12px; }
+    h1 { font-size: 1.3rem; }
+    pre { font-size: 0.76rem; }
+}
+</style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>AWS Primer</h1>
+            <p class="subtitle">Regions, VPCs, subnets, gateways and instances — for a first-time AWS user</p>
+            <p class="subtitle" style="margin-top:8px;">
+                <a class="backlink" href="../../index.html">&larr; All tracks catalog</a>
+            </p>
+            <div class="stats"><span>9 concepts</span><span>Terraform resource types</span><span>Lab 21 architecture diagram</span></div>
+            <nav class="tiernav">
+            <a href="./index.html">Track Home</a>
+            <a href="./terraform-101.html">Terraform 101</a>
+            <a href="./aws-primer.html" class="active">AWS Primer</a>
+            <a href="./basic.html">Basic</a>
+            <a href="./intermediate.html">Intermediate</a>
+            <a href="./advanced.html">Advanced</a>
+            </nav>
+        </header>
+
+        <div class="card">
+            <span class="eyebrow">Start here</span>
+            <h2>AWS in nine ideas</h2>
+            <p class="concept">This page assumes you have never opened the AWS console. Each
+            section below defines one AWS concept in plain English and names the Terraform
+            resource type that creates it, in the order the pieces stack up: a region holds a
+            VPC, the VPC holds subnets, a subnet holds an instance, and a gateway plus a route
+            table make that instance reachable. The diagram at the end is exactly what
+            <a class="lablink" href="../labmanuals/lab21-capstone-vpc-ec2.md"
+               style="margin:0;">Lab 21</a> builds.</p>
+            <div class="note"><strong>Read <a href="./terraform-101.html">Terraform 101</a>
+            first.</strong> This page teaches AWS, not Terraform. It shows HCL &mdash; the
+            language Terraform configuration is written in &mdash; to name the resource type
+            behind each AWS concept, and it assumes you have already met blocks, arguments and
+            references there.</div>
+            <h3>How to read the code blocks on this page</h3>
+            <p class="concept">Enough to follow along, no more. Terraform 101 covers all of it
+            properly.</p>
+            <table>
+                <thead><tr><th style="width:30%;">You will see</th><th>What it means</th></tr></thead>
+                <tbody>
+                    <tr><td class="lineref">resource "aws_vpc" "this" {</td>
+                        <td>Create and own one thing. <code class="inline">aws_vpc</code> is the
+                        <em>resource type</em> (which kind of AWS object); <code class="inline">this</code>
+                        is a name you choose to refer to it elsewhere in your own files.</td></tr>
+                    <tr><td class="lineref">data "aws_ami" "al2023" {</td>
+                        <td>Only look something up that already exists. It creates nothing.</td></tr>
+                    <tr><td class="lineref">cidr_block = "10.0.0.0/16"</td>
+                        <td>An <em>argument</em>: a setting inside the block, written as
+                        name, equals sign, value.</td></tr>
+                    <tr><td class="lineref">vpc_id = aws_vpc.this.id</td>
+                        <td>A <em>reference</em> to another block's attribute. It also tells
+                        Terraform to create the VPC before this resource.</td></tr>
+                    <tr><td class="lineref"># ...</td>
+                        <td>A comment. Here it marks arguments omitted for brevity.</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="card">
+            <span class="eyebrow">Where things live</span>
+            <h2>Region and Availability Zone</h2>
+            <p class="concept">A <strong>region</strong> is a geographic cluster of AWS data centres, such as <code class="inline">us-east-1</code> in North Virginia. Every resource you create belongs to exactly one region, and resources in different regions cannot see each other by default. An <strong>Availability Zone</strong> (AZ) is one isolated data-centre group inside a region, named by suffixing a letter: <code class="inline">us-east-1a</code>. This whole track uses <code class="inline">us-east-1</code>.</p>
+            <h3>Example</h3>
+<pre>provider "aws" {
+  region = "us-east-1"
+}</pre>
+            <h3>Line by line</h3>
+            <table>
+                <thead><tr><th style="width:30%;">Line</th><th>What it does</th></tr></thead>
+                <tbody>
+                <tr><td class="lineref"><code>provider &quot;aws&quot;</code></td><td>Configures the AWS provider — the plugin that turns your configuration into AWS API calls. There is no Terraform resource for a region; the region is a provider setting.</td></tr>
+                <tr><td class="lineref"><code>region</code></td><td>Every resource managed by this provider block is created here. Change it and Terraform will plan to recreate everything elsewhere.</td></tr>
+                <tr><td class="lineref">Availability Zone</td><td>Not set here. It is an argument on zonal resources such as subnets, and this track never hardcodes one — it is resolved from <code>data &quot;aws_availability_zones&quot;</code>. The subnet section below shows how.</td></tr>
+                </tbody>
+            </table>
+            <a class="lablink" href="../labmanuals/lab00-aws-setup-and-init.md">Practise it in Lab 00 — AWS setup and init &rarr;</a>
+        </div>
+        <div class="card">
+            <span class="eyebrow">Your network</span>
+            <h2>VPC and CIDR</h2>
+            <p class="concept">A <strong>VPC</strong> (Virtual Private Cloud) is your own private network inside a region. Nothing outside it can reach into it unless you explicitly open a path. Its size is fixed at creation by a <strong>CIDR block</strong> — a range of IP addresses written as address plus prefix length. <code class="inline">10.0.0.0/16</code> reserves 65,536 addresses from 10.0.0.0 to 10.0.255.255; the smaller the number after the slash, the larger the range.</p>
+            <h3>Example</h3>
+<pre>resource "aws_vpc" "this" {
+  cidr_block           = "10.0.0.0/16"
+  enable_dns_hostnames = true
+
+  tags = { Name = "tflabs-capstone", Lab = "lab21" }
+}</pre>
+            <h3>Line by line</h3>
+            <table>
+                <thead><tr><th style="width:30%;">Line</th><th>What it does</th></tr></thead>
+                <tbody>
+                <tr><td class="lineref"><code>aws_vpc</code></td><td>The Terraform resource type for a VPC.</td></tr>
+                <tr><td class="lineref"><code>cidr_block</code></td><td>The address range. It cannot be shrunk later, so pick a /16 and carve subnets out of it.</td></tr>
+                <tr><td class="lineref"><code>enable_dns_hostnames</code></td><td>Gives instances with a public IP a resolvable public DNS name.</td></tr>
+                <tr><td class="lineref"><code>tags</code></td><td>Free-form key/value labels. Every resource in this track carries <code>Name</code> and <code>Lab</code>.</td></tr>
+                </tbody>
+            </table>
+            <div class="note"><strong>Check you have a default VPC before your first apply.</strong> An <code class="inline">aws_instance</code> with no <code class="inline">subnet_id</code>, or an <code class="inline">aws_security_group</code> with no <code class="inline">vpc_id</code>, is placed in the region's <em>default VPC</em> — a VPC AWS pre-creates per region. A fresh training account may have none, and <code class="inline">terraform plan</code> does not detect it: the failure appears only at apply, as <code class="inline">VPCIdNotSpecified: No default VPC for this user</code>. Labs 03, 06 and 12 rely on it. Check, then create one if the result is empty:<pre>aws ec2 describe-vpcs --filters Name=isDefault,Values=true \
+    --query 'Vpcs[].VpcId' --output text
+
+aws ec2 create-default-vpc</pre>Lab 21 is unaffected because it builds its own VPC and sets <code class="inline">subnet_id</code> and <code class="inline">vpc_id</code> explicitly. That is the better pattern: the network a resource lands in is stated in the configuration rather than inherited from whatever the account happens to have.</div>
+            <a class="lablink" href="../labmanuals/lab02-console-vpc.md">Practise it in Lab 02 — build a VPC in the console &rarr;</a>
+        </div>
+        <div class="card">
+            <span class="eyebrow">Slicing the network</span>
+            <h2>Subnet — public versus private</h2>
+            <p class="concept">A <strong>subnet</strong> is a slice of the VPC's address range, pinned to one Availability Zone. The words public and private are not AWS settings: a subnet is <em>public</em> when its route table sends internet-bound traffic to an internet gateway, and <em>private</em> when it does not. <code class="inline">map_public_ip_on_launch</code> additionally hands every instance launched there a public IP address.</p>
+            <h3>Example</h3>
+<pre>data "aws_availability_zones" "available" {
+  state = "available"
+}
+
+resource "aws_subnet" "public" {
+  vpc_id                  = aws_vpc.this.id
+  cidr_block              = "10.0.1.0/24"
+  availability_zone       = data.aws_availability_zones.available.names[0]
+  map_public_ip_on_launch = true
+}</pre>
+            <h3>Line by line</h3>
+            <table>
+                <thead><tr><th style="width:30%;">Line</th><th>What it does</th></tr></thead>
+                <tbody>
+                <tr><td class="lineref"><code>aws_subnet</code></td><td>The Terraform resource type for a subnet.</td></tr>
+                <tr><td class="lineref"><code>vpc_id</code></td><td>Places the subnet inside the VPC. This reference is also what tells Terraform to create the VPC first.</td></tr>
+                <tr><td class="lineref"><code>cidr_block</code></td><td>A /24 (256 addresses) carved out of the VPC's /16. Subnet ranges may not overlap.</td></tr>
+                <tr><td class="lineref"><code>data &quot;aws_availability_zones&quot;</code></td><td>Asks the account which zones it can actually use. Zone names are mapped per account, so <code>us-east-1a</code> is not the same hardware in two accounts and may be absent or out of capacity in yours.</td></tr>
+                <tr><td class="lineref"><code>availability_zone</code></td><td>Pins the subnet to one AZ, which must sit inside the provider's region. Take it from the data source with <code>names[0]</code> rather than hardcoding a name — this is what Lab 21 does, and it is not a value you set by hand.</td></tr>
+                <tr><td class="lineref"><code>map_public_ip_on_launch</code></td><td>Auto-assigns a public IPv4 address to instances launched in this subnet.</td></tr>
+                </tbody>
+            </table>
+            <a class="lablink" href="../labmanuals/lab02-console-vpc.md">Practise it in Lab 02 — build a VPC in the console &rarr;</a>
+        </div>
+        <div class="card">
+            <span class="eyebrow">The way out</span>
+            <h2>Internet Gateway</h2>
+            <p class="concept">An <strong>internet gateway</strong> is the door between your VPC and the public internet. It is a single, horizontally scaled component you attach to one VPC — you do not size it, patch it, or pay for it. Creating one changes nothing on its own: traffic only uses it once a route table points at it.</p>
+            <h3>Example</h3>
+<pre>resource "aws_internet_gateway" "this" {
+  vpc_id = aws_vpc.this.id
+
+  tags = { Name = "tflabs-capstone-igw", Lab = "lab21" }
+}</pre>
+            <h3>Line by line</h3>
+            <table>
+                <thead><tr><th style="width:30%;">Line</th><th>What it does</th></tr></thead>
+                <tbody>
+                <tr><td class="lineref"><code>aws_internet_gateway</code></td><td>The Terraform resource type. One per VPC is the normal case.</td></tr>
+                <tr><td class="lineref"><code>vpc_id</code></td><td>Attaches the gateway to the VPC. An unattached gateway carries no traffic.</td></tr>
+                </tbody>
+            </table>
+            <a class="lablink" href="../labmanuals/lab21-capstone-vpc-ec2.md">Practise it in Lab 21 — the capstone build &rarr;</a>
+        </div>
+        <div class="card">
+            <span class="eyebrow">Traffic direction</span>
+            <h2>Route table</h2>
+            <p class="concept">A <strong>route table</strong> is a list of rules that answer one question: for a given destination address, where do I send the packet? Each rule pairs a destination CIDR with a target. Every VPC has a default local route so subnets can talk to each other; you add <code class="inline">0.0.0.0/0</code> pointing at the internet gateway to reach everything else. A table only affects a subnet once it is <em>associated</em> with it.</p>
+            <h3>Example</h3>
+<pre>resource "aws_route_table" "public" {
+  vpc_id = aws_vpc.this.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.this.id
+  }
+}
+
+resource "aws_route_table_association" "public" {
+  subnet_id      = aws_subnet.public.id
+  route_table_id = aws_route_table.public.id
+}</pre>
+            <h3>Line by line</h3>
+            <table>
+                <thead><tr><th style="width:30%;">Line</th><th>What it does</th></tr></thead>
+                <tbody>
+                <tr><td class="lineref"><code>aws_route_table</code></td><td>The Terraform resource type for the table itself.</td></tr>
+                <tr><td class="lineref"><code>route</code></td><td>One rule. <code>0.0.0.0/0</code> means every address not matched by a more specific route — the default route.</td></tr>
+                <tr><td class="lineref"><code>gateway_id</code></td><td>Sends that traffic to the internet gateway.</td></tr>
+                <tr><td class="lineref"><code>aws_route_table_association</code></td><td>Binds the table to a subnet. Without it the subnet keeps the VPC's main table and stays private.</td></tr>
+                </tbody>
+            </table>
+            <a class="lablink" href="../labmanuals/lab21-capstone-vpc-ec2.md">Practise it in Lab 21 — the capstone build &rarr;</a>
+        </div>
+        <div class="card">
+            <span class="eyebrow">Instance firewall</span>
+            <h2>Security group</h2>
+            <p class="concept">A <strong>security group</strong> is a stateful firewall attached to an instance's network interface. <em>Ingress</em> rules allow traffic in, <em>egress</em> rules allow it out, and everything not explicitly allowed is denied. Stateful means a reply to an allowed inbound request is automatically allowed back out, so you rarely need matching rule pairs.</p>
+            <h3>Example</h3>
+<pre>resource "aws_security_group" "web" {
+  description = "Allow inbound web traffic, all outbound"
+  vpc_id      = aws_vpc.this.id
+
+  dynamic "ingress" {
+    for_each = var.ingress_ports  # [80]
+    content {
+      from_port   = ingress.value
+      to_port     = ingress.value
+      protocol    = "tcp"
+      cidr_blocks = [var.allowed_cidr]
+    }
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}</pre>
+            <h3>Line by line</h3>
+            <table>
+                <thead><tr><th style="width:30%;">Line</th><th>What it does</th></tr></thead>
+                <tbody>
+                <tr><td class="lineref"><code>aws_security_group</code></td><td>The Terraform resource type.</td></tr>
+                <tr><td class="lineref"><code>vpc_id</code></td><td>Places the group in your VPC. Omit it and the group is created in the region's default VPC instead — see the warning in the VPC section above.</td></tr>
+                <tr><td class="lineref"><code>dynamic &quot;ingress&quot;</code></td><td>Generates one ingress rule per element of the list instead of repeating the block by hand. Lab 21 opens a single port, 80.</td></tr>
+                <tr><td class="lineref"><code>from_port</code> / <code>to_port</code></td><td>A port range. Setting both to the same number opens exactly one port.</td></tr>
+                <tr><td class="lineref"><code>cidr_blocks</code></td><td>Who may connect. Lab 21's <code>allowed_cidr</code> defaults to <code>0.0.0.0/0</code>, the entire internet — defensible for a public web port, dangerous for an administrative port such as SSH on 22. Narrow it to your own address outside a lab account.</td></tr>
+                <tr><td class="lineref"><code>egress</code></td><td>Outbound, written as one ordinary block. Groups are stateful, so replies to allowed inbound requests need no rule of their own.</td></tr>
+                </tbody>
+            </table>
+            <a class="lablink" href="../labmanuals/lab21-capstone-vpc-ec2.md">Practise it in Lab 21 — the capstone build &rarr;</a>
+        </div>
+        <div class="card">
+            <span class="eyebrow">Compute</span>
+            <h2>EC2 instance</h2>
+            <p class="concept">An <strong>EC2 instance</strong> is a virtual machine. You choose an <strong>instance type</strong> for its CPU and memory (<code class="inline">t3.micro</code> here) and an <strong>AMI</strong> — a machine image that supplies the operating system. Resolve the AMI with a data source rather than pasting an ID, because IDs differ per region and change whenever AWS republishes the image. <code class="inline">user_data</code> is a script run once on first boot.</p>
+            <h3>Example</h3>
+<pre>data "aws_ami" "al2023" {
+  most_recent = true
+  owners      = ["amazon"]
+
+  filter {
+    name   = "name"
+    values = ["al2023-ami-2023.*-x86_64"]
+  }
+}
+
+resource "aws_instance" "web" {
+  ami           = data.aws_ami.al2023.id
+  instance_type = "t3.micro"
+  subnet_id     = aws_subnet.public.id
+}</pre>
+            <h3>Line by line</h3>
+            <table>
+                <thead><tr><th style="width:30%;">Line</th><th>What it does</th></tr></thead>
+                <tbody>
+                <tr><td class="lineref"><code>data &quot;aws_ami&quot;</code></td><td>Reads an existing image rather than creating one. Data sources look things up; resources create things.</td></tr>
+                <tr><td class="lineref"><code>most_recent</code></td><td>Of the images matching the filters, take the newest. Combined with the name filter this always yields current Amazon Linux 2023.</td></tr>
+                <tr><td class="lineref"><code>aws_instance</code></td><td>The Terraform resource type for a virtual machine.</td></tr>
+                <tr><td class="lineref"><code>subnet_id</code></td><td>Places the instance in the public subnet, which is what earns it a public IP.</td></tr>
+                </tbody>
+            </table>
+            <a class="lablink" href="../labmanuals/lab03-first-ec2.md">Practise it in Lab 03 — your first EC2 instance &rarr;</a>
+        </div>
+        <div class="card">
+            <span class="eyebrow">Instance login</span>
+            <h2>Key pair</h2>
+            <p class="concept">A <strong>key pair</strong> is an SSH public/private key used to log into a Linux instance. AWS stores the public half and attaches it to the instance at launch; the private half stays on your machine and is never uploaded. No lab in this track creates a key pair: the capstone is verified over HTTP, and Lab 15 connects over SSH to a host you supply, reading an existing private key from disk.</p>
+            <h3>Example</h3>
+<pre>resource "aws_key_pair" "lab" {
+  key_name   = "tflabs-key"
+  public_key = file("~/.ssh/id_rsa.pub")
+}
+
+resource "aws_instance" "web" {
+  key_name = aws_key_pair.lab.key_name
+  # ...
+}</pre>
+            <h3>Line by line</h3>
+            <table>
+                <thead><tr><th style="width:30%;">Line</th><th>What it does</th></tr></thead>
+                <tbody>
+                <tr><td class="lineref"><code>aws_key_pair</code></td><td>The Terraform resource type.</td></tr>
+                <tr><td class="lineref"><code>public_key</code></td><td>Only the public half. Never place a private key in a <code>.tf</code> file or in git.</td></tr>
+                <tr><td class="lineref"><code>key_name</code></td><td>On the instance, names the key injected at launch. It cannot be changed without replacing the instance.</td></tr>
+                <tr><td class="lineref">using an existing key</td><td>Lab 15 skips <code>aws_key_pair</code> entirely and reads a private key you already have with <code>private_key = file(pathexpand(var.private_key_path))</code>, marked <code>sensitive = true</code>.</td></tr>
+                </tbody>
+            </table>
+            <a class="lablink" href="../labmanuals/lab15-remote-exec-provisioner.md">Practise it in Lab 15 — remote-exec provisioner &rarr;</a>
+        </div>
+        <div class="card">
+            <span class="eyebrow">Authentication</span>
+            <h2>IAM access keys</h2>
+            <p class="concept">Terraform calls the AWS API as some identity, and in a lab account that identity is an IAM user holding an <strong>access key</strong>. The pair is an access key ID (begins <code class="inline">AKIA</code>, not secret) and a secret access key (shown exactly once, fully secret). Supply them as environment variables, never as arguments in a <code class="inline">.tf</code> file, and rotate them when the lab ends.</p>
+            <h3>Example</h3>
+<pre>unset AWS_PROFILE AWS_SESSION_TOKEN
+export AWS_ACCESS_KEY_ID="AKIA..."
+export AWS_SECRET_ACCESS_KEY="..."
+export AWS_DEFAULT_REGION="us-east-1"
+
+aws sts get-caller-identity</pre>
+            <h3>Line by line</h3>
+            <table>
+                <thead><tr><th style="width:30%;">Line</th><th>What it does</th></tr></thead>
+                <tbody>
+                <tr><td class="lineref"><code>unset AWS_PROFILE</code></td><td>A leftover profile overrides these variables. Set to an empty string it fails with <code>The config profile () could not be found</code>.</td></tr>
+                <tr><td class="lineref"><code>AWS_ACCESS_KEY_ID</code></td><td>Identifies the IAM user. The AWS provider reads it automatically — no credentials argument is required.</td></tr>
+                <tr><td class="lineref"><code>AWS_SECRET_ACCESS_KEY</code></td><td>The secret half. Treat it like a password: no <code>.tf</code> file, no git, no screenshot.</td></tr>
+                <tr><td class="lineref"><code>aws sts get-caller-identity</code></td><td>Confirms which account and identity Terraform will act as. Run it before every apply.</td></tr>
+                </tbody>
+            </table>
+            <a class="lablink" href="../labmanuals/lab00-aws-setup-and-init.md">Practise it in Lab 00 — AWS setup and init &rarr;</a>
+        </div>
+        <div class="card">
+            <span class="eyebrow">Putting it together</span>
+            <h2>The Lab 21 architecture</h2>
+            <p class="concept">Seven resources, one reachable web server. Follow the numbered
+            blue arrows:
+            <strong>1</strong> a request from the internet reaches the internet gateway;
+            <strong>2</strong> the gateway passes it into the public subnet;
+            <strong>3</strong> it arrives at the security group guarding the instance;
+            <strong>4</strong> the ingress rule for TCP 80 admits it to the EC2 instance, where
+            <code class="inline">httpd</code> serves the page the user-data script wrote at
+            first boot;
+            <strong>5</strong> the reply returns the same way. The security group is stateful,
+            so the response needs no matching egress rule.</p>
+            <p class="concept">The route table is drawn with dashed grey lines because it
+            carries no packets. It is what makes step 2 possible: its
+            <code class="inline">0.0.0.0/0</code> route targets the internet gateway, and
+            <code class="inline">aws_route_table_association</code> binds the table to the
+            public subnet. Without the association the subnet falls back to the VPC's main
+            table, which has no default route, and step 2 fails. Remove any one piece and the
+            path breaks.</p>
+            <div class="diagram">
+<svg viewBox="0 0 1060 700" role="img" aria-label="Lab 21 topology. A request from the internet enters the AWS region through the internet gateway, passes into the public subnet, is admitted by the security group on TCP port 80, and reaches the EC2 instance running httpd, which replies back out through the gateway. The route table is shown with dashed lines because it configures the path rather than carrying traffic: its 0.0.0.0/0 route targets the internet gateway, and it is associated with the public subnet.">
+    <defs>
+        <marker id="arrowhead" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#2563eb" />
+        </marker>
+        <marker id="arrowhead-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#16a34a" />
+        </marker>
+        <marker id="arrowhead-grey" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b" />
+        </marker>
+    </defs>
+    <rect x="0" y="0" width="1060" height="700" fill="#f8fafc" />
+    <rect x="20" y="190" width="160" height="84" rx="10" fill="#ffffff" stroke="#64748b" stroke-width="2" />
+    <text x="100" y="222" font-family="&quot;Segoe UI&quot;, system-ui, sans-serif" font-size="15" font-weight="700" fill="#0f172a" text-anchor="middle">Internet</text>
+    <text x="100" y="244" font-family="&quot;Segoe UI&quot;, system-ui, sans-serif" font-size="11" font-weight="600" fill="#64748b" text-anchor="middle">browser / curl</text>
+    <rect x="20" y="470" width="160" height="84" rx="10" fill="#f0fdf4" stroke="#16a34a" stroke-width="2" />
+    <text x="100" y="500" font-family="&quot;SF Mono&quot;, Menlo, Consolas, monospace" font-size="12" font-weight="700" fill="#166534" text-anchor="middle">http://&lt;public_ip&gt;</text>
+    <text x="100" y="522" font-family="&quot;Segoe UI&quot;, system-ui, sans-serif" font-size="11" font-weight="600" fill="#64748b" text-anchor="middle">output web_url</text>
+    <rect x="220" y="30" width="810" height="640" rx="14" fill="#ffffff" stroke="#64748b" stroke-width="2" stroke-dasharray="7 5" />
+    <text x="240" y="58" font-family="&quot;Segoe UI&quot;, system-ui, sans-serif" font-size="15" font-weight="700" fill="#0f172a" text-anchor="start">AWS Region</text>
+    <text x="340" y="58" font-family="&quot;SF Mono&quot;, Menlo, Consolas, monospace" font-size="13" font-weight="600" fill="#64748b" text-anchor="start">us-east-1</text>
+    <text x="1010" y="58" font-family="&quot;SF Mono&quot;, Menlo, Consolas, monospace" font-size="11" font-weight="600" fill="#64748b" text-anchor="end">provider aws { region }</text>
+    <rect x="250" y="80" width="750" height="570" rx="14" fill="#f8fbff" stroke="#2563eb" stroke-width="2" />
+    <text x="272" y="108" font-family="&quot;Segoe UI&quot;, system-ui, sans-serif" font-size="15" font-weight="700" fill="#2563eb" text-anchor="start">VPC 10.0.0.0/16</text>
+    <text x="978" y="108" font-family="&quot;SF Mono&quot;, Menlo, Consolas, monospace" font-size="12" font-weight="700" fill="#2563eb" text-anchor="end">aws_vpc</text>
+    <rect x="280" y="140" width="240" height="78" rx="10" fill="#ecfeff" stroke="#06b6d4" stroke-width="2" />
+    <text x="400" y="170" font-family="&quot;Segoe UI&quot;, system-ui, sans-serif" font-size="13" font-weight="700" fill="#0e7490" text-anchor="middle">Internet Gateway</text>
+    <text x="400" y="194" font-family="&quot;SF Mono&quot;, Menlo, Consolas, monospace" font-size="11" font-weight="600" fill="#64748b" text-anchor="middle">aws_internet_gateway</text>
+    <rect x="610" y="140" width="300" height="78" rx="10" fill="#ecfeff" stroke="#06b6d4" stroke-width="2" />
+    <text x="760" y="166" font-family="&quot;Segoe UI&quot;, system-ui, sans-serif" font-size="13" font-weight="700" fill="#0e7490" text-anchor="middle">Route Table 0.0.0.0/0 &#8594; IGW</text>
+    <text x="760" y="190" font-family="&quot;SF Mono&quot;, Menlo, Consolas, monospace" font-size="11" font-weight="600" fill="#64748b" text-anchor="middle">aws_route_table</text>
+    <text x="760" y="208" font-family="&quot;SF Mono&quot;, Menlo, Consolas, monospace" font-size="10" font-weight="600" fill="#64748b" text-anchor="middle">+ aws_route_table_association</text>
+    <rect x="280" y="290" width="630" height="330" rx="12" fill="#eff6ff" stroke="#2563eb" stroke-width="2" />
+    <text x="302" y="318" font-family="&quot;Segoe UI&quot;, system-ui, sans-serif" font-size="14" font-weight="700" fill="#1d4ed8" text-anchor="start">Public Subnet 10.0.1.0/24</text>
+    <text x="888" y="318" font-family="&quot;SF Mono&quot;, Menlo, Consolas, monospace" font-size="12" font-weight="700" fill="#1d4ed8" text-anchor="end">aws_subnet</text>
+    <text x="302" y="338" font-family="&quot;SF Mono&quot;, Menlo, Consolas, monospace" font-size="10" font-weight="600" fill="#64748b" text-anchor="start">map_public_ip_on_launch = true</text>
+    <rect x="320" y="360" width="550" height="230" rx="12" fill="#ffffff" stroke="#06b6d4" stroke-width="2" />
+    <text x="342" y="388" font-family="&quot;Segoe UI&quot;, system-ui, sans-serif" font-size="13" font-weight="700" fill="#0e7490" text-anchor="start">Security Group</text>
+    <text x="848" y="388" font-family="&quot;SF Mono&quot;, Menlo, Consolas, monospace" font-size="11" font-weight="700" fill="#0e7490" text-anchor="end">aws_security_group</text>
+    <text x="342" y="408" font-family="&quot;SF Mono&quot;, Menlo, Consolas, monospace" font-size="11" font-weight="600" fill="#64748b" text-anchor="start">ingress tcp 80 &#183; egress all</text>
+    <rect x="360" y="430" width="470" height="140" rx="12" fill="#dbeafe" stroke="#2563eb" stroke-width="2" />
+    <text x="595" y="462" font-family="&quot;Segoe UI&quot;, system-ui, sans-serif" font-size="14" font-weight="700" fill="#1d4ed8" text-anchor="middle">EC2 instance &#183; t3.micro</text>
+    <text x="595" y="484" font-family="&quot;SF Mono&quot;, Menlo, Consolas, monospace" font-size="11" font-weight="600" fill="#64748b" text-anchor="middle">aws_instance</text>
+    <text x="595" y="508" font-family="&quot;SF Mono&quot;, Menlo, Consolas, monospace" font-size="11" font-weight="600" fill="#64748b" text-anchor="middle">Amazon Linux 2023 via data aws_ami</text>
+    <text x="595" y="530" font-family="&quot;SF Mono&quot;, Menlo, Consolas, monospace" font-size="10" font-weight="600" fill="#64748b" text-anchor="middle">user_data: dnf install httpd &#183; systemctl enable --now httpd</text>
+    <text x="595" y="554" font-family="&quot;Segoe UI&quot;, system-ui, sans-serif" font-size="11" font-weight="700" fill="#16a34a" text-anchor="middle">public IPv4 &#183; port 80 open</text>
+    <path d="M 180 224 L 250 224 L 250 179 L 274 179" fill="none" stroke="#2563eb" stroke-width="2.2" marker-end="url(#arrowhead)" />
+    <text x="206" y="216" font-family="&quot;Segoe UI&quot;, system-ui, sans-serif" font-size="11" font-weight="700" fill="#2563eb" text-anchor="middle">1</text>
+    <path d="M 400 218 L 400 284" fill="none" stroke="#2563eb" stroke-width="2.2" marker-end="url(#arrowhead)" />
+    <text x="412" y="256" font-family="&quot;Segoe UI&quot;, system-ui, sans-serif" font-size="11" font-weight="700" fill="#2563eb" text-anchor="start">2</text>
+    <path d="M 595 344 L 595 354" fill="none" stroke="#2563eb" stroke-width="2.2" marker-end="url(#arrowhead)" />
+    <text x="607" y="352" font-family="&quot;Segoe UI&quot;, system-ui, sans-serif" font-size="11" font-weight="700" fill="#2563eb" text-anchor="start">3</text>
+    <path d="M 595 414 L 595 424" fill="none" stroke="#2563eb" stroke-width="2.2" marker-end="url(#arrowhead)" />
+    <text x="607" y="422" font-family="&quot;Segoe UI&quot;, system-ui, sans-serif" font-size="11" font-weight="700" fill="#2563eb" text-anchor="start">4</text>
+    <path d="M 360 500 L 250 500 L 250 512 L 186 512" fill="none" stroke="#16a34a" stroke-width="2.2" marker-end="url(#arrowhead-green)" />
+    <text x="300" y="492" font-family="&quot;Segoe UI&quot;, system-ui, sans-serif" font-size="11" font-weight="700" fill="#16a34a" text-anchor="middle">5 reply</text>
+    <path d="M 604 179 L 526 179" fill="none" stroke="#64748b" stroke-width="1.8" stroke-dasharray="5 4" marker-end="url(#arrowhead-grey)" />
+    <text x="563" y="170" font-family="&quot;Segoe UI&quot;, system-ui, sans-serif" font-size="10" font-weight="600" fill="#64748b" text-anchor="middle">route target</text>
+    <path d="M 760 218 L 760 284" fill="none" stroke="#64748b" stroke-width="1.8" stroke-dasharray="5 4" marker-end="url(#arrowhead-grey)" />
+    <text x="772" y="256" font-family="&quot;Segoe UI&quot;, system-ui, sans-serif" font-size="10" font-weight="600" fill="#64748b" text-anchor="start">associated with subnet</text>
+    <text x="240" y="682" font-family="&quot;Segoe UI&quot;, system-ui, sans-serif" font-size="11" font-weight="600" fill="#64748b" text-anchor="start">Solid blue 1&#8211;5: the path a request takes. Dashed grey: route table configuration, which permits the path but carries no traffic itself.</text>
+</svg>
+            </div>
+            <table>
+                <thead><tr><th style="width:30%;">AWS name</th><th>Terraform resource type</th></tr></thead>
+                <tbody>
+                    <tr><td class="lineref">VPC</td><td><code class="inline">aws_vpc</code></td></tr>
+                    <tr><td class="lineref">Internet gateway</td><td><code class="inline">aws_internet_gateway</code></td></tr>
+                    <tr><td class="lineref">Public subnet</td><td><code class="inline">aws_subnet</code></td></tr>
+                    <tr><td class="lineref">Route table</td><td><code class="inline">aws_route_table</code> + <code class="inline">aws_route_table_association</code></td></tr>
+                    <tr><td class="lineref">Security group</td><td><code class="inline">aws_security_group</code></td></tr>
+                    <tr><td class="lineref">EC2 instance</td><td><code class="inline">aws_instance</code></td></tr>
+                    <tr><td class="lineref">Machine image</td><td><code class="inline">data.aws_ami</code></td></tr>
+                    <tr><td class="lineref">Availability Zone</td><td><code class="inline">data.aws_availability_zones</code> &mdash; the capstone takes the first zone the account can actually use rather than hardcoding <code class="inline">us-east-1a</code></td></tr>
+                </tbody>
+            </table>
+            <div class="warn">The EC2 instance is the only billable resource in the diagram.
+            Run <code class="inline">terraform destroy</code> when the lab ends.</div>
+            <a class="lablink" href="../labmanuals/lab21-capstone-vpc-ec2.md">Build it in Lab 21 &rarr;</a>
+        </div>
+
+
+        <div class="footer">
+            Terraform track &middot; <a class="backlink" href="../../index.html">All tracks</a>
+        </div>
+    </div>
+</body>
+</html>

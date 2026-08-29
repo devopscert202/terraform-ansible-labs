@@ -1,0 +1,5 @@
+# Default workspace state of the lab16 producer.
+upstream_state_path = "../lab16-workspaces/terraform.tfstate"
+
+# A named workspace's state lives under terraform.tfstate.d/<name>/:
+# upstream_state_path = "../lab16-workspaces/terraform.tfstate.d/dev/terraform.tfstate"

@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terraform &mdash; Basic Concepts</title>
+    <style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+    --blue: #2563eb; --cyan: #06b6d4;
+    --slate-900: #0f172a; --slate-700: #334155; --slate-500: #64748b; --slate-200: #e2e8f0;
+    --bg: #f8fafc; --green: #16a34a; --amber: #d97706; --rose: #e11d48;
+}
+body {
+    font-family: "Segoe UI", system-ui, sans-serif;
+    background: linear-gradient(180deg, #f8fbff 0%, #eef4fb 100%);
+    color: var(--slate-900); padding: 20px; line-height: 1.6;
+}
+.container { max-width: 1380px; margin: 0 auto; }
+header {
+    margin-bottom: 22px; padding: 18px 24px; border-radius: 14px; background: #fff;
+    border: 1px solid rgba(37, 99, 235, 0.10);
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.06); text-align: center;
+}
+h1 { font-size: 1.6rem; color: var(--blue); margin-bottom: 4px; }
+.subtitle { color: var(--slate-500); font-size: 0.92rem; }
+.backlink { color: var(--blue); font-weight: 700; text-decoration: none; }
+.backlink:hover { text-decoration: underline; }
+.stats { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+         margin-top: 12px; font-size: 0.82rem; color: var(--slate-700); }
+.stats span { padding: 4px 10px; background: #eff6ff; border-radius: 999px; }
+
+/* tier nav */
+.tiernav { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 14px; }
+.tiernav a {
+    padding: 6px 14px; border-radius: 999px; text-decoration: none; font-size: 0.84rem;
+    font-weight: 700; color: var(--blue); background: #eff6ff;
+    border: 1px solid rgba(37,99,235,0.18);
+}
+.tiernav a.active { background: var(--blue); color: #fff; }
+
+/* cards */
+.card {
+    background: #fff; border: 1px solid var(--slate-200); border-radius: 14px;
+    padding: 18px 20px; margin-bottom: 18px; box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+}
+.card h2 { font-size: 1.18rem; color: var(--slate-900); margin-bottom: 4px; }
+.card h3 { font-size: 0.98rem; color: var(--slate-700); margin: 14px 0 6px; }
+.concept { color: var(--slate-700); font-size: 0.94rem; margin-bottom: 12px; }
+.eyebrow {
+    display: inline-block; font-size: 0.68rem; font-weight: 800; letter-spacing: 0.05em;
+    text-transform: uppercase; color: var(--cyan); margin-bottom: 6px;
+}
+
+/* code */
+pre {
+    background: var(--slate-900); color: #e2e8f0; padding: 14px 16px; border-radius: 10px;
+    overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.82rem; line-height: 1.55; margin: 8px 0 12px;
+}
+pre.output { background: #0b1220; color: #86efac; }
+code.inline {
+    background: #eff6ff; color: #1d4ed8; padding: 1px 6px; border-radius: 5px;
+    font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.86em;
+}
+
+/* explanation + generic tables */
+table { width: 100%; border-collapse: collapse; margin: 8px 0 12px; }
+th, td { padding: 9px 12px; text-align: left; vertical-align: top;
+         border-bottom: 1px solid var(--slate-200); font-size: 0.88rem; }
+th { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.04em;
+     color: var(--slate-500); background: rgba(248, 250, 252, 0.9); }
+tr:last-child td { border-bottom: none; }
+td.lineref { white-space: nowrap; font-family: "SF Mono", Menlo, monospace;
+             font-size: 0.8rem; color: var(--blue); font-weight: 700; }
+
+/* tags */
+.tag { display: inline-block; padding: 3px 9px; border-radius: 999px;
+       font-size: 0.68rem; font-weight: 800; letter-spacing: 0.03em; }
+.tag.basic { background: #dbeafe; color: #1d4ed8; }
+.tag.intermediate { background: #dcfce7; color: #166534; }
+.tag.advanced { background: #fef3c7; color: #92400e; }
+.tag.aws { background: #ffe4e6; color: #be123c; }
+
+/* callouts */
+.note, .warn {
+    border-left: 3px solid var(--blue); background: #f8fbff; padding: 10px 14px;
+    border-radius: 0 8px 8px 0; font-size: 0.88rem; margin: 10px 0;
+}
+.warn { border-left-color: var(--amber); background: #fffbeb; }
+
+/* lab link */
+.lablink {
+    display: inline-block; margin-top: 6px; font-size: 0.82rem; font-weight: 700;
+    color: var(--blue); text-decoration: none;
+}
+.lablink:hover { text-decoration: underline; }
+
+/* diagram */
+.diagram { background: #fff; border: 1px solid var(--slate-200); border-radius: 14px;
+           padding: 16px; margin: 14px 0; overflow-x: auto; }
+.diagram svg { width: 100%; height: auto; display: block; }
+
+.footer { margin-top: 24px; text-align: center; color: var(--slate-500);
+          font-size: 0.84rem; padding-bottom: 12px; }
+
+@media (max-width: 1200px) { .container { max-width: 100%; } }
+@media (max-width: 768px) {
+    body { padding: 12px; }
+    h1 { font-size: 1.3rem; }
+    pre { font-size: 0.76rem; }
+}
+</style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Terraform &mdash; Basic Concepts</h1>
+            <p class="subtitle">7 topics. Each one: what it is, a real example, every significant line explained, and the lab that practises it.</p>
+            <p class="subtitle" style="margin-top:8px;">
+                <a class="backlink" href="../../index.html">&larr; All tracks catalog</a>
+            </p>
+            <div class="stats"><span>6 labs</span><span>lab00-lab05</span><span>Terraform &gt;= 1.5.0</span><span>AWS provider ~&gt; 5.0</span><span>Region us-east-1</span></div>
+            <nav class="tiernav">
+            <a href="./index.html">Track Home</a>
+            <a href="./terraform-101.html">Terraform 101</a>
+            <a href="./aws-primer.html">AWS Primer</a>
+            <a href="./basic.html" class="active">Basic</a>
+            <a href="./intermediate.html">Intermediate</a>
+            <a href="./advanced.html">Advanced</a>
+            </nav>
+        </header>
+
+        <div class="card">
+            <span class="eyebrow">Tier 1 &middot; lab00-lab05</span>
+            <h2>Basic Terraform</h2>
+            <p class="concept">Install, authenticate, declare a provider, create your first resource, and learn the init / plan / apply / destroy loop.</p>
+            <table>
+                <thead><tr><th style="width:9%;">Lab</th><th style="width:30%;">Title</th><th>Topic</th></tr></thead>
+                <tbody>
+                <tr><td class="lineref">lab00</td><td><a href="../labmanuals/lab00-aws-setup-and-init.md">AWS Setup and Init</a></td><td>Credentials, provider block, first init</td></tr>
+                <tr><td class="lineref">lab01</td><td><a href="../labmanuals/lab01-providers-init.md">Providers and Init</a></td><td>required_providers, lock file, validate</td></tr>
+                <tr><td class="lineref">lab02</td><td><a href="../labmanuals/lab02-console-vpc.md">Console VPC</a></td><td>Manual console build, contrasted with IaC</td></tr>
+                <tr><td class="lineref">lab03</td><td><a href="../labmanuals/lab03-first-ec2.md">First EC2 Instance</a></td><td>AMI data source, security group, instance</td></tr>
+                <tr><td class="lineref">lab04</td><td><a href="../labmanuals/lab04-plan-apply-destroy.md">Plan, Apply, Destroy</a></td><td>The core workflow with no cloud cost</td></tr>
+                <tr><td class="lineref">lab05</td><td><a href="../labmanuals/lab05-fmt-validate.md">Format and Validate</a></td><td>fmt, validate, CI-style quality gates</td></tr>
+                </tbody>
+            </table>
+            <div class="note">Starting from zero? Read
+                <a href="terraform-101.html">Terraform 101</a> first &mdash; what Terraform is,
+                HCL, providers, version constraints, state, and drift &mdash; then the
+                <a href="aws-primer.html">AWS primer</a> for regions, VPCs, subnets, gateways,
+                and security groups.</div>
+        </div>
+        <div class="card">
+            <span class="eyebrow">Lab 00 &middot; Foundations</span>
+            <h2>Infrastructure as code, and what a root module is</h2>
+            <p class="concept">Terraform is a declarative <em>infrastructure as code</em> (IaC) tool: you write the end state you want in HashiCorp Configuration Language (HCL) and Terraform makes the real cloud match it. A directory of <code class="inline">.tf</code> files that you run Terraform in is called a <em>root module</em> &mdash; every lab in this track is one root module with its own state, so experiments never collide. <em>State</em> is the JSON file where Terraform records which real cloud object corresponds to each block you wrote.</p>
+            <h3>Example</h3>
+<pre>terraform {
+  required_version = "&gt;= 1.5.0"
+
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~&gt; 5.0"
+    }
+  }
+}
+
+provider "aws" {
+  region = "us-east-1"
+}
+
+# A data source reads; it creates nothing and costs nothing.
+data "aws_caller_identity" "current" {}
+
+output "account_id" {
+  description = "The AWS account number your credentials belong to."
+  value       = data.aws_caller_identity.current.account_id
+}</pre>
+            <h3>Line by line</h3>
+            <table>
+                <thead><tr><th style="width:30%;">Line</th><th>What it does</th></tr></thead>
+                <tbody>
+                <tr><td class="lineref">terraform {</td><td>Settings block for Terraform itself. It configures the tool, not any cloud resource.</td></tr>
+                <tr><td class="lineref">required_version</td><td>Refuses to run on a CLI older than 1.5.0, so the whole class behaves identically.</td></tr>
+                <tr><td class="lineref">required_providers</td><td>Names each plugin the configuration needs. <code class="inline">terraform init</code> downloads exactly these.</td></tr>
+                <tr><td class="lineref">source = "hashicorp/aws"</td><td>Registry address of the plugin that talks to the AWS API.</td></tr>
+                <tr><td class="lineref">version = "~&gt; 5.0"</td><td>Accepts any 5.x release and refuses 6.0, so a major provider change cannot break the lab silently.</td></tr>
+                <tr><td class="lineref">provider "aws"</td><td>Runtime configuration for that plugin. Region only &mdash; credentials never belong in a <code class="inline">.tf</code> file.</td></tr>
+                <tr><td class="lineref">data "aws_caller_identity"</td><td>Read-only lookup of who Terraform is authenticated as. Proof the credentials work, with nothing created.</td></tr>
+                <tr><td class="lineref">output "account_id"</td><td>Prints a value after apply. Useful for humans and for other configurations.</td></tr>
+                </tbody>
+            </table>
+            <a class="lablink" href="../labmanuals/lab00-aws-setup-and-init.md">Practise it in Lab 00 &mdash; AWS Setup and Init &rarr;</a>
+        </div>
+        <div class="card">
+            <span class="eyebrow">Lab 00 &middot; Authentication</span>
+            <h2>AWS credentials: access keys and the environment variables</h2>
+            <p class="concept">An AWS <em>access key</em> is a pair of strings: the access key ID (public, starts <code class="inline">AKIA</code>) and the secret access key (private, shown once). Terraform reads them from the environment through the standard AWS SDK credential chain, which is why the provider block only needs a region. Never put either value in a <code class="inline">.tf</code> file or in git. If <code class="inline">AWS_PROFILE</code> is already exported it overrides these variables, so unset it first.</p>
+            <h3>Example</h3>
+<pre>unset AWS_PROFILE AWS_SESSION_TOKEN
+
+export AWS_ACCESS_KEY_ID="AKIA..."
+export AWS_SECRET_ACCESS_KEY="..."
+export AWS_DEFAULT_REGION="us-east-1"
+
+aws sts get-caller-identity
+# {
+#     "UserId": "AIDA...",
+#     "Account": "123456789012",
+#     "Arn": "arn:aws:iam::123456789012:user/tf-labs"
+# }
+
+terraform init</pre>
+            <h3>Line by line</h3>
+            <table>
+                <thead><tr><th style="width:30%;">Line</th><th>What it does</th></tr></thead>
+                <tbody>
+                <tr><td class="lineref">unset AWS_PROFILE</td><td>Removes any named profile from the environment. A leftover profile wins over the key variables and sends Terraform at the wrong account.</td></tr>
+                <tr><td class="lineref">unset AWS_SESSION_TOKEN</td><td>Clears a stale temporary-credential token, which otherwise fails with an expired-token error.</td></tr>
+                <tr><td class="lineref">export AWS_ACCESS_KEY_ID</td><td>The public half of the key pair. Identifies the IAM user.</td></tr>
+                <tr><td class="lineref">export AWS_SECRET_ACCESS_KEY</td><td>The private half. Treat it like a password; rotate it when the lab ends.</td></tr>
+                <tr><td class="lineref">export AWS_DEFAULT_REGION</td><td>Default region for the AWS CLI. The provider block sets Terraform's own region.</td></tr>
+                <tr><td class="lineref">aws sts get-caller-identity</td><td>Confirms the credentials resolve to a real identity before Terraform is involved.</td></tr>
+                <tr><td class="lineref">terraform init</td><td>Downloads the pinned providers into <code class="inline">.terraform/</code> and writes <code class="inline">.terraform.lock.hcl</code>.</td></tr>
+                </tbody>
+            </table>
+            <div class="note">Setting <code class="inline">AWS_PROFILE=""</code> is not the same as unsetting it: an empty value produces <code class="inline">The config profile () could not be found</code>. A named profile (<code class="inline">aws configure --profile tf-labs</code> plus <code class="inline">profile = "tf-labs"</code> in the provider block) is the documented alternate path.</div>
+            <a class="lablink" href="../labmanuals/lab00-aws-setup-and-init.md">Practise it in Lab 00 &mdash; AWS Setup and Init &rarr;</a>
+        </div>
+        <div class="card">
+            <span class="eyebrow">Lab 01 &middot; Providers</span>
+            <h2>Providers, version pinning, and the lock file</h2>
+            <p class="concept">A <em>provider</em> is a plugin that translates your HCL into API calls for one system &mdash; AWS, or the <code class="inline">random</code> provider that just generates values locally. Without a provider Terraform can build a dependency graph but cannot change anything. After <code class="inline">terraform init</code>, the file <code class="inline">.terraform.lock.hcl</code> records the exact provider builds and their checksums so every machine installs the same bytes.</p>
+            <h3>Example</h3>
+<pre>terraform {
+  required_version = "&gt;= 1.5.0"
+
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~&gt; 5.0"
+    }
+    random = {
+      source  = "hashicorp/random"
+      version = "~&gt; 3.0"
+    }
+  }
+}
+
+provider "aws" {
+  region = "us-east-1"
+}
+
+resource "random_pet" "lab_id" {
+  length = 2
+}
+
+output "lab_id" {
+  value = random_pet.lab_id.id
+}</pre>
+            <h3>Line by line</h3>
+            <table>
+                <thead><tr><th style="width:30%;">Line</th><th>What it does</th></tr></thead>
+                <tbody>
+                <tr><td class="lineref">two entries in required_providers</td><td>Both plugins are downloaded by <code class="inline">init</code>. Declaring AWS here without using it yet keeps every later lab on the same pattern.</td></tr>
+                <tr><td class="lineref">random = { ... }</td><td>The random provider needs no credentials and creates nothing billable, so it is safe for a first apply.</td></tr>
+                <tr><td class="lineref">resource "random_pet" "lab_id"</td><td><code class="inline">random_pet</code> is the type, <code class="inline">lab_id</code> is your name for it. Together they form the address <code class="inline">random_pet.lab_id</code>.</td></tr>
+                <tr><td class="lineref">length = 2</td><td>Number of words in the generated name, for example <code class="inline">quick-hound</code>.</td></tr>
+                <tr><td class="lineref">value = random_pet.lab_id.id</td><td>Reads the <code class="inline">id</code> attribute off the resource. This reference is also what makes Terraform order the graph correctly.</td></tr>
+                </tbody>
+            </table>
+            <div class="note">Commit <code class="inline">.terraform.lock.hcl</code>. Never commit <code class="inline">.terraform/</code> &mdash; it is a download cache and can be rebuilt with <code class="inline">terraform init</code> at any time.</div>
+            <a class="lablink" href="../labmanuals/lab01-providers-init.md">Practise it in Lab 01 &mdash; Providers and Init &rarr;</a>
+        </div>
+        <div class="card">
+            <span class="eyebrow">Lab 02 &middot; Console vs code</span>
+            <h2>Why the console does not scale: build a VPC by hand once</h2>
+            <p class="concept">A <em>VPC</em> (Virtual Private Cloud) is your own private network inside an AWS region, defined by a CIDR range such as <code class="inline">10.0.0.0/16</code>. Lab 02 builds one entirely by clicking in the AWS console, on purpose: it is the control experiment. Nothing records what you did, nothing can review it, and nothing can rebuild it. The commands below only read back what your clicking produced.</p>
+            <h3>Example</h3>
+<pre>aws ec2 describe-vpcs \
+  --filters "Name=tag:Name,Values=console-vpc" \
+  --query "Vpcs[].{Id:VpcId,Cidr:CidrBlock}" \
+  --output table
+
+aws ec2 describe-subnets \
+  --filters "Name=vpc-id,Values=vpc-0abc123def456789a" \
+  --query "Subnets[].{Id:SubnetId,Cidr:CidrBlock,AZ:AvailabilityZone}" \
+  --output table</pre>
+            <h3>Line by line</h3>
+            <table>
+                <thead><tr><th style="width:30%;">Line</th><th>What it does</th></tr></thead>
+                <tbody>
+                <tr><td class="lineref">describe-vpcs</td><td>Lists VPCs. The console gave you no artefact, so a query is the only way to describe what now exists.</td></tr>
+                <tr><td class="lineref">--filters Name=tag:Name</td><td>Finds the VPC by the <code class="inline">Name</code> tag you typed in the console. Untagged console resources are effectively anonymous.</td></tr>
+                <tr><td class="lineref">--query "Vpcs[].{...}"</td><td>JMESPath expression that trims the response to the ID and CIDR.</td></tr>
+                <tr><td class="lineref">describe-subnets</td><td>Lists the subnets inside that VPC and the availability zone each one sits in.</td></tr>
+                <tr><td class="lineref">vpc-0abc123def456789a</td><td>A generated ID. Nobody chose it and nothing outside AWS knows it &mdash; the exact problem state files solve.</td></tr>
+                </tbody>
+            </table>
+            <div class="note">This lab has no <code class="inline">.tf</code> files. Lab 21 builds the same network in code, and the difference in reviewability and repeatability is the whole point of the exercise.</div>
+            <a class="lablink" href="../labmanuals/lab02-console-vpc.md">Practise it in Lab 02 &mdash; Console VPC &rarr;</a>
+        </div>
+        <div class="card">
+            <span class="eyebrow">Lab 03 &middot; Resources</span>
+            <h2>Resources, data sources, and your first EC2 instance</h2>
+            <p class="concept">A <em>resource</em> is an object Terraform owns: it creates it, records its ID in state, updates it, and destroys it. A <em>data source</em> is a read-only query against something that already exists. An <em>AMI</em> (Amazon Machine Image) is the disk image an EC2 instance boots from, and its ID differs per region, so resolve it with <code class="inline">data "aws_ami"</code> instead of hardcoding an ID. This lab is deliberately the minimum viable AWS build: one data source and one resource, so a plan proposes exactly one thing to create.</p>
+            <h3>Example</h3>
+<pre>data "aws_ami" "amazon_linux" {
+  most_recent = true
+  owners      = ["amazon"]
+
+  filter {
+    name   = "name"
+    values = ["al2023-ami-2023.*-x86_64"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+}
+
+resource "aws_instance" "web" {
+  ami           = data.aws_ami.amazon_linux.id
+  instance_type = var.instance_type
+
+  tags = {
+    Name      = var.instance_name
+    Lab       = "lab03"
+    ManagedBy = "Terraform"
+  }
+}</pre>
+            <h3>Line by line</h3>
+            <table>
+                <thead><tr><th style="width:30%;">Line</th><th>What it does</th></tr></thead>
+                <tbody>
+                <tr><td class="lineref">data "aws_ami" "amazon_linux"</td><td>Asks EC2 for a matching image at plan time. Nothing is created and nothing enters state as a managed object.</td></tr>
+                <tr><td class="lineref">most_recent = true</td><td>Several images match the filter; take the newest published one.</td></tr>
+                <tr><td class="lineref">owners = ["amazon"]</td><td>Restricts the search to images published by AWS itself, so a look-alike community AMI cannot be selected.</td></tr>
+                <tr><td class="lineref">filter { name = "name" }</td><td>Matches the Amazon Linux 2023 x86_64 naming pattern. The <code class="inline">*</code> absorbs the date portion of the name.</td></tr>
+                <tr><td class="lineref">filter { virtualization-type }</td><td>Restricts to HVM images, the only virtualization type current instance families support.</td></tr>
+                <tr><td class="lineref">ami = data.aws_ami.amazon_linux.id</td><td>Consumes the data source result. The <code class="inline">data.</code> prefix is what distinguishes a lookup from a managed resource.</td></tr>
+                <tr><td class="lineref">instance_type = var.instance_type</td><td>Defaults to <code class="inline">t3.micro</code>, the smallest general-purpose size used throughout this track.</td></tr>
+                <tr><td class="lineref">no subnet_id</td><td>Nothing places this instance in a network, so EC2 puts it in the region's <em>default VPC</em>. See the note below &mdash; this is the one way this lab can fail.</td></tr>
+                <tr><td class="lineref">no security group</td><td>None is declared, so the instance gets the default VPC's default group. Lab 12 builds a group on its own; Lab 21 builds one inside a VPC it created.</td></tr>
+                <tr><td class="lineref">tags = { Lab = "lab03" }</td><td>Every AWS resource in this track carries <code class="inline">Name</code> and <code class="inline">Lab</code> tags so leftovers are easy to find and delete.</td></tr>
+                </tbody>
+            </table>
+            <div class="note"><strong>This lab needs a default VPC.</strong> An <code class="inline">aws_instance</code> with no <code class="inline">subnet_id</code> is placed in the region's default VPC, and a fresh training account may have none. <code class="inline">terraform plan</code> does not detect this; the apply fails with <code class="inline">VPCIdNotSpecified: No default VPC for this user</code>. Labs 03, 06 and 12 all depend on it. Verify with <code class="inline">aws ec2 describe-vpcs --filters Name=isDefault,Values=true --query 'Vpcs[].VpcId' --output text</code> and create one with <code class="inline">aws ec2 create-default-vpc</code> if the result is empty.</div>
+            <a class="lablink" href="../labmanuals/lab03-first-ec2.md">Practise it in Lab 03 &mdash; First EC2 Instance &rarr;</a>
+        </div>
+        <div class="card">
+            <span class="eyebrow">Lab 04 &middot; Workflow</span>
+            <h2>The core loop: init, plan, apply, destroy</h2>
+            <p class="concept">Terraform is not a daemon; you invoke it. <code class="inline">init</code> installs providers, <code class="inline">plan</code> is a dry run that prints the diff between your files and reality, <code class="inline">apply</code> executes that diff, and <code class="inline">destroy</code> removes everything the directory manages. The habit to build is propose-then-commit: read every plan before you approve it, and always destroy an AWS lab when you finish it.</p>
+            <h3>Example</h3>
+<pre>terraform init
+terraform plan
+# Plan: 1 to add, 0 to change, 0 to destroy.
+
+terraform apply
+# Enter a value: yes
+# random_string.example: Creation complete after 0s
+# Outputs:
+# generated_value = "kf3mzq8dvwrt"
+
+terraform plan
+# No changes. Your infrastructure matches the configuration.
+
+terraform plan -out=tfplan
+terraform apply tfplan
+
+terraform destroy</pre>
+            <h3>Line by line</h3>
+            <table>
+                <thead><tr><th style="width:30%;">Line</th><th>What it does</th></tr></thead>
+                <tbody>
+                <tr><td class="lineref">terraform init</td><td>First command in any new directory. Installs providers and prepares the backend. Re-run it whenever <code class="inline">required_providers</code> or the backend changes.</td></tr>
+                <tr><td class="lineref">terraform plan</td><td>Refreshes state from the API, compares it to your files, and prints the actions. It changes nothing.</td></tr>
+                <tr><td class="lineref">Plan: 1 to add, ...</td><td>The summary line to read first. Any unexpected <em>destroy</em> or <em>forces replacement</em> means stop and investigate.</td></tr>
+                <tr><td class="lineref">terraform apply</td><td>Re-plans, prompts for <code class="inline">yes</code>, then executes. Resource IDs land in <code class="inline">terraform.tfstate</code>.</td></tr>
+                <tr><td class="lineref">second terraform plan</td><td>Reports no changes. That idempotency is the proof state and configuration agree.</td></tr>
+                <tr><td class="lineref">plan -out=tfplan</td><td>Saves the exact diff to a file, so the applied change cannot differ from the reviewed one. This is the CI pattern.</td></tr>
+                <tr><td class="lineref">apply tfplan</td><td>Applies the saved plan with no prompt and no re-planning.</td></tr>
+                <tr><td class="lineref">terraform destroy</td><td>Plans and executes the removal of every resource in this directory's state.</td></tr>
+                </tbody>
+            </table>
+            <a class="lablink" href="../labmanuals/lab04-plan-apply-destroy.md">Practise it in Lab 04 &mdash; Plan, Apply, Destroy &rarr;</a>
+        </div>
+        <div class="card">
+            <span class="eyebrow">Lab 05 &middot; Quality</span>
+            <h2>fmt and validate: the two gates before every plan</h2>
+            <p class="concept"><code class="inline">terraform fmt</code> rewrites your files into canonical HCL style, so code review shows logic changes rather than indentation noise. <code class="inline">terraform validate</code> checks that blocks, argument names, types, and references are internally consistent &mdash; it needs <code class="inline">init</code> first because it reads provider schemas, but it makes no API calls. Think of it as: fmt is style, validate is grammar, plan is meaning against live infrastructure.</p>
+            <h3>Example</h3>
+<pre>terraform fmt -recursive
+# main.tf
+
+terraform fmt -check -diff
+# exits 0 when every file is already formatted
+
+terraform init -backend=false
+terraform validate
+# Success! The configuration is valid.
+
+# The output this lab formats and then hides:
+output "formatted_example" {
+  value     = random_string.formatted_example.result
+  sensitive = true
+}</pre>
+            <h3>Line by line</h3>
+            <table>
+                <thead><tr><th style="width:30%;">Line</th><th>What it does</th></tr></thead>
+                <tbody>
+                <tr><td class="lineref">terraform fmt -recursive</td><td>Formats the current directory and every subdirectory in place, and prints the names of files it changed.</td></tr>
+                <tr><td class="lineref">terraform fmt -check -diff</td><td>Changes nothing, exits non-zero if formatting is needed, and shows the diff. This is the CI form.</td></tr>
+                <tr><td class="lineref">init -backend=false</td><td>Installs providers without configuring remote state, which is what a validate-only job needs and all it should be allowed to do.</td></tr>
+                <tr><td class="lineref">terraform validate</td><td>Catches unknown arguments, wrong types, and references to resources that do not exist. It cannot catch a missing AMI or an IAM denial.</td></tr>
+                <tr><td class="lineref">sensitive = true</td><td>Redacts the value in CLI output and in <code class="inline">terraform output</code>. The value is still stored in plain text in state.</td></tr>
+                </tbody>
+            </table>
+            <div class="note">A green <code class="inline">validate</code> does not imply a green <code class="inline">plan</code>. Only <code class="inline">plan</code> contacts AWS, so quota errors, permission boundaries, and drift surface there.</div>
+            <a class="lablink" href="../labmanuals/lab05-fmt-validate.md">Practise it in Lab 05 &mdash; Format and Validate &rarr;</a>
+        </div>
+
+
+        <div class="footer">
+            Terraform track &middot; <a class="backlink" href="../../index.html">All tracks</a>
+        </div>
+    </div>
+</body>
+</html>
