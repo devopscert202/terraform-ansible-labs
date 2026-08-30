@@ -35,7 +35,7 @@ are needed.
 - [ ] [Lab 13 — Multi-provider configuration](lab13-multi-provider.md) completed
 - [ ] Terraform 1.5.0 or newer (`terraform version`)
 - [ ] A POSIX shell (`/bin/sh`) available — this lab does not run on Windows `cmd`
-- [ ] Read [../docs/advanced/provisioners.md](../docs/advanced/provisioners.md)
+- [ ] Read [../docs/11-provisioners.md](../docs/11-provisioners.md)
 
 ## Steps
 
@@ -69,8 +69,18 @@ grep -A4 'provisioner "local-exec"' main.tf
   provisioner "local-exec" {
     command = "printf '%s\n' '${self.input}'"
   }
+  # Runs before the resource is destroyed instead of after creation.
+  # A destroy-time provisioner may reference self, but not var or other resources.
+  provisioner "local-exec" {
+    when    = destroy
+    command = "printf 'destroying %s\n' '${self.input}'"
+  }
 }
 ```
+
+There are two provisioners. The first has no `when`, so it defaults to create-time and runs after
+the resource is created. The second sets `when = destroy` and runs *before* the resource is
+destroyed — you will see it in step 10.
 
 ### Step 3 — Initialize
 
@@ -241,6 +251,45 @@ Apply complete! Resources: 1 added, 0 changed, 1 destroyed.
 Destroying and recreating real infrastructure just to rerun a script is rarely acceptable — the
 practical reason to keep setup logic out of provisioners.
 
+### Step 10 — Watch the destroy-time provisioner run
+
+Everything so far has been create-time. `when = destroy` inverts the hook: the command runs
+*before* Terraform removes the resource, which is the only chance to act while the resource still
+exists. This is also the lab's cleanup, so there is nothing left to remove afterwards.
+
+```bash
+terraform destroy -auto-approve
+```
+
+**Expected output** *(trimmed)*
+
+```text
+Plan: 0 to add, 0 to change, 1 to destroy.
+terraform_data.local_action: Destroying... [id=01772e7e-3239-25dc-9378-9931cb864da5]
+terraform_data.local_action: Provisioning with 'local-exec'...
+terraform_data.local_action (local-exec): Executing: ["/bin/sh" "-c" "printf 'destroying %s\n' 'local-exec completed'"]
+terraform_data.local_action (local-exec): destroying local-exec completed
+terraform_data.local_action: Destruction complete after 0s
+
+Destroy complete! Resources: 1 destroyed.
+```
+
+`Provisioning with 'local-exec'...` appears under `Destroying...`, not under `Creating...` — that
+ordering is the whole point. Two consequences worth remembering:
+
+- **If a destroy-time provisioner exits non-zero, the destroy is blocked.** The resource stays in
+  state and you cannot remove it until the command succeeds or you delete the block.
+- **A destroy-time provisioner may only reference `self`, `count.index`, or `each.key`.** Swapping
+  `self.input` for `var.message` fails at validate, which is why the block uses `self`:
+
+```text
+Error: Invalid reference from destroy provisioner
+
+Destroy-time provisioners and their connection configurations may only
+reference attributes of the related resource, via 'self', 'count.index', or
+'each.key'.
+```
+
 ## Done when
 
 - [ ] The first apply printed `local-exec completed` in the provisioner output lines
@@ -269,6 +318,6 @@ terraform destroy -auto-approve
 
 ## Next steps
 
-- Deep dive: [../docs/advanced/provisioners.md](../docs/advanced/provisioners.md)
+- Deep dive: [../docs/11-provisioners.md](../docs/11-provisioners.md)
 - Visual: [../html/advanced.html](../html/advanced.html)
 - Continue to [Lab 15 — remote-exec provisioner](lab15-remote-exec-provisioner.md)

@@ -1,6 +1,6 @@
 # Terraform Concept Docs
 
-Written deep dives, one directory per tier. Read the matching page in
+Written deep dives, one flat sequence in lab reading order. Read the matching page in
 [`../html/`](../html/index.html) first for the short version with a worked example, then come here
 for the longer treatment, and do the lab in [`../labmanuals/`](../labmanuals/README.md).
 
@@ -8,47 +8,34 @@ These docs assume you already know what Terraform is. If you do not, read
 [Terraform 101](../html/terraform-101.html) first, then the
 [AWS primer](../html/aws-primer.html).
 
-## Tier 1 — Basic (`basic/`)
+## The docs, in order
 
-| File | Covers | Labs |
-|---|---|---|
-| [`01-getting-started.md`](basic/01-getting-started.md) | IaC, the root module, HCL syntax, version constraints, authentication | lab00, lab01 |
-| [`02-providers.md`](basic/02-providers.md) | `required_providers`, the lock file, resources vs data sources, provider upgrades | lab01 |
-| [`03-resources.md`](basic/03-resources.md) | Resource addressing, dependencies, AMI lookups, security groups, tags | lab02, lab03 |
-| [`04-workflow.md`](basic/04-workflow.md) | `init`, `plan`, `apply`, `destroy`, saved plans, when to re-init | lab04 |
-| [`05-quality.md`](basic/05-quality.md) | `fmt`, `validate`, sensitive outputs, CI gates | lab05 |
+| # | Doc | Covers | Labs it backs |
+|---|---|---|---|
+| 00 | [`00-getting-started.md`](00-getting-started.md) | IaC, the root module, HCL syntax, version constraints, authentication | lab00, lab01 |
+| 01 | [`01-providers.md`](01-providers.md) | `required_providers`, the lock file, resources vs data sources, the AMI lookup, provider aliases, and the console build lab02 does by hand | lab01, lab02 |
+| 02 | [`02-resources.md`](02-resources.md) | Resource addressing, inferred dependencies, `depends_on`, naming the network instead of inheriting a default VPC, tags | lab03 |
+| 03 | [`03-workflow.md`](03-workflow.md) | `init`, `plan`, `apply`, `destroy`, plan symbols, saved plans, when to re-init | lab04 |
+| 04 | [`04-quality.md`](04-quality.md) | `fmt` exit codes, `validate`, how far a sensitive output is hidden, CI gates | lab05 |
+| 05 | [`05-variables.md`](05-variables.md) | Typed variables, locals, value precedence, tfvars, `validation`, `sensitive`, `nonsensitive()` | lab06, lab07 |
+| 06 | [`06-state.md`](06-state.md) | What state stores, secrets in plain text, refresh and drift, `state list`/`show`, `-replace` | lab08 |
+| 07 | [`07-modules.md`](07-modules.md) | Root vs child modules, module inputs and outputs, module addresses in state | lab09 |
+| 08 | [`08-capstone.md`](08-capstone.md) | The capstone build resource by resource, `user_data` versus a provisioner, `depends_on` | lab10 |
+| 09 | [`09-collections-functions.md`](09-collections-functions.md) | list vs set vs map, `count` vs `for_each`, built-in functions, `for` expressions | lab11, lab12 |
+| 10 | [`10-multi-provider.md`](10-multi-provider.md) | Several providers in one root module, and provider aliases | lab13 |
+| 11 | [`11-provisioners.md`](11-provisioners.md) | `local-exec`, `remote-exec`, connection blocks, lifecycle hooks, better alternatives | lab14, lab15 |
+| 12 | [`12-workspaces.md`](12-workspaces.md) | What a workspace isolates, `terraform.workspace`, why it is not an environment boundary | lab16 |
+| 13 | [`13-remote-state.md`](13-remote-state.md) | S3 backends, native S3 locking, state keys, migration, remote state consumers, the capstone on a backend | lab17, lab18, lab19, lab20, lab22 |
+| 14 | [`14-dynamic-blocks.md`](14-dynamic-blocks.md) | `dynamic` blocks, the block-named iterator, when to write blocks out literally | lab21 |
+| 15 | [`15-s3-buckets.md`](15-s3-buckets.md) | Globally unique bucket names, the provider 5.x split into separate settings resources, `force_destroy` | lab23 |
+| 16 | [`16-count-foreach.md`](16-count-foreach.md) | `count` by position vs `for_each` by key, on real buckets, with both captured plans | lab24 |
+| 17 | [`17-project-structure.md`](17-project-structure.md) | Repository layout, one state per environment and component, environment promotion, project hygiene | reference — no single lab |
 
-Visual: [`../html/basic.html`](../html/basic.html)
-
-## Tier 2 — Intermediate (`intermediate/`)
-
-| File | Covers | Labs |
-|---|---|---|
-| [`06-variables.md`](intermediate/06-variables.md) | Typed variables, locals, value precedence, tfvars, sensitive | lab06, lab07 |
-| [`07-state.md`](intermediate/07-state.md) | What state stores, refresh, drift, `state list`/`show`, `-replace` | lab08 |
-| [`08-modules.md`](intermediate/08-modules.md) | Root vs child modules, module inputs and outputs, module addresses in state | lab09 |
-
-Collections, functions, and dynamic blocks (lab10–lab12) are covered in
-[`advanced/functions.md`](advanced/functions.md).
-
-Visual: [`../html/intermediate.html`](../html/intermediate.html)
-
-## Tier 3 — Advanced (`advanced/`)
-
-| File | Covers | Labs |
-|---|---|---|
-| [`functions.md`](advanced/functions.md) | Built-in functions, `for_each`, `count` vs `for_each`, dynamic blocks | lab10, lab11, lab12 |
-| [`provisioners.md`](advanced/provisioners.md) | `local-exec`, `remote-exec`, connection blocks, lifecycle hooks, better alternatives | lab14, lab15 |
-| [`state.md`](advanced/state.md) | S3 backends, state keys, DynamoDB locking, workspaces, migration, remote state consumers | lab16–lab20 |
-| [`projects.md`](advanced/projects.md) | Project layout, multiple providers, environment promotion, capstone patterns | lab13, lab21 |
-
-Visual: [`../html/advanced.html`](../html/advanced.html)
-
----
+Visual companion for every topic above: [`../html/concepts.html`](../html/concepts.html).
 
 ## The two primers
 
-Neither is tier-specific; both come before lab00.
+Neither is tied to a lab; both come before lab00.
 
 | Order | Page | Covers |
 |---|---|---|

@@ -36,7 +36,7 @@ issues you a temporary key pair. If your instructor handed you a key, that is yo
 | `~/.aws/credentials` entry | Alternate path only: the same keys saved under a profile name | None |
 | `provider "aws"` block | Tells Terraform which cloud and which region to use | None |
 | `data "aws_caller_identity"` | Reads back who you are; reads only, creates nothing | None |
-| Default VPC and its default subnets | Only if your account has none: the network labs 03, 06, and 12 place resources in | None — a VPC, subnet, and internet gateway are free |
+| Default VPC and its default subnets | Only if your account has none: labs 15 and 21 place resources in | None — a VPC, subnet, and internet gateway are free |
 | `.terraform/` directory | Where `init` stores the downloaded AWS plugin | None |
 
 ## Before you start
@@ -118,11 +118,11 @@ training portal issued you. AWS shows the secret exactly once, at creation.
 ```bash
 export AWS_ACCESS_KEY_ID="AKIA_REPLACE_WITH_YOUR_ACCESS_KEY_ID"
 export AWS_SECRET_ACCESS_KEY="REPLACE_WITH_YOUR_SECRET_ACCESS_KEY"
-export AWS_DEFAULT_REGION="us-east-1"
+export AWS_DEFAULT_REGION="us-east-2"
 ```
 
-`us-east-1` is the only value in that block you should keep verbatim. A **region** is the physical
-group of data centres your resources live in; every lab in this track uses `us-east-1`.
+`us-east-2` is the only value in that block you should keep verbatim. A **region** is the physical
+group of data centres your resources live in; every lab in this track uses `us-east-2`.
 
 Quote the secret in single quotes instead of double if it contains a `$` or a backtick, otherwise
 your shell will try to expand it and you will export a truncated key. Prefixing the `export` lines
@@ -181,7 +181,7 @@ the region and output format.
 ```text
 AWS Access Key ID [None]: AKIA_REPLACE_WITH_YOUR_ACCESS_KEY_ID
 AWS Secret Access Key [None]: REPLACE_WITH_YOUR_SECRET_ACCESS_KEY
-Default region name [None]: us-east-1
+Default region name [None]: us-east-2
 Default output format [None]: json
 ```
 
@@ -215,7 +215,7 @@ block instead. Open `../labs/lab00-aws-setup-and-init/main.tf` and add the `prof
 
 ```hcl
 provider "aws" {
-  region  = "us-east-1"
+  region  = "us-east-2"
   profile = "tf-labs"
 }
 ```
@@ -226,16 +226,16 @@ keeps using the saved profile and ignores them.
 ### Step 9 — Confirm the account has a default VPC
 
 A **VPC** is a private network inside AWS, and every region normally ships with one **default VPC**
-that AWS pre-built for you. Labs 03, 06, and 12 declare an EC2 instance without naming a subnet and
-a security group without naming a VPC, so AWS puts them in that default VPC. Those labs stay
-minimal on purpose — building a network from scratch is [Lab 21](lab21-capstone-vpc-ec2.md), and
-the concepts are covered in [the AWS primer](../html/aws-primer.html).
+that AWS pre-built for you. Two labs rely on it: [Lab 15](lab15-remote-exec-provisioner.md) launches
+its target instance with the AWS CLI into the default VPC, and
+[Lab 21](lab21-dynamic-blocks.md) declares a security group without naming a VPC, so AWS places it
+in the default one. Every other AWS lab builds its own network, starting with
+[Lab 03](lab03-first-ec2.md).
 
 The default VPC is not guaranteed. It can be deleted, and some account-vending processes never
 create one. This is worth one command now because `terraform plan` does **not** detect a missing
-default VPC — the failure appears only at `terraform apply`, in lab 03, as
-`VPCIdNotSpecified: No default VPC for this user`. That is the first AWS resource you ever create,
-and the message points at nothing you did.
+default VPC — the failure appears only at `terraform apply`, as
+`VPCIdNotSpecified: No default VPC for this user`, and the message points at nothing you did.
 
 ```bash
 aws ec2 describe-vpcs --filters Name=isDefault,Values=true \
@@ -250,8 +250,8 @@ vpc-0fa2e04ddfd87b3a9	172.31.0.0/16
 
 **Empty output is the failure condition, not a pass.** This is the trap: a `describe` call that
 finds nothing prints nothing and still exits 0, which reads like "checked, no problems". One line
-of output means you have a default VPC. No output at all means you have none, and labs 03, 06, and
-12 will fail at apply.
+of output means you have a default VPC. No output at all means you have none, and labs 15 and 21
+will fail at apply.
 
 If the output was empty, create one:
 
@@ -291,20 +291,17 @@ aws ec2 describe-subnets --filters Name=default-for-az,Values=true \
   --query 'Subnets[].[SubnetId,AvailabilityZone]' --output text
 ```
 
-**Expected output** *(ids will differ; `us-east-1` currently has six zones, and the order varies)*
+**Expected output** *(ids will differ; `us-east-2` has three zones, and the order varies)*
 
 ```text
-subnet-00207cf1bd3d27e28	us-east-1b
-subnet-05b29dd82ba0724d4	us-east-1f
-subnet-0646196e0fc96b9d1	us-east-1d
-subnet-0938ef78433ccd094	us-east-1a
-subnet-045819c0d9fb81992	us-east-1e
-subnet-08aec30f157caf726	us-east-1c
+subnet-00207cf1bd3d27e28	us-east-2b
+subnet-0646196e0fc96b9d1	us-east-2a
+subnet-08aec30f157caf726	us-east-2c
 ```
 
 One line per zone. Empty output is again the failure, and one missing zone is fine — the labs do
 not pin a zone. If a zone you need is absent, recreate its subnet with
-`aws ec2 create-default-subnet --availability-zone us-east-1a`, which refuses with
+`aws ec2 create-default-subnet --availability-zone us-east-2a`, which refuses with
 `DefaultSubnetAlreadyExistsInAvailabilityZone` if one is already there.
 
 ### Step 11 — Read the lab configuration
@@ -388,7 +385,7 @@ reading different credentials.
 | `No valid credential sources found` | Not exported in this terminal | Re-run the exports in the window you are using |
 | `The config profile (tf-labs) could not be found` | Step 6 not run, or the name is misspelled | Re-run `aws configure --profile tf-labs` |
 | `describe-vpcs` prints nothing | The account has no default VPC | Not a pass. Run `aws ec2 create-default-vpc`, then rerun the describe |
-| `VPCIdNotSpecified: No default VPC for this user` at `terraform apply` in lab 03, 06, or 12 | Step 9 skipped, or the default VPC was deleted since | `aws ec2 create-default-vpc`, then rerun `terraform apply`. `terraform plan` cannot detect this, so it never warned you |
+| `VPCIdNotSpecified: No default VPC for this user` at `terraform apply` in lab 15 or 21 | Step 9 skipped, or the default VPC was deleted since | `aws ec2 create-default-vpc`, then rerun `terraform apply`. `terraform plan` cannot detect this, so it never warned you |
 | `DefaultVpcAlreadyExists` | You already have one | Nothing to fix; the check in step 9 has passed |
 | `UnauthorizedOperation` on `create-default-vpc` | The training policy withholds `ec2:CreateDefaultVpc` | A policy boundary, not a config error. Ask for a default VPC to be created in the account |
 | `UnauthorizedOperation` on a later lab | Training accounts are permission-scoped | Not a broken credential — the action is outside your account's policy |
@@ -396,7 +393,7 @@ reading different credentials.
 ## Cleanup
 
 This lab creates no billable infrastructure, so there is nothing to destroy. Leave the default VPC
-in place — it costs nothing and labs 03, 06, and 12 depend on it. When you finish the track,
+in place — it costs nothing and labs 15 and 21 depend on it. When you finish the track,
 delete the access keys in the AWS IAM console — rotating keys you no longer need limits the
 damage if they ever leak.
 
@@ -414,6 +411,6 @@ aws configure list-profiles
 
 ## Next steps
 
-- Deep dive: [Getting started](../docs/basic/01-getting-started.md)
+- Deep dive: [Getting started](../docs/00-getting-started.md)
 - Visual: [Basic tier concepts](../html/basic.html)
-- Continue to [Lab 01 — Providers and Init](lab01-providers-init.md)
+- Continue to [Lab 01 — Providers and Initialization](lab01-providers-init.md)

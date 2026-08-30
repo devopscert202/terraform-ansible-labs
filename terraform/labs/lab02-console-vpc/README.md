@@ -15,7 +15,7 @@ Follow the lab manual: [`lab02-console-vpc.md`](../../labmanuals/lab02-console-v
 |---|---|---|
 | EC2 instance | `aws_instance` | [Lab 03 — Your first EC2 instance](../../labmanuals/lab03-first-ec2.md) |
 | VPC, subnet | `aws_vpc`, `aws_subnet` | [Lab 09 — Modules](../../labmanuals/lab09-modules.md) |
-| VPC, subnet, gateway, route table, security group | `aws_vpc`, `aws_subnet`, `aws_internet_gateway`, `aws_route_table`, `aws_security_group` | [Lab 21 — Capstone](../../labmanuals/lab21-capstone-vpc-ec2.md) |
+| VPC, subnet, gateway, route table, security group | `aws_vpc`, `aws_subnet`, `aws_internet_gateway`, `aws_route_table`, `aws_security_group` | [Lab 21 — Capstone](../../labmanuals/lab10-capstone-vpc-ec2.md) |
 
 Lab 21 is the full build: the same network you clicked together here, declared in one root
 module and applied with a single command.

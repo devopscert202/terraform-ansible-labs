@@ -1,14 +1,14 @@
 # Terraform Track
 
-**22 labs, `lab00`–`lab21`, in three tiers.** Start from zero AWS knowledge and finish with a
-public web server built entirely in code — VPC, internet gateway, route table, subnet, security
-group, and an EC2 instance that serves a page.
+**25 labs, `lab00`–`lab24`, in three tiers.** Start from zero AWS knowledge and build a public web
+server entirely in code — VPC, internet gateway, route table, subnet, security group, and an EC2
+instance that serves a page — at `lab10`, mid-track, then rebuild it on remote state at `lab22`.
 
 | | |
 |---|---|
 | **Start here, 1st** | [`html/terraform-101.html`](html/terraform-101.html) — Terraform fundamentals from absolute zero |
 | **Start here, 2nd** | [`html/aws-primer.html`](html/aws-primer.html) — AWS concepts, if you have never opened the console |
-| **Track catalog** | [`html/index.html`](html/index.html) — tier cards, all 22 labs, search |
+| **Track catalog** | [`html/index.html`](html/index.html) — tier cards, all 25 labs, search |
 | **Lab index** | [`labmanuals/README.md`](labmanuals/README.md) — the authoritative table |
 | **Lab code** | [`labs/README.md`](labs/README.md) — one root module per lab |
 | **Deep dives** | [`docs/README.md`](docs/README.md) — written notes per tier |
@@ -22,7 +22,7 @@ Both assume you know nothing, and they answer different questions. Read them in 
 | Order | Page | Answers | Covers |
 |---|---|---|---|
 | **1** | [Terraform 101](html/terraform-101.html) | What am I actually running? | What Terraform is and who owns it, what HCL is and the anatomy of a block, what a provider is and how to add one, every version-constraint operator including `~>`, `required_version` vs `required_providers`, the lock file, the CLI commands and the plan symbols, what state is, and what drift means |
-| **2** | [AWS Primer](html/aws-primer.html) | What is a VPC? | Region and availability zone, VPC and CIDR, public vs private subnets, internet gateway, route table, security group, EC2, key pair, IAM access keys — each with its Terraform resource type, plus the diagram of what `lab21` builds |
+| **2** | [AWS Primer](html/aws-primer.html) | What is a VPC? | Region and availability zone, VPC and CIDR, public vs private subnets, internet gateway, route table, security group, EC2, key pair, IAM access keys — each with its Terraform resource type, plus the diagram of what `lab10` builds |
 | **3** | [Lab 00](labmanuals/lab00-aws-setup-and-init.md) | Does my setup work? | Start typing: versions, access keys, first provider block, first `terraform init` |
 
 ---
@@ -32,17 +32,17 @@ Both assume you know nothing, and they answer different questions. Read them in 
 | Tier | Labs | Range | Concepts | You will be able to |
 |---|---|---|---|---|
 | **Basic** | 6 | `lab00`–`lab05` | [basic.html](html/basic.html) | Authenticate to AWS, declare a provider, create a first resource, run the init / plan / apply / destroy loop, and pass `fmt` and `validate` |
-| **Intermediate** | 7 | `lab06`–`lab12` | [intermediate.html](html/intermediate.html) | Parameterise with variables and tfvars, handle secrets, read and reason about state, extract a module, and generate resources from collections |
-| **Advanced** | 9 | `lab13`–`lab21` | [advanced.html](html/advanced.html) | Use several providers, run provisioners, split environments with workspaces, keep state in S3 with locking, migrate state, consume another stack's outputs, and build the capstone |
+| **Intermediate** | 7 | `lab06`–`lab12` | [intermediate.html](html/intermediate.html) | Parameterise with variables and tfvars, handle secrets, read and reason about state, extract a module, build the end-to-end capstone at `lab10`, and generate resources from collections and functions |
+| **Advanced** | 12 | `lab13`–`lab24` | [advanced.html](html/advanced.html) | Use several providers, run provisioners, split environments with workspaces, keep state in S3 with locking, migrate state, consume another stack's outputs, generate nested blocks dynamically, and rebuild the capstone on a remote backend |
 
 ## Requirements
 
 | Item | Value |
 |---|---|
-| Terraform | `>= 1.5.0` |
+| Terraform | `>= 1.5.0`, and `>= 1.11.0` for `lab17`–`lab19` and `lab22`, which set `use_lockfile` |
 | AWS provider | `~> 5.0` |
 | AWS CLI | v2 |
-| Region | `us-east-1` |
+| Region | `us-east-2` |
 | Instance type | `t3.micro` |
 | AMI | Amazon Linux 2023, resolved with `data "aws_ami"` |
 | AWS account | An IAM user with an access key. Sandbox accounts are permission-scoped, so an `UnauthorizedOperation` on apply is a policy boundary, not a broken credential |
@@ -54,7 +54,7 @@ Both assume you know nothing, and they answer different questions. Read them in 
 unset AWS_PROFILE AWS_SESSION_TOKEN
 export AWS_ACCESS_KEY_ID="AKIA..."
 export AWS_SECRET_ACCESS_KEY="..."
-export AWS_DEFAULT_REGION="us-east-1"
+export AWS_DEFAULT_REGION="us-east-2"
 aws sts get-caller-identity
 
 # 2. First lab

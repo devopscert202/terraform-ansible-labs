@@ -354,6 +354,6 @@ terraform destroy -auto-approve
 
 ## Next steps
 
-- Deep dive: [docs/intermediate/07-state.md](../docs/intermediate/07-state.md)
+- Deep dive: [docs/06-state.md](../docs/06-state.md)
 - Visual: [html/intermediate.html](../html/intermediate.html)
 - Continue to [Lab 09 — Modules](lab09-modules.md)

@@ -289,6 +289,6 @@ rm -f terraform.tfstate terraform.tfstate.backup
 
 ## Next steps
 
-- Deep dive: [Quality checks](../docs/basic/05-quality.md)
+- Deep dive: [Quality checks](../docs/04-quality.md)
 - Visual: [Basic tier concepts](../html/basic.html)
-- Continue to [Lab 06 — Variables and outputs](lab06-variables-outputs.md)
+- Continue to [Lab 06 — Variables and Outputs](lab06-variables-outputs.md)

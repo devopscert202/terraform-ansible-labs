@@ -1,6 +1,6 @@
 # Copy to terraform.tfvars and edit. terraform.tfvars is gitignored.
 
-aws_region  = "us-east-1"
+aws_region  = "us-east-2"
 name        = "lab09"
 vpc_cidr    = "10.42.0.0/16"
 subnet_cidr = "10.42.1.0/24"

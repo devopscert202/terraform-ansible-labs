@@ -10,7 +10,7 @@
 ## Overview
 
 This is the one lab in the track with no `.tf` files. You will build a network the manual way,
-in the AWS web console, and count the clicks. Later, [Lab 21](lab21-capstone-vpc-ec2.md) builds
+in the AWS web console, and count the clicks. Later, [Lab 21](lab10-capstone-vpc-ec2.md) builds
 the same shape from a single file with one command.
 
 Five pieces make a network in AWS. A **VPC** is your own private slice of the AWS network. A
@@ -41,7 +41,7 @@ Every object here is free. Nothing is billed unless you launch a server, which t
 - [ ] [Lab 01](lab01-providers-init.md) completed
 - [ ] Sign-in access to the AWS console for your training account
 - [ ] AWS CLI credentials working, as set up in [Lab 00](lab00-aws-setup-and-init.md)
-- [ ] Region set to **us-east-1** in the console's top-right region selector
+- [ ] Region set to **us-east-2** in the console's top-right region selector
 
 ## Steps
 
@@ -106,7 +106,7 @@ Go to **VPC → Subnets → Create subnet**.
 |---|---|
 | VPC ID | `console-lab-vpc` |
 | Subnet name | `console-lab-public-a` |
-| Availability Zone | `us-east-1a` |
+| Availability Zone | `us-east-2a` |
 | IPv4 CIDR block | `10.0.1.0/24` |
 
 An **availability zone** is one physical data centre within the region. A subnet lives in exactly
@@ -126,7 +126,7 @@ aws ec2 describe-subnets --filters "Name=tag:Name,Values=console-lab-public-a" \
     "SubnetId": "subnet-0f1e2d3c4b5a69870",
     "VpcId": "vpc-0a1b2c3d4e5f67890",
     "Cidr": "10.0.1.0/24",
-    "Az": "us-east-1a"
+    "Az": "us-east-2a"
 }
 ```
 
@@ -293,7 +293,7 @@ a file of about forty lines, applies in one command, and destroys in one more.
 ## Done when
 
 - [ ] `console-lab-vpc` shows state `available`
-- [ ] `console-lab-public-a` exists in `us-east-1a` inside that VPC
+- [ ] `console-lab-public-a` exists in `us-east-2a` inside that VPC
 - [ ] `console-lab-igw` shows an attachment in state `available`
 - [ ] The route table has a `0.0.0.0/0` route to the gateway
 - [ ] `console-lab-sg` allows SSH from your address only
@@ -306,7 +306,7 @@ a file of about forty lines, applies in one command, and destroys in one more.
 | `DependencyViolation` when deleting | Something inside still uses it | Delete in the order given under Cleanup |
 | Cannot attach the gateway | A VPC may hold only one | Detach the existing gateway or use your new VPC |
 | CIDR overlap error | `10.0.0.0/16` already exists here | Delete the old VPC or use `10.10.0.0/16` |
-| Objects missing from the console | Wrong region selected | Switch the region selector to `us-east-1` |
+| Objects missing from the console | Wrong region selected | Switch the region selector to `us-east-2` |
 | A CLI query returns `null` | The name tag does not match | Check the Name tag spelling in the console |
 | `UnauthorizedOperation` | Training account policy limit | Not a broken credential; ask for the permission |
 
@@ -339,6 +339,6 @@ exactly the kind of untracked leftover Terraform exists to prevent.
 
 ## Next steps
 
-- Deep dive: [Resources](../docs/basic/03-resources.md)
+- Deep dive: [Resources](../docs/02-resources.md)
 - Visual: [Basic tier concepts](../html/basic.html)
-- Continue to [Lab 03 — Your first EC2 instance](lab03-first-ec2.md)
+- Continue to [Lab 03 — Your First EC2 Instance](lab03-first-ec2.md)

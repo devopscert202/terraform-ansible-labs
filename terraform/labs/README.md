@@ -1,8 +1,8 @@
 # Terraform Lab Code
 
-One directory per lab, one **root module** each: a self-contained set of `.tf` files with its own
-state. Run every command from inside the lab directory, never from this parent — sibling
-directories must not share state.
+Twenty-five directories, `lab00`–`lab24`, one **root module** each: a self-contained set of `.tf`
+files with its own state. Run every command from inside the lab directory, never from this
+parent — sibling directories must not share state.
 
 ```bash
 cd terraform/labs/lab03-first-ec2
@@ -33,9 +33,9 @@ subject, `backend.hcl.example` where remote state is.
 | 07 | `lab07-tfvars-secrets/` | `variables.tf`, `outputs.tf`, `terraform.tfvars.example` |
 | 08 | `lab08-local-state/` | `outputs.tf` |
 | 09 | `lab09-modules/` | `variables.tf`, `outputs.tf`, `terraform.tfvars.example`, `modules/` |
-| 10 | `lab10-collections/` | `variables.tf`, `outputs.tf` |
-| 11 | `lab11-functions/` | `variables.tf`, `outputs.tf` |
-| 12 | `lab12-dynamic-blocks/` | `variables.tf`, `outputs.tf` |
+| 10 | `lab10-capstone-vpc-ec2/` | `variables.tf`, `outputs.tf`, `terraform.tfvars.example` |
+| 11 | `lab11-collections/` | `variables.tf`, `outputs.tf` |
+| 12 | `lab12-functions/` | `variables.tf`, `outputs.tf` |
 | 13 | `lab13-multi-provider/` | `variables.tf`, `terraform.tfvars.example` |
 | 14 | `lab14-local-exec-provisioner/` | — |
 | 15 | `lab15-remote-exec-provisioner/` | `terraform.tfvars.example` |
@@ -44,15 +44,17 @@ subject, `backend.hcl.example` where remote state is.
 | 18 | `lab18-state-keys-locking/` | `backend.hcl.example` |
 | 19 | `lab19-state-migration/` | `backend.hcl.example` |
 | 20 | `lab20-remote-state-consumer/` | `terraform.tfvars.example` |
-| 21 | `lab21-capstone-vpc-ec2/` | `variables.tf`, `outputs.tf`, `terraform.tfvars.example` |
+| 21 | `lab21-dynamic-blocks/` | `variables.tf`, `outputs.tf` |
+| 22 | `lab22-ec2-s3-backend/` | `variables.tf`, `outputs.tf`, `terraform.tfvars.example`, `backend.hcl.example` |
+| 23 | `lab23-s3-bucket/` | `variables.tf`, `outputs.tf` |
 
 ## Conventions
 
 | Rule | Detail |
 |---|---|
-| Terraform version | `required_version = ">= 1.5.0"` in every root module |
+| Terraform version | `required_version = ">= 1.5.0"` in every root module, except `lab17`–`lab19` and `lab22`, which need `>= 1.11.0` for `use_lockfile` |
 | AWS provider | `version = "~> 5.0"` |
-| Region | `us-east-1` |
+| Region | `us-east-2` |
 | Instance type | `t3.micro` |
 | AMI | Resolved with `data "aws_ami"` and `most_recent = true` — never a hardcoded ID |
 | Variables | Every `variable` declares a `type` and a `description`; secrets add `sensitive = true` |

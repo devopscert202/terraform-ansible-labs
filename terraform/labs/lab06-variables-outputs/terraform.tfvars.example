@@ -1,11 +1,47 @@
 # Copy this file to terraform.tfvars and edit the values.
 # terraform.tfvars is gitignored; this .example file is committed.
+# Lab 07 covers tfvars loading and precedence in detail.
 
-aws_region    = "us-east-1"
-server_name   = "lab06-custom-web"
-instance_type = "t3.micro"
+aws_region                 = "us-east-2"
+server_name                = "lab06-custom-web"
+instance_type              = "t3.micro"
+root_volume_gb             = 8
+enable_detailed_monitoring = false
+
+role_list = ["web", "api", "web"]
+role_set  = ["web", "api", "web"]
 
 tags = {
   Environment = "training"
   Owner       = "student-team"
 }
+
+server_profile = {
+  name       = "lab06-custom-web"
+  cpu_count  = 2
+  public     = true
+  department = "platform"
+}
+
+release_marker = ["al2023", 3, true]
+
+disks = [
+  { device = "/dev/sdb", size_gb = 10 },
+  { device = "/dev/sdc", size_gb = 20 },
+]
+
+environments = {
+  dev  = { instance_type = "t3.micro", replicas = 1 }
+  prod = { instance_type = "t3.small", replicas = 3 }
+}
+
+owner_email = "student@example.invalid"
+
+# Network. subnet_cidr must sit inside vpc_cidr, and subnet_az must be a zone of
+# aws_region. vpc_cidr is also the only source allowed to reach port 22.
+vpc_cidr    = "10.0.0.0/16"
+subnet_cidr = "10.0.1.0/24"
+subnet_az   = "us-east-2a"
+
+# api_token is deliberately absent. It is sensitive; supply it at runtime:
+#   export TF_VAR_api_token='...'

@@ -232,6 +232,6 @@ in a shared project your teammates need it.
 
 ## Next steps
 
-- Deep dive: [Providers](../docs/basic/02-providers.md)
+- Deep dive: [Providers](../docs/01-providers.md)
 - Visual: [Basic tier concepts](../html/basic.html)
-- Continue to [Lab 02 — Building a VPC in the console](lab02-console-vpc.md)
+- Continue to [Lab 02 — Building a Network by Hand in the Console](lab02-console-vpc.md)

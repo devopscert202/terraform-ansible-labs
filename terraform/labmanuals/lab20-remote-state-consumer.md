@@ -38,7 +38,7 @@ worth consuming.
       workspaces, and **not** destroyed — this lab reads the two state files it left behind
       (`default` in step 2, `dev` in step 9). Lab 16's cleanup section is deliberately deferred
       until after this lab; if you already ran it, reapply lab 16 steps 5 to 8 before continuing.
-- [ ] Read [../docs/advanced/state.md](../docs/advanced/state.md)
+- [ ] Read [../docs/13-remote-state.md](../docs/13-remote-state.md)
 
 This lab creates no resources and needs no AWS credentials. The producer's state is a local file,
 which keeps it runnable offline; the S3 producer variant is shown in step 9.
@@ -239,7 +239,7 @@ data "terraform_remote_state" "upstream" {
   config = {
     bucket = "tfstate-yourname-4821"
     key    = "labs/dev/network/terraform.tfstate"
-    region = "us-east-1"
+    region = "us-east-2"
   }
 }
 ```
@@ -297,6 +297,6 @@ its [cleanup section](lab16-workspaces.md#cleanup) and run the commands you defe
 
 ## Next steps
 
-- Deep dive: [../docs/advanced/projects.md](../docs/advanced/projects.md)
+- Deep dive: [../docs/17-project-structure.md](../docs/17-project-structure.md)
 - Visual: [../html/advanced.html](../html/advanced.html)
-- Continue to [Lab 21 — Capstone: VPC and EC2](lab21-capstone-vpc-ec2.md)
+- Continue to [Lab 21 — Dynamic Blocks](lab21-dynamic-blocks.md)

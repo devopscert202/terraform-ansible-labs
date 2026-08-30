@@ -1,0 +1,7 @@
+# Every variable has a default, so this file is optional. Copy it to
+# terraform.tfvars to override. Never put secrets in it.
+aws_region        = "us-east-2"
+bucket_prefix     = "tf-lab23"
+versioning_status = "Enabled"
+force_destroy     = true
+object_key        = "hello.txt"

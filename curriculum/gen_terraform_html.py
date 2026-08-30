@@ -1,19 +1,20 @@
 #!/usr/bin/env python3
-"""Generate the Terraform track HTML: index + the three tier concept pages.
+"""Generate the Terraform track HTML: the index and the single concepts page.
 
 Output (all under terraform/html/):
-    index.html          track catalog: entry-point sequence, tier cards, 22-lab table, search
-    basic.html          Tier 1 concepts (lab00-lab05)
-    intermediate.html   Tier 2 concepts (lab06-lab12)
-    advanced.html       Tier 3 concepts (lab13-lab21)
+    index.html          track catalog: entry-point sequence, 25-lab table, search
+    concepts.html       every topic, lab00 to lab24, in one continuous sequence
 
-The other two pages in the six-page set are generated elsewhere and are only linked from here:
-terraform-101.html by gen_terraform_101.py, aws-primer.html by gen_aws_primer.py.
+There is no tier-based navigation and no tier page. Tier is a per-lab label in the
+index catalog table only. The other two pages in the four-page set are generated
+elsewhere and are only linked from here: terraform-101.html by gen_terraform_101.py,
+aws-primer.html by gen_aws_primer.py.
 
 Every topic section follows the mandated four-part flow via tf_style.topic():
 concept overview -> example code block -> line-by-line explanation -> lab link.
+Each card carries a stable anchor id so the sticky topic nav can jump to it.
 
-Re-runnable: each run overwrites its four files with byte-identical output for
+Re-runnable: each run overwrites its two files with byte-identical output for
 identical input. No state is kept on disk.
 
     python3 curriculum/gen_terraform_html.py
@@ -33,31 +34,40 @@ OUT_DIR = ROOT / "terraform" / "html"
 TF_FLOOR = "Terraform &gt;= 1.5.0"
 AWS_PIN = "AWS provider ~&gt; 5.0"
 
-# The complete Terraform HTML page set. index/basic/intermediate/advanced are written by this
-# script; terraform-101 and aws-primer are written by their own generators. No other Terraform
+# The complete Terraform HTML page set. index and concepts are written by this script;
+# terraform-101 and aws-primer are written by their own generators. No other Terraform
 # HTML page exists, so nothing here may link outside this set.
 HTML_PAGES = [
     "index.html",
     "terraform-101.html",
     "aws-primer.html",
-    "basic.html",
-    "intermediate.html",
-    "advanced.html",
+    "concepts.html",
 ]
 
+# Written by this script; the other two are checked for existence only.
+OWNED_PAGES = ["index.html", "concepts.html"]
+
 # ---------------------------------------------------------------------------
-# Locked 22-lab sequence (tf-aug2026-spec.md). num, slug, title, tier, topic
+# Locked 25-lab sequence (lab00-lab24). num, slug, title, tier, topic
+#
+# Tier split applied everywhere in this repository:
+#   Basic        lab00-lab05   6 labs
+#   Intermediate lab06-lab12   7 labs, including the capstone at lab10
+#   Advanced     lab13-lab24  12 labs
+# The capstone sits mid-track at lab10 so the learner builds something end to end
+# before the tooling-heavy Advanced tier. Dynamic blocks sit at lab21, immediately
+# before the two S3 labs that close the track.
 # ---------------------------------------------------------------------------
 LABS = [
-    (0, "lab00-aws-setup-and-init", "AWS Setup and Init", "basic",
+    (0, "lab00-aws-setup-and-init", "AWS Setup and First Init", "basic",
      "Credentials, provider block, first init"),
-    (1, "lab01-providers-init", "Providers and Init", "basic",
+    (1, "lab01-providers-init", "Providers and Initialization", "basic",
      "required_providers, lock file, validate"),
-    (2, "lab02-console-vpc", "Console VPC", "basic",
+    (2, "lab02-console-vpc", "Building a Network by Hand in the Console", "basic",
      "Manual console build, contrasted with IaC"),
-    (3, "lab03-first-ec2", "First EC2 Instance", "basic",
+    (3, "lab03-first-ec2", "Your First EC2 Instance", "basic",
      "AMI data source, security group, instance"),
-    (4, "lab04-plan-apply-destroy", "Plan, Apply, Destroy", "basic",
+    (4, "lab04-plan-apply-destroy", "Plan, Apply, and Destroy", "basic",
      "The core workflow with no cloud cost"),
     (5, "lab05-fmt-validate", "Format and Validate", "basic",
      "fmt, validate, CI-style quality gates"),
@@ -69,51 +79,44 @@ LABS = [
      "terraform.tfstate, refresh, drift"),
     (9, "lab09-modules", "Modules", "intermediate",
      "Child modules, inputs, outputs"),
-    (10, "lab10-collections", "Collections", "intermediate",
+    (10, "lab10-capstone-vpc-ec2", "Capstone: VPC to public web server", "intermediate",
+     "VPC, IGW, subnet, route table, SG, EC2"),
+    (11, "lab11-collections", "Collections", "intermediate",
      "for_each over maps and sets"),
-    (11, "lab11-functions", "Functions", "intermediate",
+    (12, "lab12-functions", "Functions", "intermediate",
      "String, collection, CIDR, encoding"),
-    (12, "lab12-dynamic-blocks", "Dynamic Blocks", "intermediate",
-     "Generated nested blocks from data"),
-    (13, "lab13-multi-provider", "Multiple Providers", "advanced",
+    (13, "lab13-multi-provider", "Multi-provider configuration", "advanced",
      "Two providers, provider aliases"),
-    (14, "lab14-local-exec-provisioner", "local-exec Provisioner", "advanced",
+    (14, "lab14-local-exec-provisioner", "local-exec provisioner", "advanced",
      "Run a command on the Terraform host"),
-    (15, "lab15-remote-exec-provisioner", "remote-exec Provisioner", "advanced",
+    (15, "lab15-remote-exec-provisioner", "remote-exec provisioner", "advanced",
      "SSH connection block, inline commands"),
     (16, "lab16-workspaces", "Workspaces", "advanced",
      "terraform.workspace, per-env naming"),
-    (17, "lab17-s3-backend", "S3 Backend", "advanced",
+    (17, "lab17-s3-backend", "S3 backend", "advanced",
      "Remote state in S3, backend config files"),
-    (18, "lab18-state-keys-locking", "State Keys and Locking", "advanced",
+    (18, "lab18-state-keys-locking", "State keys and locking", "advanced",
      "Key conventions, S3 native lockfile"),
-    (19, "lab19-state-migration", "State Migration", "advanced",
+    (19, "lab19-state-migration", "State migration", "advanced",
      "init -migrate-state, backups"),
-    (20, "lab20-remote-state-consumer", "Remote State Consumer", "advanced",
+    (20, "lab20-remote-state-consumer", "Remote state consumer", "advanced",
      "terraform_remote_state data source"),
-    (21, "lab21-capstone-vpc-ec2", "Capstone: VPC and EC2", "advanced",
-     "VPC, IGW, subnet, route table, SG, EC2"),
+    (21, "lab21-dynamic-blocks", "Dynamic Blocks", "advanced",
+     "Generated nested blocks from data"),
+    (22, "lab22-ec2-s3-backend", "EC2 with remote state in S3", "advanced",
+     "The capstone build, state kept in S3"),
+    (23, "lab23-s3-bucket", "S3 bucket as a Terraform resource", "advanced",
+     "aws_s3_bucket, versioning, encryption"),
+    (24, "lab24-count-foreach-buckets", "count and for_each on real buckets", "advanced",
+     "count by position vs for_each by name"),
 ]
 
+# Tier survives only as a per-lab label in the index catalog table: it tells a learner how
+# much a lab assumes. It is not a page, a nav item, or a grouping anywhere in the HTML.
 TIERS = {
-    "basic": {
-        "label": "Basic",
-        "range": "lab00-lab05",
-        "blurb": "Install, authenticate, declare a provider, create your first resource, "
-                 "and learn the init / plan / apply / destroy loop.",
-    },
-    "intermediate": {
-        "label": "Intermediate",
-        "range": "lab06-lab12",
-        "blurb": "Parameterise configuration with variables and tfvars, read state, extract "
-                 "modules, and generate resources from collections.",
-    },
-    "advanced": {
-        "label": "Advanced",
-        "range": "lab13-lab21",
-        "blurb": "Multiple providers, provisioners, workspaces, remote state in S3 with "
-                 "locking, state migration, and the end-to-end capstone.",
-    },
+    "basic": {"label": "Basic", "range": "lab00-lab05"},
+    "intermediate": {"label": "Intermediate", "range": "lab06-lab12"},
+    "advanced": {"label": "Advanced", "range": "lab13-lab24"},
 }
 
 
@@ -138,9 +141,16 @@ def practises(num: int) -> tuple[str, str]:
 
 
 # ---------------------------------------------------------------------------
-# Tier 1 — Basic
+# All 26 topic cards, lab00 to lab24, one continuous sequence.
+#
+# There is no tier grouping here and no per-tier page: a learner reads straight
+# down concepts.html, or jumps with the sticky topic nav. The capstone (lab10) and
+# dynamic blocks (lab21) sit at their sequence positions like every other topic —
+# neither needs the out-of-order injection hook the tier pages used to require.
+#
+# Order in this list IS the order on the page. Keep it ascending by "lab".
 # ---------------------------------------------------------------------------
-BASIC_TOPICS = [
+TOPICS = [
     dict(
         eyebrow="Lab 00 &middot; Foundations",
         heading="Infrastructure as code, and what a root module is",
@@ -165,7 +175,7 @@ BASIC_TOPICS = [
 }
 
 provider "aws" {
-  region = "us-east-1"
+  region = "us-east-2"
 }
 
 # A data source reads; it creates nothing and costs nothing.
@@ -203,7 +213,7 @@ output "account_id" {
 
 export AWS_ACCESS_KEY_ID="AKIA..."
 export AWS_SECRET_ACCESS_KEY="..."
-export AWS_DEFAULT_REGION="us-east-1"
+export AWS_DEFAULT_REGION="us-east-2"
 
 aws sts get-caller-identity
 # {
@@ -256,7 +266,7 @@ terraform init'''),
 }
 
 provider "aws" {
-  region = "us-east-1"
+  region = "us-east-2"
 }
 
 resource "random_pet" "lab_id" {
@@ -304,22 +314,23 @@ aws ec2 describe-subnets \\
             ("describe-subnets", "Lists the subnets inside that VPC and the availability zone each one sits in."),
             ("vpc-0abc123def456789a", "A generated ID. Nobody chose it and nothing outside AWS knows it &mdash; the exact problem state files solve."),
         ],
-        lang_note="This lab has no <code class=\"inline\">.tf</code> files. Lab 21 builds the same "
+        lang_note="This lab has no <code class=\"inline\">.tf</code> files. Lab 10 builds the same "
                   "network in code, and the difference in reviewability and repeatability is the "
                   "whole point of the exercise.",
         lab=2,
     ),
     dict(
         eyebrow="Lab 03 &middot; Resources",
-        heading="Resources, data sources, and your first EC2 instance",
+        heading="Resources, data sources, and your first EC2 instance in its own network",
         concept=(
             "A <em>resource</em> is an object Terraform owns: it creates it, records its ID in "
             "state, updates it, and destroys it. A <em>data source</em> is a read-only query "
             "against something that already exists. An <em>AMI</em> (Amazon Machine Image) is the "
             "disk image an EC2 instance boots from, and its ID differs per region, so resolve it "
             "with <code class=\"inline\">data \"aws_ami\"</code> instead of hardcoding an ID. This "
-            "lab is deliberately the minimum viable AWS build: one data source and one resource, "
-            "so a plan proposes exactly one thing to create."
+            "lab builds the network it needs &mdash; a VPC, two subnets, and a security group "
+            "&mdash; and launches the instance into it, so the configuration states where the "
+            "instance lands instead of inheriting whatever the account happens to have."
         ),
         code=esc('''data "aws_ami" "amazon_linux" {
   most_recent = true
@@ -336,15 +347,61 @@ aws ec2 describe-subnets \\
   }
 }
 
-resource "aws_instance" "web" {
-  ami           = data.aws_ami.amazon_linux.id
-  instance_type = var.instance_type
+resource "aws_vpc" "main" {
+  cidr_block           = var.vpc_cidr           # 10.0.0.0/16
+  enable_dns_hostnames = true
+  enable_dns_support   = true
 
-  tags = {
-    Name      = var.instance_name
-    Lab       = "lab03"
-    ManagedBy = "Terraform"
+  tags = { Name = "${var.instance_name}-vpc", Lab = "lab03", ManagedBy = "Terraform" }
+}
+
+resource "aws_subnet" "public" {
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = var.public_subnet_cidr    # 10.0.1.0/24
+  availability_zone = var.public_subnet_az      # us-east-2a
+
+  tags = { Name = "${var.instance_name}-public", Lab = "lab03", ManagedBy = "Terraform" }
+}
+
+resource "aws_subnet" "private" {
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = var.private_subnet_cidr   # 10.0.2.0/24
+  availability_zone = var.private_subnet_az     # us-east-2b
+
+  tags = { Name = "${var.instance_name}-private", Lab = "lab03", ManagedBy = "Terraform" }
+}
+
+resource "aws_security_group" "instance" {
+  name        = "${var.instance_name}-sg"
+  description = "SSH from inside the VPC only, all outbound"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    description = "SSH from within the VPC"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = [var.vpc_cidr]
   }
+
+  egress {
+    description = "All outbound"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = { Name = "${var.instance_name}-sg", Lab = "lab03", ManagedBy = "Terraform" }
+}
+
+resource "aws_instance" "web" {
+  ami                    = data.aws_ami.amazon_linux.id
+  instance_type          = var.instance_type
+  subnet_id              = aws_subnet.public.id
+  vpc_security_group_ids = [aws_security_group.instance.id]
+
+  tags = { Name = var.instance_name, Lab = "lab03", ManagedBy = "Terraform" }
 }'''),
         rows=[
             ("data \"aws_ami\" \"amazon_linux\"", "Asks EC2 for a matching image at plan time. Nothing is created and nothing enters state as a managed object."),
@@ -352,23 +409,26 @@ resource "aws_instance" "web" {
             ("owners = [\"amazon\"]", "Restricts the search to images published by AWS itself, so a look-alike community AMI cannot be selected."),
             ("filter { name = \"name\" }", "Matches the Amazon Linux 2023 x86_64 naming pattern. The <code class=\"inline\">*</code> absorbs the date portion of the name."),
             ("filter { virtualization-type }", "Restricts to HVM images, the only virtualization type current instance families support."),
-            ("ami = data.aws_ami.amazon_linux.id", "Consumes the data source result. The <code class=\"inline\">data.</code> prefix is what distinguishes a lookup from a managed resource."),
+            ("aws_vpc.main", "The private network this lab creates for itself, a <code class=\"inline\">/16</code> with room for 65,536 addresses. Every other resource here lives inside it."),
+            ("enable_dns_hostnames / _support", "Turns on the VPC's internal DNS, so instances resolve names such as <code class=\"inline\">ip-10-0-1-42.us-east-2.compute.internal</code>."),
+            ("two aws_subnet blocks", "<code class=\"inline\">public</code> in <code class=\"inline\">10.0.1.0/24</code> and <code class=\"inline\">private</code> in <code class=\"inline\">10.0.2.0/24</code>. Subnet ranges may not overlap, and each is pinned to exactly one zone."),
+            ("availability_zone = var.public_subnet_az", "Comes from a plain variable, defaulting to <code class=\"inline\">us-east-2a</code> and <code class=\"inline\">us-east-2b</code>. This lab is explicit about its zones rather than resolving them from a data source; Lab 10 shows the data-source form."),
+            ("\"public\" is a name, not a setting", "Nothing makes that subnet public: there is no internet gateway and no route to one, so both subnets are private today. The name records the role it will play in Lab 10."),
+            ("vpc_id on the security group", "Places the group in the VPC this configuration created. A group without <code class=\"inline\">vpc_id</code> would fall back to the account's default VPC, which is exactly what this lab avoids."),
+            ("cidr_blocks = [var.vpc_cidr]", "Port 22 is reachable only from <code class=\"inline\">10.0.0.0/16</code>, this VPC's own range. Never <code class=\"inline\">0.0.0.0/0</code> on an administrative port."),
+            ("egress protocol = \"-1\"", "<code class=\"inline\">-1</code> means every protocol, so the instance can reach package mirrors once a route out exists. Groups are stateful, so replies to allowed inbound traffic need no rule."),
+            ("subnet_id on the instance", "Places the instance in the public subnet deliberately. Combined with <code class=\"inline\">vpc_security_group_ids</code>, nothing about this instance's network is inherited."),
             ("instance_type = var.instance_type", "Defaults to <code class=\"inline\">t3.micro</code>, the smallest general-purpose size used throughout this track."),
-            ("no subnet_id", "Nothing places this instance in a network, so EC2 puts it in the region's <em>default VPC</em>. See the note below &mdash; this is the one way this lab can fail."),
-            ("no security group", "None is declared, so the instance gets the default VPC's default group. Lab 12 builds a group on its own; Lab 21 builds one inside a VPC it created."),
             ("tags = { Lab = \"lab03\" }", "Every AWS resource in this track carries <code class=\"inline\">Name</code> and <code class=\"inline\">Lab</code> tags so leftovers are easy to find and delete."),
         ],
         lang_note=(
-            "<strong>This lab needs a default VPC.</strong> An "
-            "<code class=\"inline\">aws_instance</code> with no "
-            "<code class=\"inline\">subnet_id</code> is placed in the region's default VPC, and a "
-            "fresh training account may have none. <code class=\"inline\">terraform plan</code> "
-            "does not detect this; the apply fails with "
-            "<code class=\"inline\">VPCIdNotSpecified: No default VPC for this user</code>. "
-            "Labs 03, 06 and 12 all depend on it. Verify with "
-            "<code class=\"inline\">aws ec2 describe-vpcs --filters Name=isDefault,Values=true "
-            "--query 'Vpcs[].VpcId' --output text</code> and create one with "
-            "<code class=\"inline\">aws ec2 create-default-vpc</code> if the result is empty."
+            "<strong>This instance is deliberately unreachable.</strong> There is no internet "
+            "gateway, no route to one, and no public IP, so you cannot SSH to it from your "
+            "laptop and it cannot reach the internet. That is the point: the lab teaches "
+            "resources, data sources and network placement without also owing you a working "
+            "public service. Making something publicly reachable is the "
+            "<a class=\"lablink\" href=\"#lab10-capstone-vpc-ec2\">Lab 10 capstone</a>'s payoff, "
+            "and it needs three more resources to get there."
         ),
         lab=3,
     ),
@@ -451,12 +511,6 @@ output "formatted_example" {
                   "contacts AWS, so quota errors, permission boundaries, and drift surface there.",
         lab=5,
     ),
-]
-
-# ---------------------------------------------------------------------------
-# Tier 2 — Intermediate
-# ---------------------------------------------------------------------------
-INTERMEDIATE_TOPICS = [
     dict(
         eyebrow="Lab 06 &middot; Inputs",
         heading="Variables, locals, and outputs",
@@ -466,17 +520,48 @@ INTERMEDIATE_TOPICS = [
             "then the same code can build training and production by passing different values. A "
             "<em>local</em> is a computed value used inside the module only &mdash; ideal for "
             "merged tag maps. An <em>output</em> exports a value after apply for operators or for "
-            "another configuration to read."
+            "another configuration to read. The network the instance needs is itself parameterised "
+            "here: the VPC, subnet and security group are all driven by typed variables."
         ),
-        code=esc('''variable "instance_name" {
+        code=esc('''variable "server_name" {
   type        = string
-  description = "Name tag applied to the instance and its security group."
-  default     = "variables-lab-web"
+  description = "Value used for the Name tag on the EC2 instance."
+  default     = "lab06-web"
+}
+
+variable "instance_type" {
+  type        = string
+  description = "EC2 instance size. Must be a t3 size to keep this lab cheap."
+  default     = "t3.micro"
+  nullable    = false
+
+  validation {
+    condition     = startswith(var.instance_type, "t3.")
+    error_message = "instance_type must be a t3 size, for example t3.micro."
+  }
+}
+
+variable "vpc_cidr" {
+  type        = string
+  description = "Address range of the VPC this lab creates. Also the only source allowed to reach port 22."
+  default     = "10.0.0.0/16"
+}
+
+variable "subnet_cidr" {
+  type        = string
+  description = "Address range of the subnet the instance launches into. Must sit inside vpc_cidr."
+  default     = "10.0.1.0/24"
+}
+
+variable "subnet_az" {
+  type        = string
+  description = "Availability zone the subnet is created in. Must belong to aws_region."
+  default     = "us-east-2a"
 }
 
 variable "tags" {
   type        = map(string)
-  description = "Organisation tags merged onto every resource."
+  description = "A map: values addressed by string key. Merged into every resource tag set."
   default = {
     Environment = "training"
     Owner       = "platform-team"
@@ -485,15 +570,53 @@ variable "tags" {
 
 locals {
   common_tags = merge(var.tags, {
-    Name = var.instance_name
+    Name = var.server_name
     Lab  = "lab06"
   })
 }
 
+resource "aws_vpc" "main" {
+  cidr_block         = var.vpc_cidr
+  enable_dns_support = true
+  tags               = local.common_tags
+}
+
+resource "aws_subnet" "main" {
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = var.subnet_cidr
+  availability_zone = var.subnet_az
+  tags              = local.common_tags
+}
+
+resource "aws_security_group" "instance" {
+  name        = "${var.server_name}-sg"
+  description = "Lab 06 instance security group"
+  vpc_id      = aws_vpc.main.id
+  tags        = local.common_tags
+
+  ingress {
+    description = "SSH from inside the VPC only"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = [var.vpc_cidr]
+  }
+
+  egress {
+    description = "All outbound"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
 resource "aws_instance" "web" {
-  ami           = data.aws_ami.al2023.id
-  instance_type = "t3.micro"
-  tags          = local.common_tags
+  ami                    = data.aws_ami.al2023.id
+  instance_type          = var.instance_type
+  subnet_id              = aws_subnet.main.id
+  vpc_security_group_ids = [aws_security_group.instance.id]
+  tags                   = local.common_tags
 }
 
 output "instance_id" {
@@ -501,16 +624,33 @@ output "instance_id" {
   value       = aws_instance.web.id
 }'''),
         rows=[
-            ("variable \"instance_name\"", "Declares an input. Its address elsewhere in the configuration is <code class=\"inline\">var.instance_name</code>."),
+            ("variable \"server_name\"", "Declares an input. Its address elsewhere in the configuration is <code class=\"inline\">var.server_name</code>."),
             ("type = string", "Terraform rejects a non-string value at plan time instead of failing mid-apply. Every variable in this track declares a type."),
             ("description", "Required by the track's own rules: it is the documentation a module consumer reads."),
             ("default", "Makes the variable optional. Omit the default when a value must always be supplied deliberately."),
+            ("nullable = false", "Rejects an explicit <code class=\"inline\">null</code>, so the default cannot be overridden into nothing."),
+            ("validation { condition }", "A rule checked at plan time. <code class=\"inline\">startswith</code> keeps the lab on a cheap instance family, and the <code class=\"inline\">error_message</code> is what the learner sees."),
             ("type = map(string)", "A map of string keys to string values, written <code class=\"inline\">{ Key = \"value\" }</code> in HCL."),
             ("locals { ... }", "Values computed once and reused. Not settable from outside the module."),
             ("merge(var.tags, { ... })", "Combines maps into one. On a key collision the later map wins, so <code class=\"inline\">Name</code> here overrides any inherited <code class=\"inline\">Name</code>."),
+            ("aws_vpc.main / aws_subnet.main", "The lab builds its own one-subnet network from <code class=\"inline\">var.vpc_cidr</code> and <code class=\"inline\">var.subnet_cidr</code>, so changing a variable changes the network rather than the code."),
+            ("availability_zone = var.subnet_az", "A plain variable, defaulting to <code class=\"inline\">us-east-2a</code>. A subnet is zonal, so it must name exactly one zone."),
+            ("vpc_id on the security group", "Places the group in the VPC this configuration created, so nothing here depends on the account's default VPC."),
+            ("cidr_blocks = [var.vpc_cidr]", "One variable serves two purposes: it sizes the VPC and it is the only range allowed to reach port 22. Never <code class=\"inline\">0.0.0.0/0</code> on SSH."),
+            ("subnet_id / vpc_security_group_ids", "Wires the instance to the subnet and group above. Both are references, so Terraform builds the VPC, then the subnet and group, then the instance."),
             ("tags = local.common_tags", "One reference gives every resource the same tag set. Change <code class=\"inline\">var.tags</code> once and all of them update."),
             ("output \"instance_id\"", "Printed after apply and readable with <code class=\"inline\">terraform output instance_id</code>."),
         ],
+        lang_note=(
+            "<strong>This instance is deliberately unreachable.</strong> The lab creates no "
+            "internet gateway, no route to one, and no public IP, and port 22 is open only to "
+            "the VPC's own range &mdash; so there is nothing to connect to from outside. Public "
+            "reachability is the <a class=\"lablink\" href=\"#lab10-capstone-vpc-ec2\">Lab 10 "
+            "capstone</a>'s payoff. What this lab teaches is the type system: string, number, "
+            "bool, list, set, map, object, tuple, <code class=\"inline\">optional()</code>, "
+            "<code class=\"inline\">any</code>, <code class=\"inline\">null</code>, and "
+            "<code class=\"inline\">sensitive</code>."
+        ),
         lab=6,
     ),
     dict(
@@ -646,7 +786,100 @@ output "vpc_id" {
         lab=9,
     ),
     dict(
-        eyebrow="Lab 10 &middot; Collections",
+        eyebrow="Lab 10 &middot; Capstone",
+        heading="The whole picture: VPC, IGW, route table, subnet, SG, EC2",
+        concept=(
+            "The capstone builds a working public web server from nothing. An "
+            "<em>internet gateway</em> attaches the VPC to the internet; a <em>route table</em> "
+            "with a default route to that gateway is what makes a subnet <em>public</em>; the "
+            "security group opens port 80; and <code class=\"inline\">user_data</code> "
+            "installs a web server on first boot. The output is a URL you can actually open. It "
+            "sits mid-track on purpose: everything up to here is a piece, and this is the first "
+            "lab where the pieces make something a person can use &mdash; Labs 03 and 06 build "
+            "networks, but neither is reachable from outside."
+        ),
+        code=esc('''data "aws_availability_zones" "available" {
+  state = "available"
+}
+
+resource "aws_vpc" "this" {
+  cidr_block           = "10.0.0.0/16"
+  enable_dns_hostnames = true
+
+  tags = merge(local.common_tags, { Name = local.name })
+}
+
+resource "aws_internet_gateway" "this" {
+  vpc_id = aws_vpc.this.id
+
+  tags = merge(local.common_tags, { Name = "${local.name}-igw" })
+}
+
+resource "aws_subnet" "public" {
+  vpc_id                  = aws_vpc.this.id
+  cidr_block              = "10.0.1.0/24"
+  availability_zone       = data.aws_availability_zones.available.names[0]
+  map_public_ip_on_launch = true
+
+  tags = merge(local.common_tags, { Name = "${local.name}-public" })
+}
+
+resource "aws_route_table" "public" {
+  vpc_id = aws_vpc.this.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.this.id
+  }
+
+  tags = merge(local.common_tags, { Name = "${local.name}-public-rt" })
+}
+
+resource "aws_route_table_association" "public" {
+  subnet_id      = aws_subnet.public.id
+  route_table_id = aws_route_table.public.id
+}
+
+resource "aws_instance" "web" {
+  ami                    = data.aws_ami.al2023.id
+  instance_type          = "t3.micro"
+  subnet_id              = aws_subnet.public.id
+  vpc_security_group_ids = [aws_security_group.web.id]
+
+  user_data = <<-EOT
+    #!/bin/bash
+    dnf install -y httpd
+    systemctl enable --now httpd
+    echo "<h1>${local.name} is live</h1>" > /var/www/html/index.html
+  EOT
+
+  tags = merge(local.common_tags, { Name = "${local.name}-web" })
+}
+
+output "web_url" {
+  value = "http://${aws_instance.web.public_ip}"
+}'''),
+        rows=[
+            ("aws_vpc, cidr_block", "The private network, with room for 65,536 addresses. Every other resource here lives inside it."),
+            ("enable_dns_hostnames", "Gives instances public DNS names as well as IPs. Required before public hostnames resolve."),
+            ("aws_internet_gateway", "Attaches the VPC to the internet. On its own it routes nothing. This is the resource Labs 03 and 06 deliberately leave out."),
+            ("data.aws_availability_zones", "Asks the account which zones it can actually use. Zone names are mapped per account, so a hardcoded <code class=\"inline\">us-east-2a</code> is not the same hardware everywhere and may not exist or have capacity in yours."),
+            ("names[0]", "Takes the first usable zone. The subnet is zonal, so it must name exactly one."),
+            ("map_public_ip_on_launch", "Instances launched in this subnet get a public IP automatically."),
+            ("route { 0.0.0.0/0 }", "The default route: any destination not inside the VPC goes to the gateway. This line is what makes the subnet public."),
+            ("aws_route_table_association", "Binds the route table to the subnet. Skip it and the subnet silently keeps the VPC's main table and stays private."),
+            ("subnet_id on the instance", "Places the instance in the public subnet. Combined with the route and the public IP, the server becomes reachable."),
+            ("user_data = &lt;&lt;-EOT", "A heredoc script the cloud runs once on first boot. <code class=\"inline\">&lt;&lt;-</code> strips the leading indentation."),
+            ("dnf install -y httpd", "Amazon Linux 2023 uses <code class=\"inline\">dnf</code>. Running it here needs no SSH and no provisioner."),
+            ("output web_url", "Builds the browsable URL from the assigned public IP. This is the observable proof the stack works."),
+        ],
+        lang_note="This lab bills for real. Run <code class=\"inline\">terraform destroy</code> as soon "
+                  "as you have loaded the page. Lab 22 builds the same topology again with its "
+                  "state in S3, once you have met remote backends.",
+        lab=10,
+    ),
+    dict(
+        eyebrow="Lab 11 &middot; Collections",
         heading="for_each: one block, many resources",
         concept=(
             "<code class=\"inline\">for_each</code> creates one copy of a resource per entry in a "
@@ -663,8 +896,8 @@ output "vpc_id" {
   }))
   description = "Public subnets keyed by short name."
   default = {
-    app_a = { cidr = "10.0.1.0/24", az = "us-east-1a" }
-    app_b = { cidr = "10.0.2.0/24", az = "us-east-1b" }
+    app_a = { cidr = "10.0.1.0/24", az = "us-east-2a" }
+    app_b = { cidr = "10.0.2.0/24", az = "us-east-2b" }
   }
 }
 
@@ -675,7 +908,7 @@ resource "aws_subnet" "public" {
   cidr_block        = each.value.cidr
   availability_zone = each.value.az
 
-  tags = { Name = "public-${each.key}", Lab = "lab10" }
+  tags = { Name = "public-${each.key}", Lab = "lab11" }
 }
 
 output "subnet_ids" {
@@ -690,10 +923,10 @@ output "subnet_ids" {
             ("name =&gt; subnet.id", "Sets each output entry's key and value, giving a clean <code class=\"inline\">{ app_a = \"subnet-...\" }</code> map."),
             ("why not count", "<code class=\"inline\">count</code> addresses by position, so deleting the middle element renumbers and recreates the rest. Prefer <code class=\"inline\">for_each</code> for anything named."),
         ],
-        lab=10,
+        lab=11,
     ),
     dict(
-        eyebrow="Lab 11 &middot; Functions",
+        eyebrow="Lab 12 &middot; Functions",
         heading="Built-in functions transform values at plan time",
         concept=(
             "HCL has no loops or user-defined functions, but it ships a large library of built-in "
@@ -729,89 +962,8 @@ locals {
             ("jsonencode({ ... })", "Serialises an HCL object to a JSON string, for user-data, IAM policies, or an output another tool reads."),
             ("terraform console", "Evaluates any of these interactively. Try <code class=\"inline\">cidrsubnet(\"10.0.0.0/16\", 8, 1)</code>."),
         ],
-        lab=11,
-    ),
-    dict(
-        eyebrow="Lab 12 &middot; Dynamic blocks",
-        heading="dynamic: generate repeated nested blocks",
-        concept=(
-            "Some arguments are nested blocks rather than values &mdash; a security group's "
-            "<code class=\"inline\">ingress</code> rules, for example. "
-            "<code class=\"inline\">for_each</code> cannot help there, because it repeats whole "
-            "resources. A <code class=\"inline\">dynamic</code> block repeats one nested block per "
-            "collection entry, so adding a firewall rule becomes adding a map entry rather than "
-            "editing HCL structure. Use it sparingly: a handful of literal blocks reads better."
-        ),
-        code=esc('''variable "ingress_rules" {
-  type = map(object({
-    port        = number
-    cidr_blocks = list(string)
-    description = string
-  }))
-  description = "One entry per inbound rule. No SSH rule: nothing in this lab connects to a host."
-  default = {
-    http  = { port = 80, cidr_blocks = ["10.0.0.0/8"], description = "internal HTTP" }
-    https = { port = 443, cidr_blocks = ["10.0.0.0/8"], description = "internal HTTPS" }
-  }
-}
-
-resource "aws_security_group" "service" {
-  name_prefix = "lab12-dynamic-"
-  description = "Ingress rules generated by a dynamic block"
-
-  dynamic "ingress" {
-    for_each = var.ingress_rules
-
-    content {
-      description = ingress.value.description
-      from_port   = ingress.value.port
-      to_port     = ingress.value.port
-      protocol    = "tcp"
-      cidr_blocks = ingress.value.cidr_blocks
-    }
-  }
-
-  egress {
-    description = "All outbound"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = { Name = "lab12-dynamic-sg", Lab = "lab12" }
-}'''),
-        rows=[
-            ("dynamic \"ingress\"", "The label names the nested block type to generate. It must be a block the resource actually accepts."),
-            ("for_each = var.ingress_rules", "One <code class=\"inline\">ingress</code> block per map entry. Two entries here means two rules."),
-            ("content { ... }", "The template for each generated block. Everything inside is emitted once per iteration."),
-            ("ingress.value.port", "Inside a dynamic block the iterator is named after the block, so it is <code class=\"inline\">ingress.value</code>, not <code class=\"inline\">each.value</code>."),
-            ("from_port = to_port", "Both set to the same port, which is how a single-port rule is expressed."),
-            ("egress stays literal", "There is only one egress rule, so a plain block is clearer than a generated one."),
-            ("name_prefix", "Lets AWS append a unique suffix, so repeated applies cannot collide on a fixed group name."),
-            ("no vpc_id", "This group is not placed in a VPC, so it is created in the region's default VPC. See the note below."),
-            ("adding a rule", "Add a map entry, for example <code class=\"inline\">metrics = { port = 9100, ... }</code>. The resource body does not change."),
-        ],
-        lang_note=(
-            "<strong>This lab needs a default VPC.</strong> An "
-            "<code class=\"inline\">aws_security_group</code> with no "
-            "<code class=\"inline\">vpc_id</code> is created in the region's default VPC, which a "
-            "fresh training account may not have. <code class=\"inline\">terraform plan</code> "
-            "does not detect it; the apply fails with "
-            "<code class=\"inline\">VPCIdNotSpecified: No default VPC for this user</code>. Check "
-            "with <code class=\"inline\">aws ec2 describe-vpcs --filters Name=isDefault,Values=true "
-            "--query 'Vpcs[].VpcId' --output text</code>, and create one with "
-            "<code class=\"inline\">aws ec2 create-default-vpc</code>. Lab 21 avoids this entirely "
-            "by building its own VPC and setting <code class=\"inline\">vpc_id</code> explicitly."
-        ),
         lab=12,
     ),
-]
-
-# ---------------------------------------------------------------------------
-# Tier 3 — Advanced
-# ---------------------------------------------------------------------------
-ADVANCED_TOPICS = [
     dict(
         eyebrow="Lab 13 &middot; Providers",
         heading="Several providers in one configuration, and aliases",
@@ -824,46 +976,45 @@ ADVANCED_TOPICS = [
             "non-default one must say so with a <code class=\"inline\">provider</code> argument."
         ),
         code=esc('''terraform {
+  required_version = ">= 1.5.0"
   required_providers {
     aws    = { source = "hashicorp/aws", version = "~> 5.0" }
     random = { source = "hashicorp/random", version = "~> 3.0" }
   }
 }
 
+provider "aws" { region = var.aws_region }   # var.aws_region defaults to us-east-2
+provider "random" {}
+
+resource "random_pet" "label" { length = 2 }
+
+output "provider_composition" {
+  value = { aws_region = var.aws_region, generated_label = random_pet.label.id }
+}
+
+# Two configurations of the SAME provider need an alias. The lab creates nothing
+# in the second region; this is the pattern, for when you do.
 provider "aws" {
-  region = "us-east-1"
+  alias  = "secondary"
+  region = var.secondary_region
 }
 
-provider "aws" {
-  alias  = "west"
-  region = "us-west-2"
-}
+resource "aws_vpc" "secondary" {
+  provider   = aws.secondary
+  cidr_block = "10.90.0.0/16"
 
-resource "random_pet" "label" {
-  length = 2
-}
-
-resource "aws_s3_bucket" "west_logs" {
-  provider = aws.west
-  bucket   = "tf-labs-${random_pet.label.id}-west"
-
-  tags = { Name = "west-logs", Lab = "lab13" }
-}
-
-output "composition" {
-  value = {
-    default_region = "us-east-1"
-    label          = random_pet.label.id
-    west_bucket    = aws_s3_bucket.west_logs.bucket
-  }
+  tags = { Name = "${random_pet.label.id}-secondary", Lab = "lab13" }
 }'''),
         rows=[
-            ("two required_providers entries", "Each provider is a separate plugin download and a separate credential context."),
-            ("first provider \"aws\"", "No alias, so this is the default. Any AWS resource that says nothing about providers uses it."),
-            ("alias = \"west\"", "Names a second AWS configuration. Its address is <code class=\"inline\">aws.west</code>."),
-            ("provider = aws.west", "Sends this one resource to the us-west-2 configuration. Without it the bucket would land in us-east-1."),
-            ("bucket = \"tf-labs-${...}\"", "S3 bucket names are globally unique, so the random suffix keeps concurrent learners from colliding."),
-            ("random_pet.label.id", "A cross-provider reference. Terraform orders the graph so the name exists before the bucket is created."),
+            ("two required_providers entries", "Each provider is a separate plugin download and a separate credential context. <code class=\"inline\">init</code> fetches both."),
+            ("provider \"aws\" { region = ... }", "Runtime configuration for the AWS plugin. No alias, so this is the default: any AWS resource that says nothing about providers uses it."),
+            ("provider \"random\" {}", "A provider with nothing to configure still gets a block. It needs no credentials and reaches no API, so it is free to apply."),
+            ("resource \"random_pet\" \"label\"", "The one resource this lab creates. Two providers are declared and only one of them builds anything &mdash; declaring a provider does not oblige you to use it."),
+            ("output provider_composition", "Prints one value from each side, which is the observable proof that both plugins loaded and ran."),
+            ("alias = \"secondary\"", "Names a second AWS configuration. Its address is <code class=\"inline\">aws.secondary</code>, and the unaliased block stays the default."),
+            ("region = var.secondary_region", "The alias exists to hold a <em>different</em> region from the default. Any region other than <code class=\"inline\">var.aws_region</code> works; the labs stay in us-east-2, so pick the second one deliberately."),
+            ("provider = aws.secondary", "Sends this one resource to the aliased configuration. Omit the argument and it silently lands in the default region instead &mdash; a mistake no plan will flag."),
+            ("random_pet.label.id in a tag", "A cross-provider reference. Terraform orders the graph so the generated name exists before the VPC is created."),
         ],
         lab=13,
     ),
@@ -880,20 +1031,20 @@ output "composition" {
         ),
         code=esc('''variable "message" {
   type        = string
-  description = "Text the local command prints."
   default     = "local-exec completed"
+  description = "Text the local-exec provisioner prints on the machine running Terraform."
 }
 
 resource "terraform_data" "local_action" {
   input = var.message
-
   provisioner "local-exec" {
-    command = "printf '%s\\n' '${self.input}' >> provisioner.log"
+    command = "printf '%s\\n' '${self.input}'"
   }
-
+  # Runs before the resource is destroyed instead of after creation.
+  # A destroy-time provisioner may reference self, but not var or other resources.
   provisioner "local-exec" {
     when    = destroy
-    command = "printf 'destroyed\\n' >> provisioner.log"
+    command = "printf 'destroying %s\\n' '${self.input}'"
   }
 }
 
@@ -906,7 +1057,8 @@ output "message" {
             ("provisioner \"local-exec\"", "Runs on the Terraform host after the resource is created. The default hook is create."),
             ("command = \"printf ...\"", "Executed through the local shell, so it depends on the operating system of whatever runs Terraform &mdash; a real portability hazard between laptop and CI."),
             ("self.input", "<code class=\"inline\">self</code> refers to the resource the provisioner is attached to. It is only valid inside a provisioner."),
-            ("when = destroy", "Runs before the resource is destroyed instead of after creation. If it fails, the destroy is blocked."),
+            ("when = destroy", "Runs before the resource is destroyed instead of after creation. If it fails, the destroy is <strong>blocked</strong> and the resource stays in state."),
+            ("self in a destroy provisioner", "A destroy-time provisioner may only reference <code class=\"inline\">self</code>, <code class=\"inline\">count.index</code> or <code class=\"inline\">each.key</code>. Using <code class=\"inline\">var.message</code> here fails at validate."),
             ("failure behaviour", "A failed create-time provisioner marks the resource tainted, so the next apply destroys and recreates it."),
         ],
         lab=14,
@@ -954,7 +1106,7 @@ resource "terraform_data" "bootstrap" {
             ("file(pathexpand(...))", "<code class=\"inline\">pathexpand</code> expands a leading <code class=\"inline\">~</code>; <code class=\"inline\">file</code> reads the key from disk at plan time."),
             ("timeout = \"2m\"", "How long to keep retrying the handshake while the instance finishes booting. Too short is the most common cause of failure here."),
             ("inline = [ ... ]", "A list of commands run in order on the host. A non-zero exit code fails the apply."),
-            ("prefer user_data", "The same two commands in <code class=\"inline\">user_data</code> need no inbound SSH, no key on the Terraform host, and no reachability. Lab 21 does it that way."),
+            ("prefer user_data", "The same two commands in <code class=\"inline\">user_data</code> need no inbound SSH, no key on the Terraform host, and no reachability. Labs 10 and 22 do it that way."),
         ],
         lab=15,
     ),
@@ -1029,7 +1181,7 @@ output "workspace" {
 # backend.hcl.example -> copy to backend.hcl and fill in
 # bucket       = "replace-with-your-globally-unique-state-bucket"
 # key          = "labs/lab17/terraform.tfstate"
-# region       = "us-east-1"
+# region       = "us-east-2"
 # encrypt      = true
 # use_lockfile = true
 
@@ -1199,7 +1351,7 @@ terraform state pull > remote-copy.tfstate'''),
   config = {
     bucket = "myorg-terraform-state"
     key    = "labs/dev/network/terraform.tfstate"
-    region = "us-east-1"
+    region = "us-east-2"
   }
 }
 
@@ -1221,139 +1373,409 @@ resource "aws_instance" "app" {
         lab=20,
     ),
     dict(
-        eyebrow="Lab 21 &middot; Capstone",
-        heading="The whole picture: VPC, IGW, route table, subnet, SG, EC2",
+        eyebrow="Lab 21 &middot; Dynamic blocks",
+        heading="dynamic: generate repeated nested blocks",
         concept=(
-            "The capstone builds a working public web server from nothing. An "
-            "<em>internet gateway</em> attaches the VPC to the internet; a <em>route table</em> "
-            "with a default route to that gateway is what makes a subnet <em>public</em>; the "
-            "security group opens port 80; and <code class=\"inline\">user_data</code> "
-            "installs a web server on first boot. The output is a URL you can actually open, "
-            "which is the payoff for the entire track."
+            "Some arguments are nested blocks rather than values &mdash; a security group's "
+            "<code class=\"inline\">ingress</code> rules, for example. "
+            "<code class=\"inline\">for_each</code> cannot help there, because it repeats whole "
+            "resources. A <code class=\"inline\">dynamic</code> block repeats one nested block per "
+            "collection entry, so adding a firewall rule becomes adding a map entry rather than "
+            "editing HCL structure. Use it sparingly: a handful of literal blocks reads better."
         ),
-        code=esc('''data "aws_availability_zones" "available" {
-  state = "available"
+        code=esc('''variable "ingress_rules" {
+  type = map(object({
+    port        = number
+    cidr_blocks = list(string)
+    description = string
+  }))
+  description = "One entry per inbound rule. No SSH rule: nothing in this lab connects to a host."
+  default = {
+    http  = { port = 80, cidr_blocks = ["10.0.0.0/8"], description = "internal HTTP" }
+    https = { port = 443, cidr_blocks = ["10.0.0.0/8"], description = "internal HTTPS" }
+  }
 }
 
-resource "aws_vpc" "this" {
-  cidr_block           = "10.0.0.0/16"
-  enable_dns_hostnames = true
+resource "aws_security_group" "service" {
+  name_prefix = "lab21-dynamic-"
+  description = "Ingress rules generated by a dynamic block"
 
-  tags = merge(local.common_tags, { Name = local.name })
-}
+  dynamic "ingress" {
+    for_each = var.ingress_rules
 
-resource "aws_internet_gateway" "this" {
-  vpc_id = aws_vpc.this.id
-
-  tags = merge(local.common_tags, { Name = "${local.name}-igw" })
-}
-
-resource "aws_subnet" "public" {
-  vpc_id                  = aws_vpc.this.id
-  cidr_block              = "10.0.1.0/24"
-  availability_zone       = data.aws_availability_zones.available.names[0]
-  map_public_ip_on_launch = true
-
-  tags = merge(local.common_tags, { Name = "${local.name}-public" })
-}
-
-resource "aws_route_table" "public" {
-  vpc_id = aws_vpc.this.id
-
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.this.id
+    content {
+      description = ingress.value.description
+      from_port   = ingress.value.port
+      to_port     = ingress.value.port
+      protocol    = "tcp"
+      cidr_blocks = ingress.value.cidr_blocks
+    }
   }
 
-  tags = merge(local.common_tags, { Name = "${local.name}-public-rt" })
-}
+  egress {
+    description = "All outbound"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 
-resource "aws_route_table_association" "public" {
-  subnet_id      = aws_subnet.public.id
-  route_table_id = aws_route_table.public.id
-}
-
-resource "aws_instance" "web" {
-  ami                    = data.aws_ami.al2023.id
-  instance_type          = "t3.micro"
-  subnet_id              = aws_subnet.public.id
-  vpc_security_group_ids = [aws_security_group.web.id]
-
-  user_data = <<-EOT
-    #!/bin/bash
-    dnf install -y httpd
-    systemctl enable --now httpd
-    echo "<h1>${local.name} is live</h1>" > /var/www/html/index.html
-  EOT
-
-  tags = merge(local.common_tags, { Name = "${local.name}-web" })
-}
-
-output "web_url" {
-  value = "http://${aws_instance.web.public_ip}"
+  tags = { Name = "lab21-dynamic-sg", Lab = "lab21" }
 }'''),
         rows=[
-            ("aws_vpc, cidr_block", "The private network, with room for 65,536 addresses. Every other resource here lives inside it."),
-            ("enable_dns_hostnames", "Gives instances public DNS names as well as IPs. Required before public hostnames resolve."),
-            ("aws_internet_gateway", "Attaches the VPC to the internet. On its own it routes nothing."),
-            ("data.aws_availability_zones", "Asks the account which zones it can actually use. Zone names are mapped per account, so a hardcoded <code class=\"inline\">us-east-1a</code> is not the same hardware everywhere and may not exist or have capacity in yours."),
-            ("names[0]", "Takes the first usable zone. The subnet is zonal, so it must name exactly one."),
-            ("map_public_ip_on_launch", "Instances launched in this subnet get a public IP automatically."),
-            ("route { 0.0.0.0/0 }", "The default route: any destination not inside the VPC goes to the gateway. This line is what makes the subnet public."),
-            ("aws_route_table_association", "Binds the route table to the subnet. Skip it and the subnet silently keeps the VPC's main table and stays private."),
-            ("subnet_id on the instance", "Places the instance in the public subnet. Combined with the route and the public IP, the server becomes reachable."),
-            ("user_data = &lt;&lt;-EOT", "A heredoc script the cloud runs once on first boot. <code class=\"inline\">&lt;&lt;-</code> strips the leading indentation."),
-            ("dnf install -y httpd", "Amazon Linux 2023 uses <code class=\"inline\">dnf</code>. Running it here needs no SSH and no provisioner."),
-            ("output web_url", "Builds the browsable URL from the assigned public IP. This is the observable proof the whole stack works."),
+            ("dynamic \"ingress\"", "The label names the nested block type to generate. It must be a block the resource actually accepts."),
+            ("for_each = var.ingress_rules", "One <code class=\"inline\">ingress</code> block per map entry. Two entries here means two rules."),
+            ("content { ... }", "The template for each generated block. Everything inside is emitted once per iteration."),
+            ("ingress.value.port", "Inside a dynamic block the iterator is named after the block, so it is <code class=\"inline\">ingress.value</code>, not <code class=\"inline\">each.value</code>."),
+            ("from_port = to_port", "Both set to the same port, which is how a single-port rule is expressed."),
+            ("egress stays literal", "There is only one egress rule, so a plain block is clearer than a generated one."),
+            ("name_prefix", "Lets AWS append a unique suffix, so repeated applies cannot collide on a fixed group name."),
+            ("no vpc_id", "This group is not placed in a VPC, so it is created in the region's default VPC. See the note below."),
+            ("adding a rule", "Add a map entry, for example <code class=\"inline\">metrics = { port = 9100, ... }</code>. The resource body does not change."),
         ],
-        lang_note="This lab bills for real. Run <code class=\"inline\">terraform destroy</code> as soon "
-                  "as you have loaded the page.",
+        lang_note=(
+            "<strong>This lab needs a default VPC.</strong> An "
+            "<code class=\"inline\">aws_security_group</code> with no "
+            "<code class=\"inline\">vpc_id</code> is created in the region's default VPC, which a "
+            "fresh training account may not have. <code class=\"inline\">terraform plan</code> "
+            "does not detect it; the apply fails with "
+            "<code class=\"inline\">VPCIdNotSpecified: No default VPC for this user</code>. Check "
+            "with <code class=\"inline\">aws ec2 describe-vpcs --filters Name=isDefault,Values=true "
+            "--query 'Vpcs[].VpcId' --output text</code>, and create one with "
+            "<code class=\"inline\">aws ec2 create-default-vpc</code>. Only this lab and Lab 15 "
+            "still need one; every other AWS lab in the track builds its own network and sets "
+            "<code class=\"inline\">subnet_id</code> and <code class=\"inline\">vpc_id</code> "
+            "explicitly, which is the better pattern."
+        ),
         lab=21,
+    ),
+    dict(
+        eyebrow="Lab 22 &middot; Remote state in practice",
+        heading="The capstone rebuilt with its state in S3",
+        concept=(
+            "Lab 10 built a public web server with state on your laptop. Lab 22 builds the same "
+            "topology with the state object in S3 and native locking switched on, which is how "
+            "the stack would actually be run by a team. Nothing about the resources changes; "
+            "what changes is where the record of them lives, so the backend is supplied at "
+            "<code class=\"inline\">init</code> time through "
+            "<code class=\"inline\">-backend-config</code> rather than written into the code."
+        ),
+        code=esc('''terraform {
+  # Same floor as labs 17-19: use_lockfile is generally available from 1.11.
+  required_version = ">= 1.11.0"
+
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+
+  backend "s3" {}
+}
+
+locals {
+  name = "${var.project}-remote"
+
+  common_tags = {
+    Lab     = "lab22"
+    Project = var.project
+  }
+}
+
+# backend.hcl.example -> copy to backend.hcl and fill in
+# bucket       = "replace-with-your-globally-unique-state-bucket"
+# key          = "labs/lab22/terraform.tfstate"
+# region       = "us-east-2"
+# encrypt      = true
+# use_lockfile = true
+
+# terraform init -backend-config=backend.hcl'''),
+        rows=[
+            ("backend \"s3\" {}", "Partial configuration. The bucket, key and region arrive at <code class=\"inline\">init</code>, because a backend block cannot reference a variable."),
+            ("required_version &gt;= 1.11.0", "Same reason as labs 17 to 19: <code class=\"inline\">use_lockfile</code> is experimental in 1.10 and generally available from 1.11."),
+            ("key = labs/lab22/...", "A distinct key, so this lab's state cannot overwrite lab 17's or lab 19's in the same bucket."),
+            ("use_lockfile = true", "Native S3 locking. Terraform writes <code class=\"inline\">&lt;key&gt;.tflock</code> beside the state object while the apply runs."),
+            ("same resources as Lab 10", "VPC, internet gateway, public subnet, route table and association, security group, and the user-data web server. Only the state location differs."),
+            ("Lab = \"lab22\"", "The tag that distinguishes this build from the Lab 10 capstone if both are applied in one account."),
+            ("depends_on on the instance", "Forces the route table association to exist before the instance launches, so the first boot already has a path out for <code class=\"inline\">dnf</code>."),
+        ],
+        lang_note="This lab bills for real, and it also leaves an object in your state bucket. "
+                  "Run <code class=\"inline\">terraform destroy</code> when you have loaded the "
+                  "page; the state object and its bucket are yours to remove separately.",
+        lab=22,
+    ),
+    dict(
+        eyebrow="Lab 23 &middot; Storage",
+        heading="An S3 bucket as a managed resource",
+        concept=(
+            "Every earlier S3 bucket in this track was somebody else's: a state store you created "
+            "by hand so Terraform could write to it. Lab 23 turns the bucket itself into a managed "
+            "resource. Bucket names are globally unique across all AWS accounts, and the modern "
+            "provider splits what used to be one giant resource into a small core resource plus "
+            "one resource per feature &mdash; versioning, encryption, public access &mdash; which "
+            "is why a safe bucket is four blocks rather than four arguments."
+        ),
+        code=esc('''locals {
+  bucket_name = "${var.bucket_prefix}-${random_pet.suffix.id}"
+}
+
+resource "random_pet" "suffix" {
+  length    = 2
+  separator = "-"
+}
+
+resource "aws_s3_bucket" "lab" {
+  bucket        = local.bucket_name
+  force_destroy = var.force_destroy
+
+  tags = merge(local.common_tags, { Name = local.bucket_name })
+}
+
+resource "aws_s3_bucket_versioning" "lab" {
+  bucket = aws_s3_bucket.lab.id
+
+  versioning_configuration {
+    status = var.versioning_status
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "lab" {
+  bucket = aws_s3_bucket.lab.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "lab" {
+  bucket = aws_s3_bucket.lab.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}'''),
+        rows=[
+            ("aws_s3_bucket", "The core resource. In provider 5.x it carries almost no settings of its own; each feature moved into a resource of its own, keyed by bucket name. Older tutorials showing these as inline blocks describe provider 3.x."),
+            ("random_pet.suffix", "Bucket names are globally unique across every AWS account, so a fixed name collides the moment a second learner applies. Two random words make the name safe without editing the file."),
+            ("force_destroy", "Lets <code class=\"inline\">destroy</code> delete a bucket that still holds objects. Correct for a throwaway lab, dangerous anywhere else."),
+            ("aws_s3_bucket_versioning", "Keeps previous object versions. This is the setting that makes a state bucket recoverable after a bad apply, which is why labs 17 to 19 and 22 asked for it."),
+            ("aws_s3_bucket_server_side_encryption_configuration", "Encrypts objects at rest with S3-managed keys. State files hold sensitive values in plain text, so this is not optional in practice."),
+            ("aws_s3_bucket_public_access_block", "Four independent switches that together make accidental public exposure impossible. Set all four unless you are deliberately hosting a public site."),
+            ("bucket = aws_s3_bucket.lab.id", "Every feature resource references the core one, which is what orders the graph and ties them together in state."),
+        ],
+        lang_note="Terraform cannot manage the bucket its own state lives in: creating it would need "
+                  "a working backend, and the backend needs the bucket. That is why labs 17 to 19 "
+                  "and 22 create the state bucket out of band. This lab keeps its own state local, "
+                  "so the bucket is an ordinary managed resource with nothing circular about it.",
+        lab=23,
+    ),
+    dict(
+        eyebrow="Lab 24 &middot; Meta-arguments",
+        heading="count by position, for_each by name",
+        concept=(
+            "Both meta-arguments build many resources from one block, and the difference only "
+            "shows up when the input changes. A <code class=\"inline\">count</code> instance is "
+            "addressed by its <strong>position</strong> &mdash; "
+            "<code class=\"inline\">aws_s3_bucket.by_count[1]</code> &mdash; so deleting an item "
+            "from the middle of the list shifts every later item down a slot, and Terraform reads "
+            "that shift as a change to each one. A <code class=\"inline\">for_each</code> instance "
+            "is addressed by its <strong>key</strong> &mdash; "
+            "<code class=\"inline\">aws_s3_bucket.by_each[\"assets\"]</code> &mdash; so removing a "
+            "key touches only that resource and leaves its neighbours alone."
+        ),
+        code=esc('''# count: N interchangeable copies, addressed by POSITION.
+resource "aws_s3_bucket" "by_count" {
+  count = length(var.bucket_names)
+
+  bucket        = "${local.prefix}-count-${var.bucket_names[count.index]}"
+  force_destroy = true
+
+  tags = merge(local.common_tags, {
+    Name  = "${local.prefix}-count-${var.bucket_names[count.index]}"
+    Index = tostring(count.index)
+  })
+}
+
+# for_each: N differently-configured instances, addressed by NAME.
+resource "aws_s3_bucket" "by_each" {
+  for_each = var.buckets
+
+  bucket        = "${local.prefix}-${each.key}"
+  force_destroy = true
+
+  tags = merge(each.value.tags, local.common_tags, {
+    Name = "${local.prefix}-${each.key}"
+  })
+}
+
+resource "aws_s3_bucket_versioning" "by_each" {
+  for_each = var.buckets
+
+  bucket = aws_s3_bucket.by_each[each.key].id
+
+  versioning_configuration {
+    status = each.value.versioning ? "Enabled" : "Suspended"
+  }
+}'''),
+        rows=[
+            ("count = length(var.bucket_names)", "Instance count comes from a list. Addresses are <code class=\"inline\">[0]</code>, <code class=\"inline\">[1]</code>, <code class=\"inline\">[2]</code> &mdash; position is the only identity each one has."),
+            ("count.index", "The current position. Because the name is derived from it, changing the list order rewrites names."),
+            ("for_each = var.buckets", "Iterates a map. Requires a map or a set, never a list &mdash; a list would reintroduce positional addressing."),
+            ("each.key / each.value", "The key names the instance and appears in its address; the object under it configures that one instance, so no two need to match."),
+            ("aws_s3_bucket.by_each[each.key].id", "A keyed reference into another for_each resource. Both blocks iterate the same map, so the keys line up."),
+            ("each.value.versioning ? ...", "Per-instance configuration &mdash; the real reason to choose for_each. A count block cannot vary settings between copies."),
+        ],
+        lang_note="Removing the middle item shows the cost of position. Deleting "
+                  "<code class=\"inline\">assets</code> from the list gives "
+                  "<code class=\"inline\">1 to add, 0 to change, 2 to destroy</code>: index [1] is "
+                  "<em>replaced</em>, because a bucket name is immutable and index [1] must now "
+                  "become <code class=\"inline\">backups</code>. Deleting the same key from the map "
+                  "gives <code class=\"inline\">0 to add, 0 to change, 2 to destroy</code>, and both "
+                  "destroyed resources belong to the removed key &mdash; the surviving buckets do not "
+                  "appear in the plan at all. Prefer for_each whenever the collection can change.",
+        lab=24,
     ),
 ]
 
+def _anchor_tail(eyebrow: str) -> str:
+    """Slug of the part of the eyebrow after the lab number, e.g. 'Keys and locking'."""
+    tail = eyebrow.split("&middot;")[-1].strip().lower()
+    return "".join(ch if ch.isalnum() else "-" for ch in tail).strip("-")
 
-def render_tier(tier: str, topics: list[dict]) -> str:
-    meta = TIERS[tier]
-    tier_labs = [lab for lab in LABS if lab[3] == tier]
-    intro = f"""        <div class="card">
-            <span class="eyebrow">Tier {"123"[list(TIERS).index(tier)]} &middot; {meta["range"]}</span>
-            <h2>{meta["label"]} Terraform</h2>
-            <p class="concept">{meta["blurb"]}</p>
-            <table>
-                <thead><tr><th style="width:9%;">Lab</th><th style="width:30%;">Title</th><th>Topic</th></tr></thead>
-                <tbody>
+
+def build_anchors(topics: list[dict]) -> list[str]:
+    """A stable id per topic, in page order.
+
+    A lab with one topic uses its lab slug, so the anchor reads
+    #lab13-multi-provider. A lab with several (lab00 has two) disambiguates with
+    the eyebrow tail: #lab00-foundations, #lab00-authentication.
+    """
+    counts: dict[int, int] = {}
+    for spec in topics:
+        counts[spec["lab"]] = counts.get(spec["lab"], 0) + 1
+
+    anchors = []
+    for spec in topics:
+        num = spec["lab"]
+        if counts[num] == 1:
+            anchors.append(lab_by_num(num)[1])
+        else:
+            anchors.append(f"lab{num:02d}-{_anchor_tail(spec['eyebrow'])}")
+    if len(set(anchors)) != len(anchors):
+        raise ValueError(f"duplicate topic anchors: {anchors}")
+    return anchors
+
+
+def check_topic_order(topics: list[dict]) -> None:
+    """Page order is lab order. Nothing re-sorts at render time, so assert it here."""
+    nums = [spec["lab"] for spec in topics]
+    if nums != sorted(nums):
+        raise ValueError(f"TOPICS is not in ascending lab order: {nums}")
+    known = {lab[0] for lab in LABS}
+    unknown = sorted(set(nums) - known)
+    if unknown:
+        raise ValueError(f"TOPICS references labs not in LABS: {unknown}")
+    uncovered = sorted(known - set(nums))
+    if uncovered:
+        raise ValueError(f"labs with no topic card: {uncovered}")
+
+
+CONCEPTS_CSS = """
+/* sticky in-page topic nav */
+.topicnav {
+    position: sticky; top: 0; z-index: 20; margin-bottom: 18px;
+    background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(6px);
+    border: 1px solid var(--slate-200); border-radius: 14px; padding: 12px 16px;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.08);
+}
+.topicnav h2 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em;
+               color: var(--slate-500); margin-bottom: 8px; }
+.topicnav ol {
+    list-style: none; display: grid; gap: 6px;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    max-height: 42vh; overflow-y: auto;
+}
+.topicnav a {
+    display: block; padding: 5px 10px; border-radius: 8px; text-decoration: none;
+    font-size: 0.8rem; color: var(--slate-700); background: #f8fbff;
+    border: 1px solid rgba(37, 99, 235, 0.12);
+}
+.topicnav a:hover { background: var(--blue); color: #fff; border-color: var(--blue); }
+.topicnav a b { color: var(--blue); font-family: "SF Mono", Menlo, monospace;
+                font-size: 0.76rem; margin-right: 6px; }
+.topicnav a:hover b { color: #fff; }
+/* clear the sticky nav when an anchor is jumped to */
+.card[id] { scroll-margin-top: 46vh; }
+@media (max-width: 768px) {
+    .topicnav ol { grid-template-columns: 1fr 1fr; max-height: 34vh; }
+}
 """
-    for num, slug, title, _tier, topic_text in tier_labs:
-        intro += (f'                <tr><td class="lineref">lab{num:02d}</td>'
-                  f'<td><a href="../labmanuals/{slug}.md">{title}</a></td>'
-                  f"<td>{topic_text}</td></tr>\n")
-    intro += """                </tbody>
-            </table>
+
+
+def render_topic_nav(topics: list[dict], anchors: list[str]) -> str:
+    items = []
+    for spec, anchor in zip(topics, anchors):
+        title = spec["heading"].replace('"', "&quot;")
+        tail = spec["eyebrow"].split("&middot;")[-1].strip()
+        items.append(
+            f'                <li><a href="#{anchor}" title="{title}">'
+            f'<b>lab{spec["lab"]:02d}</b>{tail}</a></li>'
+        )
+    return f"""        <nav class="topicnav">
+            <h2>All {len(topics)} topics &mdash; lab00 to lab24</h2>
+            <ol>
+{chr(10).join(items)}
+            </ol>
+        </nav>
+"""
+
+
+def render_concepts() -> str:
+    """One page, every topic, lab00 to lab24. No tier grouping and no tier headings."""
+    check_topic_order(TOPICS)
+    anchors = build_anchors(TOPICS)
+
+    intro = f"""        <div class="card">
+            <span class="eyebrow">lab00 &ndash; lab24 &middot; one continuous sequence</span>
+            <h2>Terraform concepts, in the order the labs teach them</h2>
+            <p class="concept">Every topic in the track is on this page, ordered by lab number
+                from your first <code class="inline">terraform init</code> to
+                <code class="inline">count</code> versus
+                <code class="inline">for_each</code> on real S3 buckets. Each card gives the
+                concept in plain English, a real example, every significant line explained, and a
+                link to the lab that practises it. Read straight down, or jump with the topic
+                index above.</p>
             <div class="note">Starting from zero? Read
                 <a href="terraform-101.html">Terraform 101</a> first &mdash; what Terraform is,
                 HCL, providers, version constraints, state, and drift &mdash; then the
                 <a href="aws-primer.html">AWS primer</a> for regions, VPCs, subnets, gateways,
-                and security groups.</div>
+                and security groups. The <a href="index.html">track home</a> has the searchable
+                catalogue of all {len(LABS)} lab manuals.</div>
         </div>
 """
 
-    sections = [intro]
-    for spec in topics:
+    sections = [render_topic_nav(TOPICS, anchors), intro]
+    for spec, anchor in zip(TOPICS, anchors):
         href, label = practises(spec["lab"])
         sections.append(topic(
             spec["eyebrow"], spec["heading"], spec["concept"], spec["code"],
             spec["rows"], href, label, lang_note=spec.get("lang_note", ""),
+            anchor=anchor,
         ))
 
-    stats = [f"{len(tier_labs)} labs", meta["range"], TF_FLOOR, AWS_PIN, "Region us-east-1"]
     return page(
-        f"Terraform &mdash; {meta['label']} Concepts",
-        f"{len(topics)} topics. Each one: what it is, a real example, every significant line "
-        "explained, and the lab that practises it.",
+        "Terraform &mdash; Concepts",
+        f"{len(TOPICS)} topics across all {len(LABS)} labs, in lab order. Each one: what it is, "
+        "a real example, every significant line explained, and the lab that practises it.",
         "".join(sections),
-        active=tier,
-        stats=stats,
+        active="concepts",
+        stats=[f"{len(TOPICS)} topics", f"{len(LABS)} labs", "lab00&ndash;lab24", TF_FLOOR,
+               AWS_PIN, "Region us-east-2"],
+        extra_css=CONCEPTS_CSS,
     )
 
 
@@ -1365,16 +1787,6 @@ INDEX_CSS = """
     border: 1px solid var(--slate-200); border-radius: 10px; outline: none;
 }
 .search-bar input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37,99,235,0.12); }
-.tiergrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px;
-            margin-bottom: 18px; }
-.tiercard {
-    background: #fff; border: 1px solid var(--slate-200); border-radius: 14px;
-    padding: 16px 18px; box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
-}
-.tiercard h2 { font-size: 1.05rem; margin: 6px 0 4px; }
-.tiercard p { color: var(--slate-700); font-size: 0.88rem; margin-bottom: 8px; }
-.tiercard .range { display: block; color: var(--slate-500); font-size: 0.78rem;
-                   font-family: "SF Mono", Menlo, monospace; margin-bottom: 8px; }
 /* entry-point sequence: Terraform 101 -> AWS primer -> lab00 */
 .startcard {
     background: #fff; border: 2px solid var(--blue); border-radius: 14px;
@@ -1400,7 +1812,7 @@ INDEX_CSS = """
           margin-top: 6px; }
 .arrow { color: var(--slate-500); font-weight: 800; }
 .no-results { display: none; padding: 14px; color: var(--slate-500); font-size: 0.9rem; }
-@media (max-width: 768px) { .tiergrid { grid-template-columns: 1fr; } }
+@media (max-width: 768px) { .seq { grid-template-columns: 1fr; } }
 """
 
 INDEX_JS = """        <script>
@@ -1425,15 +1837,11 @@ INDEX_JS = """        <script>
 
 
 def render_index() -> str:
-    cards = []
-    for key, meta in TIERS.items():
-        count = len([lab for lab in LABS if lab[3] == key])
-        cards.append(f"""            <div class="tiercard">
-                <span class="tag {key}">{meta["label"]}</span>
-                <h2><a class="backlink" href="{key}.html">{meta["label"]} &rarr;</a></h2>
-                <span class="range">{meta["range"]} &middot; {count} labs</span>
-                <p>{meta["blurb"]}</p>
-            </div>""")
+    # First topic anchor per lab, so every catalog row deep-links into concepts.html.
+    anchors = build_anchors(TOPICS)
+    first_anchor: dict[int, str] = {}
+    for spec, anchor in zip(TOPICS, anchors):
+        first_anchor.setdefault(spec["lab"], anchor)
 
     rows = []
     for num, slug, title, tier, topic_text in LABS:
@@ -1443,7 +1851,7 @@ def render_index() -> str:
             f'<td><a href="../labmanuals/{slug}.md">{title}</a></td>'
             f'<td><span class="tag {tier}">{TIERS[tier]["label"]}</span></td>'
             f"<td>{topic_text}</td>"
-            f'<td><a href="{tier}.html">{TIERS[tier]["label"]} concepts</a></td>'
+            f'<td><a href="concepts.html#{first_anchor[num]}">lab{num:02d} concepts</a></td>'
             f"</tr>"
         )
 
@@ -1471,7 +1879,7 @@ def render_index() -> str:
                     <p>Region and availability zone, VPC and CIDR, public and private subnets,
                         internet gateway, route table, security group, EC2 instance, key pair, and
                         IAM access keys &mdash; each with its Terraform resource type, plus the
-                        diagram of what Lab 21 builds.</p>
+                        diagram of what Lab 10 builds.</p>
                     <span class="q">Answers: what is a VPC?</span>
                 </div>
                 <div>
@@ -1484,12 +1892,23 @@ def render_index() -> str:
                 </div>
             </div>
             <div class="note">Already comfortable with Terraform and AWS? Skip straight to the
-                <a href="basic.html">Basic tier concepts</a> or to
+                <a href="concepts.html">concepts page</a> or to
                 <a href="{lab00_href}">Lab 00</a>.</div>
         </div>
 
-        <div class="tiergrid">
-{chr(10).join(cards)}
+        <div class="card">
+            <span class="eyebrow">All {len(TOPICS)} topics on one page</span>
+            <h2><a class="backlink" href="concepts.html">Terraform concepts &rarr;</a></h2>
+            <p class="concept">One page, lab00 to lab24, in lab order &mdash; no tier pages and
+                no tier navigation. Each topic gives the concept in plain English, a real HCL
+                example, every significant line explained, and a link to the lab that practises
+                it. A sticky topic index at the top jumps to any of the {len(TOPICS)} cards, and
+                the Concepts column in the table below deep-links to the topic for each lab.</p>
+            <p class="concept">Tier is still recorded per lab, in the Tier column below:
+                <span class="tag basic">Basic</span> lab00&ndash;lab05,
+                <span class="tag intermediate">Intermediate</span> lab06&ndash;lab12,
+                <span class="tag advanced">Advanced</span> lab13&ndash;lab24. It tells you how
+                much a lab assumes; it is not a place to navigate to.</p>
         </div>
 
         <div class="card">
@@ -1520,17 +1939,15 @@ def render_index() -> str:
         <div class="card">
             <span class="eyebrow">All {len(HTML_PAGES)} pages</span>
             <h2>The HTML set</h2>
-            <p class="concept">Six self-contained pages. No CDN, no external fonts, no build step
+            <p class="concept">Four self-contained pages. No CDN, no external fonts, no build step
                 &mdash; open any of them offline, or print them.</p>
             <table>
                 <thead><tr><th style="width:22%;">Page</th><th style="width:14%;">Read it</th><th>Contents</th></tr></thead>
                 <tbody>
                 <tr><td class="lineref"><a href="terraform-101.html">terraform-101.html</a></td><td><strong>1st</strong></td><td>Terraform fundamentals from absolute zero: the tool, HCL, providers, version constraints, the CLI, state, drift.</td></tr>
                 <tr><td class="lineref"><a href="aws-primer.html">aws-primer.html</a></td><td><strong>2nd</strong></td><td>AWS concepts from absolute zero, each with its Terraform resource type, plus the capstone architecture diagram.</td></tr>
-                <tr><td class="lineref">index.html</td><td>as needed</td><td>This page: the entry-point sequence, the tier cards, and the searchable table of all {len(LABS)} labs.</td></tr>
-                <tr><td class="lineref"><a href="basic.html">basic.html</a></td><td>with lab00&ndash;05</td><td>Tier 1 concepts.</td></tr>
-                <tr><td class="lineref"><a href="intermediate.html">intermediate.html</a></td><td>with lab06&ndash;12</td><td>Tier 2 concepts.</td></tr>
-                <tr><td class="lineref"><a href="advanced.html">advanced.html</a></td><td>with lab13&ndash;21</td><td>Tier 3 concepts.</td></tr>
+                <tr><td class="lineref"><a href="concepts.html">concepts.html</a></td><td>alongside every lab</td><td>All {len(TOPICS)} topics, lab00 to lab24, in one continuous sequence with a sticky topic index.</td></tr>
+                <tr><td class="lineref">index.html</td><td>as needed</td><td>This page: the entry-point sequence and the searchable table of all {len(LABS)} labs.</td></tr>
                 </tbody>
             </table>
         </div>
@@ -1544,7 +1961,7 @@ def render_index() -> str:
                 <tr><td class="lineref">html/</td><td>The {len(HTML_PAGES)} pages above. Concept, example, line-by-line explanation, and a link to the matching lab.</td></tr>
                 <tr><td class="lineref">labmanuals/</td><td>The step-by-step manual you follow at the keyboard, with expected output after every command.</td></tr>
                 <tr><td class="lineref">labs/</td><td>The runnable <code class="inline">.tf</code> code, one root module per lab. Edit files here rather than pasting from the manual.</td></tr>
-                <tr><td class="lineref">docs/</td><td>Longer written deep dives per tier, for after the lab.</td></tr>
+                <tr><td class="lineref">docs/</td><td>Longer written deep dives, one flat numbered file per subject, for after the lab.</td></tr>
                 </tbody>
             </table>
             <div class="warn">Every AWS lab costs money while it is running. Finish with
@@ -1554,13 +1971,13 @@ def render_index() -> str:
 
     return page(
         "Terraform Track",
-        f"{len(LABS)} labs across three tiers &mdash; from your first "
+        f"{len(LABS)} labs, lab00 to lab24 &mdash; from your first "
         "<code class=\"inline\">terraform init</code> to a working public web server built "
         "entirely in code.",
         body,
         active="index",
-        stats=[f"{len(LABS)} labs", "3 tiers", f"{len(HTML_PAGES)} HTML pages", TF_FLOOR,
-               AWS_PIN, "Region us-east-1", "Offline"],
+        stats=[f"{len(LABS)} labs", f"{len(TOPICS)} topics", f"{len(HTML_PAGES)} HTML pages",
+               TF_FLOOR, AWS_PIN, "Region us-east-2", "Offline"],
         extra_css=INDEX_CSS,
     )
 
@@ -1574,50 +1991,114 @@ def write(name: str, content: str) -> None:
     print(f"  {len(content.splitlines()):5d} lines  {path.relative_to(ROOT)}")
 
 
+# Manuals still being authored. Their hrefs are generated deliberately; report them as
+# pending rather than missing, and remove each slug once its file lands.
+PENDING_MANUALS: set[str] = set()
+
+
 def check_hrefs() -> int:
     """Every ../labmanuals/labNN-*.md href must resolve to a real file."""
     missing = []
+    pending = []
     for num, slug, _title, _tier, _topic in LABS:
         target = ROOT / "terraform" / "labmanuals" / f"{slug}.md"
-        if not target.exists():
-            missing.append(f"lab{num:02d}: {target.relative_to(ROOT)}")
+        if target.exists():
+            continue
+        entry = f"lab{num:02d}: {target.relative_to(ROOT)}"
+        (pending if slug in PENDING_MANUALS else missing).append(entry)
+    if pending:
+        print("\nPENDING lab manuals (expected, still being written):")
+        for item in pending:
+            print(f"  {item}")
     if missing:
         print("\nMISSING lab manuals referenced by generated hrefs:")
         for item in missing:
             print(f"  {item}")
+    elif pending:
+        print(f"\nhref check: {len(LABS) - len(pending)} of {len(LABS)} lab manual targets exist; "
+              f"{len(pending)} pending.")
     else:
         print(f"\nhref check: all {len(LABS)} lab manual targets exist.")
     return len(missing)
 
 
+RETIRED_PAGES = ("basic.html", "intermediate.html", "advanced.html")
+
+
 def check_page_set() -> int:
-    """No generated page may link to a Terraform HTML page outside the six-page set."""
+    """No generated page may link to a Terraform HTML page outside the four-page set."""
     import re
 
     bad = 0
-    for name in ("index.html", "basic.html", "intermediate.html", "advanced.html"):
+    for name in OWNED_PAGES:
         text = (OUT_DIR / name).read_text(encoding="utf-8")
-        for href in re.findall(r'href="\.?/?([a-z0-9._-]+\.html)"', text):
+        for href in re.findall(r'href="\.?/?([a-z0-9._-]+\.html)(?:#[a-z0-9._-]+)?"', text):
             if href not in HTML_PAGES:
                 print(f"  OFF-SET LINK {name} -> {href}")
                 bad += 1
             elif not (OUT_DIR / href).exists():
                 print(f"  MISSING PAGE {name} -> {href}")
                 bad += 1
+        for retired in RETIRED_PAGES:
+            if retired in text:
+                print(f"  RETIRED TIER PAGE still named in {name}: {retired}")
+                bad += 1
     if not bad:
         print(f"page-set check: every HTML link stays inside the {len(HTML_PAGES)}-page set "
-              "and resolves on disk.")
+              "and resolves on disk; no tier page is referenced.")
     return bad
+
+
+def check_anchors() -> int:
+    """Every #anchor in the generated pages must resolve to an id on concepts.html."""
+    import re
+
+    ids = set(re.findall(r'<div class="card" id="([a-z0-9-]+)">',
+                         (OUT_DIR / "concepts.html").read_text(encoding="utf-8")))
+    expected = set(build_anchors(TOPICS))
+    bad = 0
+    if ids != expected:
+        print(f"  ANCHOR IDS MISMATCH: missing {sorted(expected - ids)}, "
+              f"extra {sorted(ids - expected)}")
+        bad += 1
+
+    for name in OWNED_PAGES:
+        text = (OUT_DIR / name).read_text(encoding="utf-8")
+        for target in re.findall(r'href="(?:concepts\.html)?#([a-z0-9-]+)"', text):
+            if target not in ids:
+                print(f"  DANGLING ANCHOR {name} -> #{target}")
+                bad += 1
+
+    nav_targets = set(re.findall(
+        r'<li><a href="#([a-z0-9-]+)"',
+        (OUT_DIR / "concepts.html").read_text(encoding="utf-8")))
+    if nav_targets != ids:
+        print(f"  TOPIC NAV INCOMPLETE: nav lists {len(nav_targets)} of {len(ids)} topics")
+        bad += 1
+
+    if not bad:
+        print(f"anchor check: {len(ids)} topic ids on concepts.html, the sticky nav lists all "
+              "of them, and every in-page link resolves.")
+    return bad
+
+
+def remove_retired_pages() -> None:
+    """basic/intermediate/advanced.html are superseded by concepts.html."""
+    for name in RETIRED_PAGES:
+        path = OUT_DIR / name
+        if path.exists():
+            path.unlink()
+            print(f"  removed superseded {path.relative_to(ROOT)}")
 
 
 def main() -> None:
     print("Generating Terraform track HTML:")
+    write("concepts.html", render_concepts())
     write("index.html", render_index())
-    write("basic.html", render_tier("basic", BASIC_TOPICS))
-    write("intermediate.html", render_tier("intermediate", INTERMEDIATE_TOPICS))
-    write("advanced.html", render_tier("advanced", ADVANCED_TOPICS))
+    remove_retired_pages()
     check_hrefs()
     check_page_set()
+    check_anchors()
 
 
 if __name__ == "__main__":

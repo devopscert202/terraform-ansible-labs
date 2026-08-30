@@ -2,7 +2,7 @@
 """Generate terraform/html/aws-primer.html.
 
 AWS concepts for a learner who has never opened the console, followed by a hand-authored
-inline SVG of the lab21 topology. Self-contained: no CDN, no external fonts, no raster
+inline SVG of the lab10 topology. Self-contained: no CDN, no external fonts, no raster
 images. Re-running overwrites the output byte-for-byte.
 
     python3 curriculum/gen_aws_primer.py
@@ -21,14 +21,14 @@ TOPICS = [
         "Where things live",
         "Region and Availability Zone",
         "A <strong>region</strong> is a geographic cluster of AWS data centres, such as "
-        "<code class=\"inline\">us-east-1</code> in North Virginia. Every resource you create "
+        "<code class=\"inline\">us-east-2</code> in North Virginia. Every resource you create "
         "belongs to exactly one region, and resources in different regions cannot see each "
         "other by default. An <strong>Availability Zone</strong> (AZ) is one isolated "
         "data-centre group inside a region, named by suffixing a letter: "
-        "<code class=\"inline\">us-east-1a</code>. This whole track uses "
-        "<code class=\"inline\">us-east-1</code>.",
+        "<code class=\"inline\">us-east-2a</code>. This whole track uses "
+        "<code class=\"inline\">us-east-2</code>.",
         'provider "aws" {\n'
-        '  region = "us-east-1"\n'
+        '  region = "us-east-2"\n'
         "}",
         [
             ("<code>provider &quot;aws&quot;</code>",
@@ -59,7 +59,7 @@ TOPICS = [
         'resource "aws_vpc" "this" {\n'
         '  cidr_block           = "10.0.0.0/16"\n'
         "  enable_dns_hostnames = true\n\n"
-        '  tags = { Name = "tflabs-capstone", Lab = "lab21" }\n'
+        '  tags = { Name = "tflabs-capstone", Lab = "lab10" }\n'
         "}",
         [
             ("<code>aws_vpc</code>", "The Terraform resource type for a VPC."),
@@ -84,11 +84,11 @@ TOPICS = [
         "<code class=\"inline\">terraform plan</code> does not detect it: the failure appears "
         "only at apply, as "
         "<code class=\"inline\">VPCIdNotSpecified: No default VPC for this user</code>. "
-        "Labs 03, 06 and 12 rely on it. Check, then create one if the result is empty:"
+        "Labs 15 and 21 rely on it; every other AWS lab builds its own network. Check, then create one if the result is empty:"
         "<pre>aws ec2 describe-vpcs --filters Name=isDefault,Values=true \\\n"
         "    --query 'Vpcs[].VpcId' --output text\n\n"
         "aws ec2 create-default-vpc</pre>"
-        "Lab 21 is unaffected because it builds its own VPC and sets "
+        "Lab 10 is unaffected because it builds its own VPC and sets "
         "<code class=\"inline\">subnet_id</code> and <code class=\"inline\">vpc_id</code> "
         "explicitly. That is the better pattern: the network a resource lands in is stated in "
         "the configuration rather than inherited from whatever the account happens to have.",
@@ -120,12 +120,12 @@ TOPICS = [
              "A /24 (256 addresses) carved out of the VPC's /16. Subnet ranges may not overlap."),
             ("<code>data &quot;aws_availability_zones&quot;</code>",
              "Asks the account which zones it can actually use. Zone names are mapped per "
-             "account, so <code>us-east-1a</code> is not the same hardware in two accounts and "
+             "account, so <code>us-east-2a</code> is not the same hardware in two accounts and "
              "may be absent or out of capacity in yours."),
             ("<code>availability_zone</code>",
              "Pins the subnet to one AZ, which must sit inside the provider's region. Take it "
              "from the data source with <code>names[0]</code> rather than hardcoding a name — "
-             "this is what Lab 21 does, and it is not a value you set by hand."),
+             "this is what Lab 10 does, and it is not a value you set by hand."),
             ("<code>map_public_ip_on_launch</code>",
              "Auto-assigns a public IPv4 address to instances launched in this subnet."),
         ],
@@ -141,7 +141,7 @@ TOPICS = [
         "traffic only uses it once a route table points at it.",
         'resource "aws_internet_gateway" "this" {\n'
         "  vpc_id = aws_vpc.this.id\n\n"
-        '  tags = { Name = "tflabs-capstone-igw", Lab = "lab21" }\n'
+        '  tags = { Name = "tflabs-capstone-igw", Lab = "lab10" }\n'
         "}",
         [
             ("<code>aws_internet_gateway</code>",
@@ -149,8 +149,8 @@ TOPICS = [
             ("<code>vpc_id</code>",
              "Attaches the gateway to the VPC. An unattached gateway carries no traffic."),
         ],
-        f"{MANUALS}/lab21-capstone-vpc-ec2.md",
-        "Lab 21 — the capstone build",
+        f"{MANUALS}/lab10-capstone-vpc-ec2.md",
+        "Lab 10 — the capstone build",
     ),
     (
         "Traffic direction",
@@ -182,8 +182,8 @@ TOPICS = [
              "Binds the table to a subnet. Without it the subnet keeps the VPC's main table "
              "and stays private."),
         ],
-        f"{MANUALS}/lab21-capstone-vpc-ec2.md",
-        "Lab 21 — the capstone build",
+        f"{MANUALS}/lab10-capstone-vpc-ec2.md",
+        "Lab 10 — the capstone build",
     ),
     (
         "Instance firewall",
@@ -219,11 +219,11 @@ TOPICS = [
              "default VPC instead — see the warning in the VPC section above."),
             ("<code>dynamic &quot;ingress&quot;</code>",
              "Generates one ingress rule per element of the list instead of repeating the "
-             "block by hand. Lab 21 opens a single port, 80."),
+             "block by hand. Lab 10 opens a single port, 80."),
             ("<code>from_port</code> / <code>to_port</code>",
              "A port range. Setting both to the same number opens exactly one port."),
             ("<code>cidr_blocks</code>",
-             "Who may connect. Lab 21's <code>allowed_cidr</code> defaults to "
+             "Who may connect. Lab 10's <code>allowed_cidr</code> defaults to "
              "<code>0.0.0.0/0</code>, the entire internet — defensible for a public web port, "
              "dangerous for an administrative port such as SSH on 22. Narrow it to your own "
              "address outside a lab account."),
@@ -231,8 +231,8 @@ TOPICS = [
              "Outbound, written as one ordinary block. Groups are stateful, so replies to "
              "allowed inbound requests need no rule of their own."),
         ],
-        f"{MANUALS}/lab21-capstone-vpc-ec2.md",
-        "Lab 21 — the capstone build",
+        f"{MANUALS}/lab10-capstone-vpc-ec2.md",
+        "Lab 10 — the capstone build",
     ),
     (
         "Compute",
@@ -315,7 +315,7 @@ TOPICS = [
         'unset AWS_PROFILE AWS_SESSION_TOKEN\n'
         'export AWS_ACCESS_KEY_ID="AKIA..."\n'
         'export AWS_SECRET_ACCESS_KEY="..."\n'
-        'export AWS_DEFAULT_REGION="us-east-1"\n\n'
+        'export AWS_DEFAULT_REGION="us-east-2"\n\n'
         "aws sts get-caller-identity",
         [
             ("<code>unset AWS_PROFILE</code>",
@@ -363,10 +363,10 @@ BLUE, CYAN, SLATE, SLATE_MID, GREEN = "#2563eb", "#06b6d4", "#0f172a", "#64748b"
 
 
 def diagram() -> str:
-    """Hand-authored inline SVG of exactly what lab21 builds."""
+    """Hand-authored inline SVG of exactly what lab10 builds."""
     parts = [
         '<svg viewBox="0 0 1060 700" role="img" '
-        'aria-label="Lab 21 topology. A request from the internet enters the AWS region through '
+        'aria-label="Lab 10 topology. A request from the internet enters the AWS region through '
         'the internet gateway, passes into the public subnet, is admitted by the security group '
         'on TCP port 80, and reaches the EC2 instance running httpd, which replies back out '
         'through the gateway. The route table is shown with dashed lines because it configures '
@@ -403,7 +403,7 @@ def diagram() -> str:
         # --- region -------------------------------------------------------------
         box(220, 30, 810, 640, SLATE_MID, "#ffffff", dash="7 5", rx=14),
         label(240, 58, "AWS Region", size=15, color=SLATE),
-        label(340, 58, "us-east-1", size=13, color=SLATE_MID, weight="600", mono=True),
+        label(340, 58, "us-east-2", size=13, color=SLATE_MID, weight="600", mono=True),
         label(1010, 58, "provider aws { region }", size=11, color=SLATE_MID, weight="600",
               anchor="end", mono=True),
 
@@ -519,8 +519,8 @@ def build() -> str:
             resource type that creates it, in the order the pieces stack up: a region holds a
             VPC, the VPC holds subnets, a subnet holds an instance, and a gateway plus a route
             table make that instance reachable. The diagram at the end is exactly what
-            <a class="lablink" href="%s/lab21-capstone-vpc-ec2.md"
-               style="margin:0;">Lab 21</a> builds.</p>
+            <a class="lablink" href="%s/lab10-capstone-vpc-ec2.md"
+               style="margin:0;">Lab 10</a> builds.</p>
             <div class="note"><strong>Read <a href="./terraform-101.html">Terraform 101</a>
             first.</strong> This page teaches AWS, not Terraform. It shows HCL &mdash; the
             language Terraform configuration is written in &mdash; to name the resource type
@@ -553,7 +553,7 @@ def build() -> str:
 
     diagram_card = f"""        <div class="card">
             <span class="eyebrow">Putting it together</span>
-            <h2>The Lab 21 architecture</h2>
+            <h2>The Lab 10 architecture</h2>
             <p class="concept">Seven resources, one reachable web server. Follow the numbered
             blue arrows:
             <strong>1</strong> a request from the internet reaches the internet gateway;
@@ -584,12 +584,12 @@ def build() -> str:
                     <tr><td class="lineref">Security group</td><td><code class="inline">aws_security_group</code></td></tr>
                     <tr><td class="lineref">EC2 instance</td><td><code class="inline">aws_instance</code></td></tr>
                     <tr><td class="lineref">Machine image</td><td><code class="inline">data.aws_ami</code></td></tr>
-                    <tr><td class="lineref">Availability Zone</td><td><code class="inline">data.aws_availability_zones</code> &mdash; the capstone takes the first zone the account can actually use rather than hardcoding <code class="inline">us-east-1a</code></td></tr>
+                    <tr><td class="lineref">Availability Zone</td><td><code class="inline">data.aws_availability_zones</code> &mdash; the capstone takes the first zone the account can actually use rather than hardcoding <code class="inline">us-east-2a</code></td></tr>
                 </tbody>
             </table>
             <div class="warn">The EC2 instance is the only billable resource in the diagram.
             Run <code class="inline">terraform destroy</code> when the lab ends.</div>
-            <a class="lablink" href="{MANUALS}/lab21-capstone-vpc-ec2.md">Build it in Lab 21 &rarr;</a>
+            <a class="lablink" href="{MANUALS}/lab10-capstone-vpc-ec2.md">Build it in Lab 10 &rarr;</a>
         </div>
 """
 
@@ -598,7 +598,7 @@ def build() -> str:
         "Regions, VPCs, subnets, gateways and instances — for a first-time AWS user",
         intro + "".join(cards) + diagram_card,
         active="primer",
-        stats=["9 concepts", "Terraform resource types", "Lab 21 architecture diagram"],
+        stats=["9 concepts", "Terraform resource types", "Lab 10 architecture diagram"],
     )
 
 

@@ -23,7 +23,7 @@ without owning any resource, and letting you practise the mechanics without spen
 | Resource | Purpose | Cost |
 |---|---|---|
 | `random_pet.label` | A two-word name generated locally, proving the `random` provider works | Free |
-| `provider "aws"` (configured, unused) | Sets the `us-east-1` region context and validates the plugin loads | Free |
+| `provider "aws"` (configured, unused) | Sets the `us-east-2` region context and validates the plugin loads | Free |
 | Output `provider_composition` | A map combining the AWS region and the generated label | Free |
 
 Nothing in this lab touches your AWS account, so it applies cleanly even with no credentials
@@ -31,10 +31,10 @@ exported.
 
 ## Before you start
 
-- [ ] [Lab 12 — Dynamic blocks](lab12-dynamic-blocks.md) completed
+- [ ] [Lab 12 — Functions](lab12-functions.md) completed
 - [ ] Terraform 1.5.0 or newer on your `PATH` (`terraform version`)
 - [ ] Network access to `registry.terraform.io` so `init` can download plugins
-- [ ] Read the module layout notes in [../docs/advanced/projects.md](../docs/advanced/projects.md)
+- [ ] Read the module layout notes in [../docs/10-multi-provider.md](../docs/17-project-structure.md)
 
 ## Steps
 
@@ -103,7 +103,7 @@ cat variables.tf
 ```text
 variable "aws_region" {
   type        = string
-  default     = "us-east-1"
+  default     = "us-east-2"
   description = "AWS region used by the AWS provider."
 }
 ```
@@ -216,7 +216,7 @@ Plan: 1 to add, 0 to change, 0 to destroy.
 
 Changes to Outputs:
   + provider_composition = {
-      + aws_region      = "us-east-1"
+      + aws_region      = "us-east-2"
       + generated_label = (known after apply)
     }
 ```
@@ -243,7 +243,7 @@ Apply complete! Resources: 1 added, 0 changed, 0 destroyed.
 Outputs:
 
 provider_composition = {
-  "aws_region" = "us-east-1"
+  "aws_region" = "us-east-2"
   "generated_label" = "distinct-dolphin"
 }
 ```
@@ -278,7 +278,7 @@ single entry.
 provider still creates nothing.
 
 ```bash
-terraform plan -var='aws_region=us-west-2'
+terraform plan -var='aws_region=us-east-1'
 ```
 
 **Expected output**
@@ -286,7 +286,7 @@ terraform plan -var='aws_region=us-west-2'
 ```text
 Changes to Outputs:
   ~ provider_composition = {
-      ~ aws_region      = "us-east-1" -> "us-west-2"
+      ~ aws_region      = "us-east-2" -> "us-east-1"
         # (1 unchanged attribute hidden)
     }
 ```
@@ -300,7 +300,7 @@ unchanged because `random_pet.label` is not being replaced.
 - [ ] `terraform init` reported installing both `hashicorp/aws` and `hashicorp/random`
 - [ ] `.terraform.lock.hcl` exists and names both providers
 - [ ] `terraform plan` showed exactly one resource to add
-- [ ] `provider_composition` shows `us-east-1` plus a two-word generated label
+- [ ] `provider_composition` shows `us-east-2` plus a two-word generated label
 - [ ] `terraform state list` returns exactly `random_pet.label`
 - [ ] Overriding `aws_region` changed the output without changing the plan's resource count
 
@@ -323,6 +323,6 @@ terraform destroy -auto-approve
 
 ## Next steps
 
-- Deep dive: [../docs/advanced/projects.md](../docs/advanced/projects.md)
+- Deep dive: [../docs/17-project-structure.md](../docs/17-project-structure.md)
 - Visual: [../html/advanced.html](../html/advanced.html)
 - Continue to [Lab 14 — local-exec provisioner](lab14-local-exec-provisioner.md)
