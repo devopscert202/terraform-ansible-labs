@@ -19,9 +19,10 @@ exposes its outputs as read-only values. The module reading is the **consumer**;
 read is the **producer**. Nothing is created or modified — the consumer only looks.
 
 The consequence is that a producer's `output` names stop being an implementation detail. They are
-a published interface: rename `vpc_id` and every consumer's next plan breaks. This is the last
-lab before the capstone, which is the first time you build a full stack whose outputs would be
-worth consuming.
+a published interface: rename `vpc_id` and every consumer's next plan breaks. The capstone you
+built in [Lab 10](lab10-capstone-vpc-ec2.md) is the kind of stack whose `vpc_id` and `public_ip`
+outputs another team would consume this way; here the producer is [Lab 16](lab16-workspaces.md),
+because it left two state files behind and needs no AWS credentials to read.
 
 ## What you will build
 
@@ -272,7 +273,7 @@ in the producer — which is why output names need the same care as a public API
 - [ ] `terraform state list` returned only the data source address
 - [ ] Pointing at the `dev` workspace state changed `upstream_environment` to `"dev"`
 - [ ] Requesting a nonexistent output produced `Unsupported attribute`
-- [ ] You can explain why exporting whole resource objects is worse than exporting `vpc_id`
+- [ ] You can explain why renaming a producer's output breaks its consumers
 
 ## If something fails
 

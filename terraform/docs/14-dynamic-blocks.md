@@ -22,13 +22,8 @@ variable "ingress_rules" {
     cidr_blocks = list(string)
     description = string
   }))
-  description = "One entry per inbound rule. dynamic turns each entry into an ingress block."
+  description = "One entry per inbound rule. dynamic turns each entry into an ingress block. No SSH rule: nothing in this lab connects to a host."
   default = {
-    ssh = {
-      port        = 22
-      cidr_blocks = ["10.0.0.0/8"]
-      description = "internal SSH"
-    }
     http = {
       port        = 80
       cidr_blocks = ["10.0.0.0/8"]
@@ -78,15 +73,15 @@ resource "aws_security_group" "service" {
 | Element | Meaning |
 |---|---|
 | `dynamic "ingress"` | The label names the nested block type to generate. It must be a block the resource genuinely supports |
-| `for_each` | The collection to iterate. Map or set, same as on a resource |
+| `for_each` | The collection to iterate. Map or set, same as on a resource. Two entries here means two rules |
 | `content { }` | The body of each generated block. Required — the arguments go here, not directly in `dynamic` |
 | `ingress.value` | The current element. **The iterator is named after the block**, not `each` |
-| `ingress.key` | The current map key — `"ssh"`, `"http"`, `"https"` |
+| `ingress.key` | The current map key — `"http"`, `"https"` |
 
 The iterator naming is the detail that catches people: inside `dynamic "ingress"` you write
 `ingress.value`, not `each.value`. Override it with `iterator = rule` if the default name collides.
 
-Adding a fourth rule now means adding a map entry — no HCL structure changes, and the diff in
+Adding a third rule now means adding a map entry — no HCL structure changes, and the diff in
 review is one readable block of data. That is the real gain: the security policy becomes data you
 can read, rather than structure you have to parse.
 
@@ -134,8 +129,9 @@ terraform destroy
 
 - The data types a `dynamic` block iterates:
   [`09-collections-functions.md`](09-collections-functions.md)
-- The same technique inside a full build, at lab10: [`08-capstone.md`](08-capstone.md)
-- The capstone this security group is the setup for, rebuilt on a remote backend at lab22:
+- The counter-example, a security group with one literal `ingress` rule, at lab10:
+  [`08-capstone.md`](08-capstone.md)
+- Nested blocks written out plainly across a whole build, at lab22:
   [`13-remote-state.md`](13-remote-state.md)
 
 ## Hands-On Labs

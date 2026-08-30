@@ -267,8 +267,8 @@ terraform destroy -auto-approve
 Plan: 0 to add, 0 to change, 1 to destroy.
 terraform_data.local_action: Destroying... [id=01772e7e-3239-25dc-9378-9931cb864da5]
 terraform_data.local_action: Provisioning with 'local-exec'...
-terraform_data.local_action (local-exec): Executing: ["/bin/sh" "-c" "printf 'destroying %s\n' 'local-exec completed'"]
-terraform_data.local_action (local-exec): destroying local-exec completed
+terraform_data.local_action (local-exec): Executing: ["/bin/sh" "-c" "printf 'destroying %s\n' 'second run'"]
+terraform_data.local_action (local-exec): destroying second run
 terraform_data.local_action: Destruction complete after 0s
 
 Destroy complete! Resources: 1 destroyed.
@@ -297,6 +297,7 @@ reference attributes of the related resource, via 'self', 'count.index', or
 - [ ] The second, unchanged apply reported `0 added, 0 changed, 0 destroyed` and printed nothing
 - [ ] Changing `message` updated the resource in place and still printed nothing
 - [ ] `-replace` destroyed, recreated, and reran the command
+- [ ] `terraform destroy` printed `destroying second run` under `Destroying...`, not under `Creating...`
 - [ ] You can name one fair use of `local-exec` and one that belongs in user-data instead
 
 ## If something fails

@@ -263,7 +263,7 @@ terraform state show random_pet.label
 random_pet.label
 # random_pet.label:
 resource "random_pet" "label" {
-    id        = "ruling-lab"
+    id        = "distinct-dolphin"
     length    = 2
     separator = "-"
 }

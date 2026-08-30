@@ -17,9 +17,10 @@ types and the format AWS demands.
 
 Functions cannot be called at the top level of a file. They live inside expressions, and the usual
 home for a non-trivial expression is a `locals` block, which you met in Lab 06. The other tool this
-lab introduces is `terraform console`, an interactive prompt where you evaluate an expression and
-see the answer immediately instead of guessing and re-running `plan`. You will work through one
-family per step at that prompt, then see the same functions used for real in the configuration.
+lab leans on is `terraform console`, an interactive prompt where you evaluate an expression and
+see the answer immediately instead of guessing and re-running `plan`. Labs 06 and 11 used it one
+expression at a time; here you stay inside it. You will work through one family per step at that
+prompt, then see the same functions used for real in the configuration.
 
 This lab creates no resources, so it is free and needs no AWS credentials.
 
@@ -67,7 +68,7 @@ terraform console
 ```
 
 The prompt is `>`. It evaluates one expression at a time and prints the result. Nothing you type here
-changes any file or any infrastructure. Stay at this prompt for Steps 3 through 12.
+changes any file or any infrastructure. Stay at this prompt for Steps 3 through 13.
 
 ### Step 3 — String functions: reshape text
 
@@ -159,7 +160,8 @@ min(3, 9, 1)
 ```
 
 `length()` works on lists, sets, maps, and strings, which makes it the function you use to turn a
-collection into the number that `count` requires — you did exactly that in Lab 10.
+collection into the number that `count` requires — [Lab 24](lab24-count-foreach-buckets.md) does
+exactly that against real S3 buckets.
 
 ### Step 8 — Network functions: carve out a subnet range
 

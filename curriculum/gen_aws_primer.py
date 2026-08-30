@@ -25,7 +25,9 @@ TOPICS = [
         "belongs to exactly one region, and resources in different regions cannot see each "
         "other by default. An <strong>Availability Zone</strong> (AZ) is one isolated "
         "data-centre group inside a region, named by suffixing a letter: "
-        "<code class=\"inline\">us-east-2a</code>. This whole track uses "
+        "<code class=\"inline\">us-east-2a</code>. <code class=\"inline\">us-east-2</code> "
+        "publishes exactly three, <code class=\"inline\">us-east-2a</code> through "
+        "<code class=\"inline\">us-east-2c</code>. This whole track uses "
         "<code class=\"inline\">us-east-2</code>.",
         'provider "aws" {\n'
         '  region = "us-east-2"\n'
@@ -39,10 +41,10 @@ TOPICS = [
              "Every resource managed by this provider block is created here. Change it and "
              "Terraform will plan to recreate everything elsewhere."),
             ("Availability Zone",
-             "Not set here. It is an argument on zonal resources such as subnets, and this "
-             "track never hardcodes one — it is resolved from "
-             "<code>data &quot;aws_availability_zones&quot;</code>. The subnet section below "
-             "shows how."),
+             "Not set here. It is an argument on zonal resources such as subnets. Labs 03 and "
+             "06 pass one in through a variable defaulting to <code>us-east-2a</code>; Lab 10 "
+             "resolves it from <code>data &quot;aws_availability_zones&quot;</code> instead, "
+             "which is the portable form. The subnet section below shows how."),
         ],
         f"{MANUALS}/lab00-aws-setup-and-init.md",
         "Lab 00 — AWS setup and init",
@@ -215,9 +217,11 @@ TOPICS = [
             ("<code>vpc_id</code>",
              "Places the group in your VPC. Omit it and the group is created in the region's "
              "default VPC instead — see the warning in the VPC section above."),
-            ("<code>dynamic &quot;ingress&quot;</code>",
-             "Generates one ingress rule per element of the list instead of repeating the "
-             "block by hand. Lab 10 opens a single port, 80."),
+            ("<code>ingress</code>",
+             "One inbound rule, written out literally. Lab 10 needs exactly one — HTTP on "
+             "<code>var.http_port</code>, which defaults to 80 — so there is nothing to "
+             "generate. Lab 21 shows the <code>dynamic</code> form for a group whose rules "
+             "come from a collection."),
             ("<code>from_port</code> / <code>to_port</code>",
              "A port range. Setting both to the same number opens exactly one port."),
             ("<code>cidr_blocks</code>",

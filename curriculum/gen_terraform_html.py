@@ -803,7 +803,8 @@ output "vpc_id" {
 }
 
 resource "aws_vpc" "this" {
-  cidr_block           = "10.0.0.0/16"
+  cidr_block           = var.vpc_cidr   # 10.0.0.0/16
+  enable_dns_support   = true
   enable_dns_hostnames = true
 
   tags = merge(local.common_tags, { Name = local.name })
@@ -817,7 +818,7 @@ resource "aws_internet_gateway" "this" {
 
 resource "aws_subnet" "public" {
   vpc_id                  = aws_vpc.this.id
-  cidr_block              = "10.0.1.0/24"
+  cidr_block              = var.public_subnet_cidr   # 10.0.1.0/24
   availability_zone       = data.aws_availability_zones.available.names[0]
   map_public_ip_on_launch = true
 
@@ -840,9 +841,34 @@ resource "aws_route_table_association" "public" {
   route_table_id = aws_route_table.public.id
 }
 
+resource "aws_security_group" "web" {
+  name        = "${local.name}-web"
+  description = "Allow inbound web traffic, all outbound"
+  vpc_id      = aws_vpc.this.id
+
+  # One literal rule. Only HTTP is needed: the instance has no key pair.
+  ingress {
+    description = "Inbound HTTP"
+    from_port   = var.http_port      # 80
+    to_port     = var.http_port
+    protocol    = "tcp"
+    cidr_blocks = [var.allowed_cidr] # 0.0.0.0/0
+  }
+
+  egress {
+    description = "All outbound"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = merge(local.common_tags, { Name = "${local.name}-web-sg" })
+}
+
 resource "aws_instance" "web" {
   ami                    = data.aws_ami.al2023.id
-  instance_type          = "t3.micro"
+  instance_type          = var.instance_type   # t3.micro
   subnet_id              = aws_subnet.public.id
   vpc_security_group_ids = [aws_security_group.web.id]
 
@@ -854,6 +880,8 @@ resource "aws_instance" "web" {
   EOT
 
   tags = merge(local.common_tags, { Name = "${local.name}-web" })
+
+  depends_on = [aws_route_table_association.public]
 }
 
 output "web_url" {
@@ -868,9 +896,12 @@ output "web_url" {
             ("map_public_ip_on_launch", "Instances launched in this subnet get a public IP automatically."),
             ("route { 0.0.0.0/0 }", "The default route: any destination not inside the VPC goes to the gateway. This line is what makes the subnet public."),
             ("aws_route_table_association", "Binds the route table to the subnet. Skip it and the subnet silently keeps the VPC's main table and stays private."),
+            ("one literal ingress block", "The group needs exactly one rule, so it is written out rather than generated. <code class=\"inline\">var.http_port</code> is a single number defaulting to <code class=\"inline\">80</code>. There is deliberately no SSH rule: the instance has no key pair and nothing here connects to it. <a class=\"lablink\" href=\"#lab21-dynamic-blocks\">Lab 21</a> is the case where a <code class=\"inline\">dynamic</code> block earns its keep."),
+            ("cidr_blocks = [var.allowed_cidr]", "Defaults to <code class=\"inline\">0.0.0.0/0</code> so the lab works from any network. Narrow it to <code class=\"inline\">YOUR_IP/32</code> in any account you care about."),
             ("subnet_id on the instance", "Places the instance in the public subnet. Combined with the route and the public IP, the server becomes reachable."),
             ("user_data = &lt;&lt;-EOT", "A heredoc script the cloud runs once on first boot. <code class=\"inline\">&lt;&lt;-</code> strips the leading indentation."),
             ("dnf install -y httpd", "Amazon Linux 2023 uses <code class=\"inline\">dnf</code>. Running it here needs no SSH and no provisioner."),
+            ("depends_on = [aws_route_table_association.public]", "The instance reads no attribute from the association, so Terraform sees no dependency &mdash; but <code class=\"inline\">dnf install</code> needs working internet routing. This is the textbook case for an explicit <code class=\"inline\">depends_on</code>: a real dependency no reference expresses."),
             ("output web_url", "Builds the browsable URL from the assigned public IP. This is the observable proof the stack works."),
         ],
         lang_note="This lab bills for real. Run <code class=\"inline\">terraform destroy</code> as soon "
@@ -880,48 +911,45 @@ output "web_url" {
     ),
     dict(
         eyebrow="Lab 11 &middot; Collections",
-        heading="for_each: one block, many resources",
+        heading="Lists, sets and maps, and the for expression",
         concept=(
-            "<code class=\"inline\">for_each</code> creates one copy of a resource per entry in a "
-            "map or set, so three subnets need one block rather than three. Inside the block, "
-            "<code class=\"inline\">each.key</code> is the entry's key and "
-            "<code class=\"inline\">each.value</code> is its value. Because the address includes "
-            "the key, removing one entry does not disturb the others &mdash; which is exactly what "
-            "goes wrong with <code class=\"inline\">count</code> and its integer indexes."
+            "HCL has three collection types. A <strong>list</strong> is ordered and keeps "
+            "duplicates, addressed by position. A <strong>set</strong> is unordered and discards "
+            "duplicates. A <strong>map</strong> is keyed by string. A <em>for expression</em> "
+            "builds a new collection from an existing one, and the shape of the result follows "
+            "the brackets you wrap it in: <code class=\"inline\">[ ]</code> produces a list, "
+            "<code class=\"inline\">{ }</code> produces a map. Everything here evaluates at plan "
+            "time, so this lab creates nothing in AWS and costs nothing to run."
         ),
-        code=esc('''variable "subnets" {
-  type = map(object({
-    cidr = string
-    az   = string
-  }))
-  description = "Public subnets keyed by short name."
-  default = {
-    app_a = { cidr = "10.0.1.0/24", az = "us-east-2a" }
-    app_b = { cidr = "10.0.2.0/24", az = "us-east-2b" }
-  }
+        code=esc('''locals {
+  # toset() discards the duplicate the list keeps; sort() gives a stable order,
+  # because a set has no order of its own.
+  unique_tag_names = sort(tolist(toset(var.tag_names)))
+
+  # A for expression over a list produces a list, still addressed by position.
+  tag_labels = [for name in var.tag_names : upper(name)]
+
+  # A for expression over a map produces a map. name is the key, subnet is the
+  # object stored under it, so subnet.cidr reaches a single attribute.
+  subnet_cidrs = { for name, subnet in var.subnets : name => subnet.cidr }
+
+  # An if clause at the end of a for expression filters the result.
+  zone_a_subnets = [for name, subnet in var.subnets : name if subnet.az == "us-east-2a"]
 }
 
-resource "aws_subnet" "public" {
-  for_each = var.subnets
-
-  vpc_id            = aws_vpc.this.id
-  cidr_block        = each.value.cidr
-  availability_zone = each.value.az
-
-  tags = { Name = "public-${each.key}", Lab = "lab11" }
-}
-
-output "subnet_ids" {
-  value = { for name, subnet in aws_subnet.public : name => subnet.id }
+# One resource block, one instance. Turning a collection into many copies of a
+# resource needs the count and for_each meta-arguments, which Lab 24 introduces.
+resource "terraform_data" "collections" {
+  input = local.collection_shapes
 }'''),
         rows=[
-            ("map(object({ ... }))", "A map whose values are structured. Terraform checks at plan time that every entry has a <code class=\"inline\">cidr</code> and an <code class=\"inline\">az</code> of the right type."),
-            ("for_each = var.subnets", "Creates one subnet per map entry. Addresses become <code class=\"inline\">aws_subnet.public[\"app_a\"]</code>."),
-            ("each.key", "The map key, <code class=\"inline\">app_a</code>. Used here to build a distinct Name tag."),
-            ("each.value.cidr", "A field of the entry's object value."),
-            ("{ for name, subnet in ... }", "A <em>for expression</em> that builds a new map by iterating the created resources."),
-            ("name =&gt; subnet.id", "Sets each output entry's key and value, giving a clean <code class=\"inline\">{ app_a = \"subnet-...\" }</code> map."),
-            ("why not count", "<code class=\"inline\">count</code> addresses by position, so deleting the middle element renumbers and recreates the rest. Prefer <code class=\"inline\">for_each</code> for anything named."),
+            ("terraform_data", "A built-in placeholder resource. It creates nothing in any cloud, so this lab needs no credentials and leaves nothing to destroy."),
+            ("toset(var.tag_names)", "Converts the list to a set, which silently drops the repeated entry. Converting back with <code class=\"inline\">tolist()</code> is what lets <code class=\"inline\">sort()</code> apply."),
+            ("sort(...)", "A set has no order of its own, so Terraform may render it in any sequence. Sorting makes the output stable between runs."),
+            ("[for name in var.tag_names : upper(name)]", "A for expression over a list. Square brackets mean the result is a list, one element per input element, order preserved."),
+            ("{ for name, subnet in var.subnets : name =&gt; subnet.cidr }", "Iterating a map yields two loop variables, the key and the value. Braces and <code class=\"inline\">=&gt;</code> mean the result is a map."),
+            ("if subnet.az == \"us-east-2a\"", "An optional if clause filters entries out of the result. Only subnets in that zone reach the output."),
+            ("why not count or for_each here", "Those meta-arguments turn a collection into many <em>resources</em>, which is a different subject. Lab 24 covers it. This lab is about the collections themselves."),
         ],
         lab=11,
     ),
@@ -992,8 +1020,18 @@ output "provider_composition" {
   value = { aws_region = var.aws_region, generated_label = random_pet.label.id }
 }
 
-# Two configurations of the SAME provider need an alias. The lab creates nothing
-# in the second region; this is the pattern, for when you do.
+# ---------------------------------------------------------------------------
+# Everything below is the ALIAS PATTERN, not part of lab13. The lab stops above.
+# Two configurations of the SAME provider need an alias. Copy this into your own
+# work when you need a second region; add the variable, or the snippet will not
+# plan.
+# ---------------------------------------------------------------------------
+variable "secondary_region" {
+  type        = string
+  description = "A region other than var.aws_region, for the aliased provider."
+  default     = "us-east-1"
+}
+
 provider "aws" {
   alias  = "secondary"
   region = var.secondary_region
@@ -1012,9 +1050,10 @@ resource "aws_vpc" "secondary" {
             ("resource \"random_pet\" \"label\"", "The one resource this lab creates. Two providers are declared and only one of them builds anything &mdash; declaring a provider does not oblige you to use it."),
             ("output provider_composition", "Prints one value from each side, which is the observable proof that both plugins loaded and ran."),
             ("alias = \"secondary\"", "Names a second AWS configuration. Its address is <code class=\"inline\">aws.secondary</code>, and the unaliased block stays the default."),
-            ("region = var.secondary_region", "The alias exists to hold a <em>different</em> region from the default. Any region other than <code class=\"inline\">var.aws_region</code> works; the labs stay in us-east-2, so pick the second one deliberately."),
+            ("variable \"secondary_region\"", "Declared here so the pattern below stands on its own. Without it the snippet references an undeclared variable and fails at <code class=\"inline\">plan</code>. It is not in the lab's own <code class=\"inline\">variables.tf</code>."),
+            ("region = var.secondary_region", "The alias exists to hold a <em>different</em> region from the default. The labs run in us-east-2, so the second one is us-east-1."),
             ("provider = aws.secondary", "Sends this one resource to the aliased configuration. Omit the argument and it silently lands in the default region instead &mdash; a mistake no plan will flag."),
-            ("random_pet.label.id in a tag", "A cross-provider reference. Terraform orders the graph so the generated name exists before the VPC is created."),
+            ("random_pet.label.id in a tag", "A cross-provider reference. Terraform orders the graph so the generated name exists before the VPC is created. This resource is part of the pattern, not of lab13 &mdash; the lab creates only the <code class=\"inline\">random_pet</code>."),
         ],
         lab=13,
     ),
@@ -1118,28 +1157,19 @@ resource "terraform_data" "bootstrap" {
             "directory. Every directory starts in the workspace called "
             "<code class=\"inline\">default</code>. Switching workspace switches which state "
             "Terraform reads, so <code class=\"inline\">dev</code> and "
-            "<code class=\"inline\">staging</code> can coexist from identical code. Reference the "
-            "current name as <code class=\"inline\">terraform.workspace</code> so resource names "
-            "cannot collide in AWS."
+            "<code class=\"inline\">default</code> can coexist from identical code. Reference the "
+            "current name as <code class=\"inline\">terraform.workspace</code>. This lab creates "
+            "nothing in AWS &mdash; the point is the state files, not the resources."
         ),
         code=esc('''locals {
   environment = terraform.workspace
-  name        = "labs-${terraform.workspace}"
+  labels      = { environment = terraform.workspace, managed_by = "terraform" }
 }
 
-resource "aws_vpc" "this" {
-  cidr_block = "10.0.0.0/16"
+resource "terraform_data" "workspace" { input = local.labels }
 
-  tags = {
-    Name        = local.name
-    Environment = local.environment
-    Lab         = "lab16"
-  }
-}
-
-output "workspace" {
-  value = terraform.workspace
-}
+output "workspace" { value = terraform.workspace }
+output "labels" { value = terraform_data.workspace.output }
 
 # terraform workspace list
 # * default
@@ -1149,11 +1179,13 @@ output "workspace" {
 # terraform workspace show'''),
         rows=[
             ("terraform.workspace", "A built-in value holding the active workspace name. Available anywhere in the configuration, no variable needed."),
-            ("name = \"labs-${terraform.workspace}\"", "Makes every AWS name workspace-specific, so applying in <code class=\"inline\">dev</code> and <code class=\"inline\">staging</code> does not produce duplicate names."),
-            ("Environment tag", "Tags the environment from the same source of truth, so the console shows which workspace created a resource."),
+            ("terraform_data", "A placeholder resource that creates nothing. It exists so each workspace has something in its state, which is what makes the two state files visibly different."),
+            ("labels map", "Stamps the workspace name into the resource's input, so the output proves which workspace produced it."),
             ("workspace new dev", "Creates the workspace and switches to it. Its state starts empty, so the first plan proposes creating everything."),
             ("workspace select dev", "Switches without creating. Always run <code class=\"inline\">workspace show</code> before an apply you care about."),
+            ("in a real configuration", "Interpolate <code class=\"inline\">terraform.workspace</code> into every resource name and tag, or two workspaces will try to create the same AWS name and collide."),
             ("workspace vs separate keys", "Workspaces share one backend key prefix and suit short-lived sandboxes. Production boundaries deserve wholly separate state keys, as in Lab 18."),
+            ("do not destroy yet", "Lab 20 reads both of this lab's state files. Its cleanup is deliberately deferred until after that lab."),
         ],
         lab=16,
     ),

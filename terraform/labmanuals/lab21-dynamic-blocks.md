@@ -9,19 +9,22 @@
 
 ## Overview
 
-`for_each` in Lab 10 made many copies of a whole *resource*. Sometimes you instead need many copies
-of a *block inside* one resource. A **security group** is the clearest example: it is an AWS firewall
-attached to an instance, and each rule you want is a separate `ingress` block nested in the same
-`aws_security_group` resource. Two ports means two near-identical blocks, and adding a third
-means editing HCL.
+Sometimes a resource needs many copies of a *block inside it*. A **security group** is the clearest
+example: it is an AWS firewall, and each rule you want is a separate `ingress` block nested in the
+same `aws_security_group` resource. Two ports means two near-identical blocks, and adding a third
+means editing HCL. [Lab 10's](lab10-capstone-vpc-ec2.md) capstone security group needed exactly one
+rule, so it was written out literally; this lab is what you reach for when there are several.
 
 A **dynamic block** solves that. `dynamic "ingress"` takes a collection in `for_each` and generates
 one real `ingress` block per element, using the `content` block as the template. Adding a port
 becomes a data change, not a code change. **Ingress** means inbound traffic; **egress** means
 outbound.
 
-This is the last Tier 2 lab, and the pattern carries straight into the Tier 3 capstone, which
-opens port 80 on a web server.
+Note that `for_each` appears here as an argument *inside* a `dynamic` block, generating nested
+blocks within one resource. The `for_each` **meta-argument**, which makes many copies of a whole
+resource, is a different thing and comes later in
+[Lab 24](lab24-count-foreach-buckets.md). The map-and-object handling from
+[Lab 11](lab11-collections.md) is all you need here.
 
 ## What you will build
 
@@ -35,7 +38,7 @@ opens port 80 on a web server.
 ## Before you start
 
 - [ ] Lab 20 completed ([lab20-remote-state-consumer.md](lab20-remote-state-consumer.md))
-- [ ] You have used `for_each` with a map and know `each.key` and `each.value` (Lab 10)
+- [ ] You can read a `map(object(...))` and reach one attribute of one entry (Lab 11)
 - [ ] AWS credentials exported and `aws sts get-caller-identity` succeeds
 - [ ] Working directory: `../labs/lab21-dynamic-blocks/`
 - [ ] A default VPC exists in `us-east-2` — this security group has no `vpc_id`, so it needs one, for the reason given in [Lab 03](lab03-first-ec2.md):
@@ -53,10 +56,13 @@ way; only the apply fails.
 
 ```bash
 cd terraform/labs/lab21-dynamic-blocks
-cat variables.tf
+sed -n '/variable "ingress_rules"/,$p' variables.tf
 ```
 
-**Expected output**
+`variables.tf` also declares `aws_region`, defaulting to `us-east-2`; the command above skips it to
+keep the rule data in view.
+
+**Expected output** *(trimmed — the `https` entry follows the same shape)*
 
 ```text
 variable "ingress_rules" {
