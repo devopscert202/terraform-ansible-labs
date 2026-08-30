@@ -399,9 +399,13 @@ aws_subnet.public
 aws_vpc.this
 ```
 
-The request arrived because all five network pieces lined up: the gateway is attached, the route
-table sends 0.0.0.0/0 to it, the association binds that table to the subnet, the subnet assigns
-a public IP, and the security group allows port 80.
+Nine entries: the seven managed resources plus the two data sources. Terraform records data
+sources in state so it can tell whether a later read returns something different, but it never
+creates or destroys them.
+
+The page in Step 13 arrived because all five network pieces lined up: the gateway is attached, the
+route table sends 0.0.0.0/0 to it, the association binds that table to the subnet, the subnet
+assigns a public IP, and the security group allows port 80.
 
 ### Step 15 — Destroy
 

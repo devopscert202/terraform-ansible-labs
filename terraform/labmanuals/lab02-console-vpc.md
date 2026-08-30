@@ -10,7 +10,7 @@
 ## Overview
 
 This is the one lab in the track with no `.tf` files. You will build a network the manual way,
-in the AWS web console, and count the clicks. Later, [Lab 21](lab10-capstone-vpc-ec2.md) builds
+in the AWS web console, and count the clicks. Later, [Lab 10](lab10-capstone-vpc-ec2.md) builds
 the same shape from a single file with one command.
 
 Five pieces make a network in AWS. A **VPC** is your own private slice of the AWS network. A
@@ -26,7 +26,7 @@ Terraform reads when it builds a plan.
 
 ## What you will build
 
-| Resource | Terraform type (used in Lab 21) | Cost |
+| Resource | Terraform type (used in Lab 10) | Cost |
 |---|---|---|
 | VPC `10.0.0.0/16` | `aws_vpc` | None |
 | Public subnet `10.0.1.0/24` | `aws_subnet` | None |
@@ -178,7 +178,9 @@ the gateway is attached, but nothing knows to use it.
 
 ### Step 9 — Verify the route and the subnet association
 
-A route table only affects subnets associated with it. Check both facts at once.
+A route table only affects subnets associated with it. Check both facts at once. Substitute the
+`VpcId` you wrote down in Step 3 for the placeholder below — the command returns nothing useful
+with the manual's id, which belongs to no real account.
 
 ```bash
 aws ec2 describe-route-tables --filters "Name=vpc-id,Values=vpc-0a1b2c3d4e5f67890" \
@@ -273,22 +275,22 @@ Confirm `CidrIp` is your address with `/32`, not `0.0.0.0/0`.
 Every object AWS created got an id you did not choose. Write them down — you need them to delete
 things in the right order, and they are the same strings Terraform will keep in its state file.
 
-| Object | Your id | Terraform address in Lab 21 |
+| Object | Your id | Terraform address in Lab 10 |
 |---|---|---|
-| VPC | `vpc-…` | `aws_vpc.main.id` |
+| VPC | `vpc-…` | `aws_vpc.this.id` |
 | Subnet | `subnet-…` | `aws_subnet.public.id` |
-| Internet gateway | `igw-…` | `aws_internet_gateway.main.id` |
+| Internet gateway | `igw-…` | `aws_internet_gateway.this.id` |
 | Security group | `sg-…` | `aws_security_group.web.id` |
 
-In Lab 21 you never see these ids. One resource refers to another by name, and Terraform fills
+In Lab 10 you never see these ids. One resource refers to another by name, and Terraform fills
 in the generated id at apply time.
 
 ### Step 14 — Count the work
 
 You have created five objects across five console screens and run six commands to check them,
 and each object had to be pointed at the one before it. Nothing recorded the order, nothing can
-repeat it, and nobody else can review it before it happens. Lab 21 builds this same network from
-a file of about forty lines, applies in one command, and destroys in one more.
+repeat it, and nobody else can review it before it happens. Lab 10 builds this same network from
+one file, applies in one command, and destroys in one more.
 
 ## Done when
 

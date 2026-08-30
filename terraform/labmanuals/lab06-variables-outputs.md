@@ -26,7 +26,7 @@ Almost all of that happens without creating anything: the type lessons run again
 and outputs, which cost nothing and answer in under a second. The lab does then build real
 infrastructure so you can watch variables reach AWS — a small private network of one VPC, one subnet,
 and one security group, with a single `t3.micro` instance inside it. That instance is deliberately
-not reachable from the internet; Lab 21 is where a public instance gets built.
+not reachable from the internet; Lab 10 is where a public instance gets built.
 
 ## What you will build
 
@@ -759,7 +759,7 @@ Note what `cidr_blocks = [var.vpc_cidr]` means: port 22 is open to `10.0.0.0/16`
 only something already inside this VPC can connect. **You will not be able to SSH to this instance
 from your laptop, and that is intentional.** There is no internet gateway, no route table entry to
 one, and no public IP, so the instance has no path to or from the internet in either direction. Lab
-21 builds the public version — internet gateway, route table, public IP — as the track's capstone.
+10 builds the public version — internet gateway, route table, public IP — as the track's capstone.
 
 Each of the three carries `tags = local.common_tags`, so the tag lesson from Step 19 applies to the
 whole configuration and not just the instance.

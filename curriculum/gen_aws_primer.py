@@ -21,7 +21,7 @@ TOPICS = [
         "Where things live",
         "Region and Availability Zone",
         "A <strong>region</strong> is a geographic cluster of AWS data centres, such as "
-        "<code class=\"inline\">us-east-2</code> in North Virginia. Every resource you create "
+        "<code class=\"inline\">us-east-2</code> in Ohio. Every resource you create "
         "belongs to exactly one region, and resources in different regions cannot see each "
         "other by default. An <strong>Availability Zone</strong> (AZ) is one isolated "
         "data-centre group inside a region, named by suffixing a letter: "

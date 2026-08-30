@@ -43,6 +43,11 @@ output "total_disk_gb" {
   value       = local.total_disk_gb
 }
 
+output "freeform" {
+  description = "Value of the any-typed variable, returned with whatever shape it was given."
+  value       = var.freeform
+}
+
 output "contact" {
   description = "Fallback applied because owner_email is null."
   value       = local.contact

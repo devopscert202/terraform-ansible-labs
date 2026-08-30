@@ -60,6 +60,10 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.0"
+    }
   }
 }
 ```
@@ -67,6 +71,10 @@ terraform {
 `required_version` refuses to run on a Terraform older than 1.5.0. `source` is the plugin's
 address in the public registry. `version = "~> 5.0"` means "any 5.x release, but never 6.0" —
 a new major version may change behaviour, so it is held back deliberately.
+
+Two providers are declared, so `init` downloads two plugins. `aws` is here because every later
+lab needs it; `random` is the one this lab actually uses, in the `random_pet.lab_id` resource
+further down the file.
 
 Note what is absent: no access key and no secret key. Credentials stay in your environment,
 exactly as you set them up in Lab 00.

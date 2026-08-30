@@ -105,7 +105,7 @@ variable "disks" {
   ]
 
   validation {
-    condition     = alltrue([for d in var.disks : d.size_gb >= 8])
+    condition     = min(var.disks[*].size_gb...) >= 8
     error_message = "Every disk needs size_gb of at least 8."
   }
 }

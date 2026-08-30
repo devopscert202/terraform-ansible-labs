@@ -16,8 +16,8 @@ alone. Without state, Terraform would create a duplicate every time.
 
 Because there is no `backend` block in this configuration, state is a JSON file sitting in the lab
 directory. That is fine for one person on one laptop and wrong for a team, for two reasons you will
-prove here: the file is easy to lose, and anything sensitive inside it is in plain text. Tier 3
-fixes both by moving state to S3.
+prove here: the file is easy to lose, and anything sensitive inside it is in plain text.
+[Lab 17](lab17-s3-backend.md) fixes both by moving state to S3.
 
 This lab uses the `random` provider, so it creates nothing in AWS and costs nothing. The generated
 values differ on every run, so your pet name and password will not match the examples below.
@@ -281,7 +281,8 @@ grep -o '"result": "[^"]*"' terraform.tfstate
 This is the lesson the whole lab exists for. Step 8 showed this attribute as `(sensitive value)`;
 the redaction is a display convenience in the CLI. In the file, the generated password is stored in
 clear text. Anyone who can read the file can read the secret, which is why a local state file must
-never be committed to git and why Tier 3 moves state into encrypted remote storage.
+never be committed to git and why [Lab 17](lab17-s3-backend.md) moves state into encrypted remote
+storage.
 
 ### Step 13 — Prove state prevents duplicate creation
 

@@ -41,7 +41,8 @@ locals {
   )
 
   # Numbers support arithmetic; the same digits held as a string would not.
-  total_disk_gb = var.root_volume_gb + sum([for d in var.disks : d.size_gb])
+  # var.disks[*].size_gb reads one attribute out of every object in the list.
+  total_disk_gb = var.root_volume_gb + sum(var.disks[*].size_gb)
 
   # Same default value in both variables, different element count.
   list_vs_set = {
