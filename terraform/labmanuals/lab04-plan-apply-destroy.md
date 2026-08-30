@@ -209,5 +209,5 @@ rm -f terraform.tfstate terraform.tfstate.backup
 ## Next steps
 
 - Deep dive: [The core workflow](../docs/03-workflow.md)
-- Visual: [Basic tier concepts](../html/basic.html)
+- Visual: [Concept page — this lab's topic](../html/concepts.html#lab04-plan-apply-destroy)
 - Continue to [Lab 05 — Format and Validate](lab05-fmt-validate.md)

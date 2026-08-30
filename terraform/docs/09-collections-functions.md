@@ -8,7 +8,7 @@ the same kind of data is [`14-dynamic-blocks.md`](14-dynamic-blocks.md) at lab21
 
 ## The problem both solve
 
-Everything up to lab09 wrote one block per object. Three subnets meant three `aws_subnet` blocks,
+Every lab before these two wrote one block per object. Three subnets meant three `aws_subnet` blocks,
 nearly identical. That does not scale, and it does not survive review — a typo in the third copy is
 invisible.
 

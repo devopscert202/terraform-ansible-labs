@@ -301,14 +301,12 @@ resource "aws_route_table_association" "public" {
   description = "Allow inbound web traffic, all outbound"
   vpc_id      = aws_vpc.this.id
 
-  dynamic "ingress" {
-    for_each = var.ingress_ports  # [80]
-    content {
-      from_port   = ingress.value
-      to_port     = ingress.value
-      protocol    = "tcp"
-      cidr_blocks = [var.allowed_cidr]
-    }
+  ingress {
+    description = "Inbound HTTP"
+    from_port   = var.http_port  # 80
+    to_port     = var.http_port
+    protocol    = "tcp"
+    cidr_blocks = [var.allowed_cidr]
   }
 
   egress {

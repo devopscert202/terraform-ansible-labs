@@ -377,5 +377,5 @@ unset TF_VAR_db_password
 ## Next steps
 
 - Deep dive: [docs/05-variables.md](../docs/05-variables.md)
-- Visual: [html/intermediate.html](../html/intermediate.html)
+- Visual: [Concept page — this lab's topic](../html/concepts.html#lab07-tfvars-secrets)
 - Continue to [Lab 08 — Local State](lab08-local-state.md)

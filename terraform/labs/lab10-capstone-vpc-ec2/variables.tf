@@ -28,10 +28,10 @@ variable "instance_type" {
   default     = "t3.micro"
 }
 
-variable "ingress_ports" {
-  type        = list(number)
-  description = "TCP ports opened by the security group, expanded by a dynamic block. Only HTTP is needed; the instance has no key pair and is never reached over SSH."
-  default     = [80]
+variable "http_port" {
+  type        = number
+  description = "TCP port the security group opens for web traffic. Only HTTP is needed; the instance has no key pair and is never reached over SSH."
+  default     = 80
 }
 
 variable "allowed_cidr" {

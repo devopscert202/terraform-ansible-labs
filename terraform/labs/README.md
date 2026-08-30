@@ -14,7 +14,9 @@ terraform destroy      # when you are finished
 ```
 
 Follow the matching manual in [`../labmanuals/`](../labmanuals/) rather than reading the code
-cold. Full index: [`../labmanuals/README.md`](../labmanuals/README.md).
+cold. Full index: [`../labmanuals/README.md`](../labmanuals/README.md). The concept behind each
+file, with a line-by-line explanation, is on [`../html/concepts.html`](../html/concepts.html) —
+for example [`lab03`](../html/concepts.html#lab03-first-ec2).
 
 ## Directories
 
@@ -46,7 +48,8 @@ subject, `backend.hcl.example` where remote state is.
 | 20 | `lab20-remote-state-consumer/` | `terraform.tfvars.example` |
 | 21 | `lab21-dynamic-blocks/` | `variables.tf`, `outputs.tf` |
 | 22 | `lab22-ec2-s3-backend/` | `variables.tf`, `outputs.tf`, `terraform.tfvars.example`, `backend.hcl.example` |
-| 23 | `lab23-s3-bucket/` | `variables.tf`, `outputs.tf` |
+| 23 | `lab23-s3-bucket/` | `variables.tf`, `outputs.tf`, `terraform.tfvars.example` |
+| 24 | `lab24-count-foreach-buckets/` | `variables.tf`, `outputs.tf`, `terraform.tfvars.example` |
 
 ## Conventions
 
@@ -60,6 +63,8 @@ subject, `backend.hcl.example` where remote state is.
 | Variables | Every `variable` declares a `type` and a `description`; secrets add `sensitive = true` |
 | Tags | Every AWS resource carries `Name` and `Lab = "labNN"` |
 | Formatting | `terraform fmt -check` and `terraform validate` must pass |
+| Networks | A lab that launches an instance builds its own VPC, subnet and security group and sets `subnet_id` and `vpc_id` explicitly. Only `lab15` and `lab21` still depend on the account's default VPC |
+| SSH ingress | Scoped to the VPC CIDR, never `0.0.0.0/0`. `lab03` and `lab06` have no internet gateway and no public IP, so their instances are unreachable on purpose; `lab10` and `lab22` are the only reachable builds |
 
 ## Never commit
 

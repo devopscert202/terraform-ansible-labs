@@ -17,7 +17,7 @@ Fictional company used across Ansible and Terraform labs. Learners configure **w
 ## Terraform assets
 
 - EC2 pattern: [terraform/labs/lab03-first-ec2](../../../terraform/labs/lab03-first-ec2)
-- VPC + EC2 capstone: [terraform/labmanuals/lab21-capstone-vpc-ec2.md](../../../terraform/labmanuals/lab21-capstone-vpc-ec2.md)
+- VPC + EC2 capstone: [terraform/labmanuals/lab10-capstone-vpc-ec2.md](../../../terraform/labmanuals/lab10-capstone-vpc-ec2.md)
 
 ## Suggested flow
 

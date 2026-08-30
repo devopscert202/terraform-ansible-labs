@@ -406,5 +406,5 @@ unset TF_STATE_BUCKET
 ## Next steps
 
 - Deep dive: [../docs/13-remote-state.md](../docs/13-remote-state.md)
-- Visual: [../html/advanced.html](../html/advanced.html)
+- Visual: [Concept page — this lab's topic](../html/concepts.html#lab19-state-migration)
 - Continue to [Lab 20 — Remote state consumer](lab20-remote-state-consumer.md)

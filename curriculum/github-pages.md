@@ -39,12 +39,13 @@ git push origin main
 | Terraform track catalog | https://devopscert202.github.io/terraform-ansible-labs/terraform/html/index.html |
 | Terraform 101 (read first) | https://devopscert202.github.io/terraform-ansible-labs/terraform/html/terraform-101.html |
 | Terraform AWS primer (read second) | https://devopscert202.github.io/terraform-ansible-labs/terraform/html/aws-primer.html |
-| Terraform Basic | https://devopscert202.github.io/terraform-ansible-labs/terraform/html/basic.html |
-| Terraform Intermediate | https://devopscert202.github.io/terraform-ansible-labs/terraform/html/intermediate.html |
-| Terraform Advanced | https://devopscert202.github.io/terraform-ansible-labs/terraform/html/advanced.html |
+| Terraform concepts (all topics) | https://devopscert202.github.io/terraform-ansible-labs/terraform/html/concepts.html |
 
-The Terraform track lives at one flat depth (`terraform/html/`), so its six pages are two levels
-below the site root, not three. All six are generated; never hand-edit them. Regenerate before
+The Terraform track lives at one flat depth (`terraform/html/`), so its four pages are two levels
+below the site root, not three. The three former tier pages (`basic.html`, `intermediate.html`,
+`advanced.html`) were replaced by the single `concepts.html`, which carries every topic from lab00
+to lab24 in one sequence with a sticky topic index. All four pages are generated; never hand-edit
+them. Regenerate before
 pushing:
 
 ```bash

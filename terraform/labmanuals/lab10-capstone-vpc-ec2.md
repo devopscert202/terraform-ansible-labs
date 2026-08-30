@@ -9,9 +9,10 @@
 
 ## Overview
 
-Every lab so far taught one piece: a provider, a variable, an output, a dynamic block. This
+Every lab so far taught one piece: a provider, a resource, a variable, an output, a module. This
 capstone assembles them into one root module that builds a complete, reachable network from
-nothing. A **VPC** is your private network inside AWS, a **subnet** is a slice of it, and an
+nothing. Everything here uses only what labs 00 to 09 already covered — there is no new syntax to
+learn, only more of it in one place. A **VPC** is your private network inside AWS, a **subnet** is a slice of it, and an
 **internet gateway** is the door to the public internet. You will create all of it, launch an
 instance that installs a web server on first boot, and curl the resulting public URL.
 
@@ -72,7 +73,7 @@ variable "project" {
 variable "vpc_cidr" {
 variable "public_subnet_cidr" {
 variable "instance_type" {
-variable "ingress_ports" {
+variable "http_port" {
 variable "allowed_cidr" {
 ```
 
@@ -98,31 +99,32 @@ all of them. That is acceptable for a public web server you destroy within the h
 pattern to copy. In any account that is not a throwaway lab account, edit `terraform.tfvars` and
 set `allowed_cidr` to `YOUR_IP/32` before you continue.
 
-### Step 4 — Read how the security group is generated
+### Step 4 — Read the security group rules
 
-`var.ingress_ports` is a `list(number)`, and the `dynamic "ingress"` block from Lab 12 expands it
-into one `ingress` rule per port. The list holds port 80 and nothing else: the instance has no
-key pair, no step in this lab logs into it, and an open port nobody uses is only an attack
-surface. Open a port when a step needs it, not in advance.
+A security group is a stateful firewall. It has one `ingress` rule here and one `egress` rule.
+The ingress rule opens exactly one port, `var.http_port`, to `var.allowed_cidr`. Port 80 is the
+only one open: the instance has no key pair, no step in this lab logs into it, and an open port
+nobody uses is only an attack surface. Open a port when a step needs it, not in advance.
 
 ```bash
-grep -A 10 'dynamic "ingress"' main.tf
+grep -A 8 'ingress {' main.tf
 ```
 
 **Expected output**
 
 ```text
-  dynamic "ingress" {
-    for_each = var.ingress_ports
-    content {
-      description = "Inbound TCP ${ingress.value}"
-      from_port   = ingress.value
-      to_port     = ingress.value
-      protocol    = "tcp"
-      cidr_blocks = [var.allowed_cidr]
-    }
+  ingress {
+    description = "Inbound HTTP"
+    from_port   = var.http_port
+    to_port     = var.http_port
+    protocol    = "tcp"
+    cidr_blocks = [var.allowed_cidr]
   }
 ```
+
+Writing one rule per block is fine when there are one or two. When a group needs many rules
+driven by a list, repeating the block gets unwieldy — [Lab 21](lab21-dynamic-blocks.md) generates
+them from a collection with a `dynamic` block instead. You do not need that here.
 
 ### Step 5 — Read where the availability zone comes from
 
@@ -470,6 +472,6 @@ rm -rf .terraform terraform.tfstate*
 ## Next steps
 
 - Deep dive: [docs/08-capstone.md](../docs/08-capstone.md)
-- Visual: [Intermediate tier page](../html/intermediate.html)
+- Visual: [Concept page — this lab's topic](../html/concepts.html#lab10-capstone-vpc-ec2)
 - Concepts recap: [AWS primer and architecture diagram](../html/aws-primer.html)
 - Continue to [Lab 11 — Collections](lab11-collections.md)

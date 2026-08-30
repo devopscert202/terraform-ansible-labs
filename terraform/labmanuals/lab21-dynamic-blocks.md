@@ -370,6 +370,6 @@ terraform destroy
 
 ## Next steps
 
-- Deep dive: [docs/07-modules.md](../docs/07-modules.md)
-- Visual: [html/advanced.html](../html/advanced.html)
+- Deep dive: [docs/14-dynamic-blocks.md](../docs/14-dynamic-blocks.md)
+- Visual: [Concept page — this lab's topic](../html/concepts.html#lab21-dynamic-blocks)
 - Continue to [Lab 22 — EC2 with remote state in S3](lab22-ec2-s3-backend.md)

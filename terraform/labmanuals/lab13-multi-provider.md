@@ -34,7 +34,7 @@ exported.
 - [ ] [Lab 12 — Functions](lab12-functions.md) completed
 - [ ] Terraform 1.5.0 or newer on your `PATH` (`terraform version`)
 - [ ] Network access to `registry.terraform.io` so `init` can download plugins
-- [ ] Read the module layout notes in [../docs/10-multi-provider.md](../docs/17-project-structure.md)
+- [ ] Read the module layout notes in [../docs/10-multi-provider.md](../docs/10-multi-provider.md)
 
 ## Steps
 
@@ -323,6 +323,6 @@ terraform destroy -auto-approve
 
 ## Next steps
 
-- Deep dive: [../docs/17-project-structure.md](../docs/17-project-structure.md)
-- Visual: [../html/advanced.html](../html/advanced.html)
+- Deep dive: [../docs/10-multi-provider.md](../docs/10-multi-provider.md)
+- Visual: [Concept page — this lab's topic](../html/concepts.html#lab13-multi-provider)
 - Continue to [Lab 14 — local-exec provisioner](lab14-local-exec-provisioner.md)

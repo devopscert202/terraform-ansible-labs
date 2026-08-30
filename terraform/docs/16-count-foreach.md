@@ -103,7 +103,8 @@ fragile, since the two resources would have to be kept aligned by hand. `local.p
 `random_id` suffix for the same reason lab23 uses `random_pet`: bucket names are global, so the lab has
 to be runnable by everyone at once.
 
-Ten resources come out of these blocks plus the `random_id`, and the addresses are the whole lesson:
+Those three blocks and the `random_id` produce ten resources in total, and their addresses are the
+whole lesson:
 
 ```text
 aws_s3_bucket.by_count[0]

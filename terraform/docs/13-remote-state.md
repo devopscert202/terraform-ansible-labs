@@ -10,9 +10,8 @@ Workspaces — the other way to hold several states for one configuration, at la
 
 ## Why local state stops working
 
-Local state (covered in [`06-state.md`](06-state.md)) is a file in
-your working directory. It works perfectly for one person. Add a second person and every one of its
-properties becomes a problem:
+Local state (covered in [`06-state.md`](06-state.md)) is a file in your working directory. It works
+perfectly for one person. Add a second person and every one of its properties becomes a problem:
 
 | Problem | Consequence |
 |---|---|
@@ -281,8 +280,9 @@ output "upstream_environment" {
 }
 ```
 
-Lab20 reads lab16's local state file, which keeps the lab free and credential-free. Against a real
-S3 backend the shape is the same, with the producer's backend settings in `config`:
+Lab20 reads lab16's local state file, which keeps the lab free and credential-free — and is why
+lab16's cleanup is deferred until lab20 is done ([`12-workspaces.md`](12-workspaces.md)). Against a
+real S3 backend the shape is the same, with the producer's backend settings in `config`:
 
 ```hcl
 data "terraform_remote_state" "network" {

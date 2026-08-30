@@ -340,5 +340,5 @@ exactly the kind of untracked leftover Terraform exists to prevent.
 ## Next steps
 
 - Deep dive: [Resources](../docs/02-resources.md)
-- Visual: [Basic tier concepts](../html/basic.html)
+- Visual: [Concept page — this lab's topic](../html/concepts.html#lab02-console-vpc)
 - Continue to [Lab 03 — Your First EC2 Instance](lab03-first-ec2.md)

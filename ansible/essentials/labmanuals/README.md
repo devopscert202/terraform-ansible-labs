@@ -1,6 +1,6 @@
 # Ansible Essentials Lab Manuals
 
-7 labs · ~10 hours · [20-hour bootcamp](../../curriculum/20-hour-bootcamp.md)
+7 labs · ~10 hours · [20-hour bootcamp](../../../curriculum/20-hour-bootcamp.md)
 
 | Lab | Name | File |
 |-----|------|------|

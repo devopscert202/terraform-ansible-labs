@@ -621,5 +621,5 @@ terraform state rm aws_instance.web
 ## Next steps
 
 - Deep dive: [Resources](../docs/02-resources.md)
-- Visual: [Basic tier concepts](../html/basic.html)
+- Visual: [Concept page — this lab's topic](../html/concepts.html#lab03-first-ec2)
 - Continue to [Lab 04 — Plan, Apply, and Destroy](lab04-plan-apply-destroy.md)

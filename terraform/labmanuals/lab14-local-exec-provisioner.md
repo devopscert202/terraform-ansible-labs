@@ -319,5 +319,5 @@ terraform destroy -auto-approve
 ## Next steps
 
 - Deep dive: [../docs/11-provisioners.md](../docs/11-provisioners.md)
-- Visual: [../html/advanced.html](../html/advanced.html)
+- Visual: [Concept page — this lab's topic](../html/concepts.html#lab14-local-exec-provisioner)
 - Continue to [Lab 15 — remote-exec provisioner](lab15-remote-exec-provisioner.md)

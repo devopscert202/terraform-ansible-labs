@@ -88,15 +88,15 @@ resource "aws_security_group" "web" {
   description = "Allow inbound web traffic, all outbound"
   vpc_id      = aws_vpc.this.id
 
-  dynamic "ingress" {
-    for_each = var.ingress_ports
-    content {
-      description = "Inbound TCP ${ingress.value}"
-      from_port   = ingress.value
-      to_port     = ingress.value
-      protocol    = "tcp"
-      cidr_blocks = [var.allowed_cidr]
-    }
+  # One literal rule. Only HTTP is needed: the instance has no key pair and is
+  # never reached over SSH. Lab 21 shows how to generate many rules like this
+  # from a collection with a dynamic block.
+  ingress {
+    description = "Inbound HTTP"
+    from_port   = var.http_port
+    to_port     = var.http_port
+    protocol    = "tcp"
+    cidr_blocks = [var.allowed_cidr]
   }
 
   egress {

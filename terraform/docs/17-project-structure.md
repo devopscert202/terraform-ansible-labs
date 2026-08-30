@@ -48,10 +48,10 @@ usually via `terraform_remote_state` (lab20). Start with fewer roots and split w
 appears — a slow plan, a lock you keep waiting on, a change that keeps touching things it should
 not.
 
-**Visual summary:** [`../html/concepts.html`](../html/concepts.html)
-
-Multiple providers and provider aliases, which a dev/prod split often needs, are
+Multiple providers and provider aliases, which a two-region layout needs, are
 [`10-multi-provider.md`](10-multi-provider.md) at lab13.
+
+**Visual summary:** [`../html/concepts.html`](../html/concepts.html)
 
 ## Environment promotion
 

@@ -447,6 +447,6 @@ aws s3 rb "s3://tf-lab23-charmed-stud" --force
 
 You now have a resource you can create many of, which is exactly what the last lab needs.
 
-- Deep dive: [../docs/15-s3-buckets.md](../docs/13-remote-state.md) and [../docs/17-project-structure.md](../docs/17-project-structure.md)
-- Visual: [../html/advanced.html](../html/advanced.html)
+- Deep dive: [../docs/15-s3-buckets.md](../docs/15-s3-buckets.md) and [../docs/17-project-structure.md](../docs/17-project-structure.md)
+- Visual: [Concept page — this lab's topic](../html/concepts.html#lab23-s3-bucket)
 - Continue to [Lab 24 — count and for_each on real buckets](lab24-count-foreach-buckets.md)

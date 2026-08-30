@@ -432,5 +432,5 @@ versions this lab's applies accumulated.
 ## Next steps
 
 - Deep dive: [../docs/13-remote-state.md](../docs/13-remote-state.md)
-- Visual: [../html/advanced.html](../html/advanced.html)
+- Visual: [Concept page — this lab's topic](../html/concepts.html#lab17-s3-backend)
 - Continue to [Lab 18 — State keys and locking](lab18-state-keys-locking.md)

@@ -348,5 +348,5 @@ versions all three labs accumulated.
 ## Next steps
 
 - Deep dive: [../docs/13-remote-state.md](../docs/13-remote-state.md)
-- Visual: [../html/advanced.html](../html/advanced.html)
+- Visual: [Concept page — this lab's topic](../html/concepts.html#lab18-state-keys-locking)
 - Continue to [Lab 19 — State migration](lab19-state-migration.md)

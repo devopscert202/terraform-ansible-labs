@@ -196,14 +196,12 @@ TOPICS = [
         'resource "aws_security_group" "web" {\n'
         '  description = "Allow inbound web traffic, all outbound"\n'
         "  vpc_id      = aws_vpc.this.id\n\n"
-        '  dynamic "ingress" {\n'
-        "    for_each = var.ingress_ports  # [80]\n"
-        "    content {\n"
-        "      from_port   = ingress.value\n"
-        "      to_port     = ingress.value\n"
-        '      protocol    = "tcp"\n'
-        "      cidr_blocks = [var.allowed_cidr]\n"
-        "    }\n"
+        "  ingress {\n"
+        '    description = "Inbound HTTP"\n'
+        "    from_port   = var.http_port  # 80\n"
+        "    to_port     = var.http_port\n"
+        '    protocol    = "tcp"\n'
+        "    cidr_blocks = [var.allowed_cidr]\n"
         "  }\n\n"
         "  egress {\n"
         "    from_port   = 0\n"

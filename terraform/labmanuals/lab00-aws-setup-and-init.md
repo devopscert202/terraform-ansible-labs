@@ -412,5 +412,5 @@ aws configure list-profiles
 ## Next steps
 
 - Deep dive: [Getting started](../docs/00-getting-started.md)
-- Visual: [Basic tier concepts](../html/basic.html)
+- Visual: [Concept page — this lab's topic](../html/concepts.html#lab00-foundations)
 - Continue to [Lab 01 — Providers and Initialization](lab01-providers-init.md)

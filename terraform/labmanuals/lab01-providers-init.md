@@ -233,5 +233,5 @@ in a shared project your teammates need it.
 ## Next steps
 
 - Deep dive: [Providers](../docs/01-providers.md)
-- Visual: [Basic tier concepts](../html/basic.html)
+- Visual: [Concept page — this lab's topic](../html/concepts.html#lab01-providers-init)
 - Continue to [Lab 02 — Building a Network by Hand in the Console](lab02-console-vpc.md)

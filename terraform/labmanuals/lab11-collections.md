@@ -399,6 +399,6 @@ terraform destroy -auto-approve
 
 ## Next steps
 
-- Deep dive: [docs/05-variables.md](../docs/05-variables.md)
-- Visual: [html/intermediate.html](../html/intermediate.html)
+- Deep dive: [docs/09-collections-functions.md](../docs/09-collections-functions.md)
+- Visual: [Concept page — this lab's topic](../html/concepts.html#lab11-collections)
 - Continue to [Lab 12 — Functions](lab12-functions.md)

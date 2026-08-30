@@ -121,15 +121,12 @@ resource "aws_security_group" "web" {
   description = "Allow inbound web traffic, all outbound"
   vpc_id      = aws_vpc.this.id
 
-  dynamic "ingress" {
-    for_each = var.ingress_ports
-    content {
-      description = "Inbound TCP ${ingress.value}"
-      from_port   = ingress.value
-      to_port     = ingress.value
-      protocol    = "tcp"
-      cidr_blocks = [var.allowed_cidr]
-    }
+  ingress {
+    description = "Inbound HTTP"
+    from_port   = var.http_port
+    to_port     = var.http_port
+    protocol    = "tcp"
+    cidr_blocks = [var.allowed_cidr]
   }
 
   egress {
@@ -144,10 +141,12 @@ resource "aws_security_group" "web" {
 }
 ```
 
-`var.ingress_ports` defaults to `[80]` and the `dynamic` block generates one `ingress` block per
-port, so adding a port is a variable change rather than a structural one. There is deliberately no
-SSH rule: the instance has no key pair and nothing in this lab connects to it. Lab21 takes the same
-technique further and is the deep dive on it — [`14-dynamic-blocks.md`](14-dynamic-blocks.md).
+`var.http_port` defaults to `80`, so changing the port is a variable change rather than a
+structural one. The rule is written out literally because there is only one: the capstone sits at
+lab10 and uses nothing a learner has not already met. There is deliberately no SSH rule either —
+the instance has no key pair and nothing in this lab connects to it. When a group needs many rules
+driven by a collection, lab21 generates them with a `dynamic` block —
+[`14-dynamic-blocks.md`](14-dynamic-blocks.md).
 
 Security groups are stateful — the `egress` rule permits outbound traffic, and replies to it return
 automatically without a matching ingress rule. `allowed_cidr` defaults to `0.0.0.0/0` so the lab

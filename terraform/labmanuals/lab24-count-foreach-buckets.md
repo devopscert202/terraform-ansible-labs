@@ -667,7 +667,7 @@ against an empty directory; you finished by reading a plan closely enough to see
 list item would have destroyed a bucket nobody asked you to touch. That habit — read the plan,
 believe the plan — is the whole discipline.
 
-- Deep dive: [../docs/16-count-foreach.md](../docs/09-collections-functions.md) for collections and `for` expressions
+- Deep dive: [../docs/16-count-foreach.md](../docs/16-count-foreach.md) for collections and `for` expressions
 - Deep dive: [../docs/13-remote-state.md](../docs/13-remote-state.md) for resource addresses and state surgery
-- Visual: [../html/advanced.html](../html/advanced.html)
+- Visual: [Concept page — this lab's topic](../html/concepts.html#lab24-count-foreach-buckets)
 - Whole-track catalog: [../html/index.html](../html/index.html)

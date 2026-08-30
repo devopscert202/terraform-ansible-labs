@@ -22,11 +22,11 @@ naming the variable, the line, and the type it wanted. This lab walks the whole 
 those, and `any` — declaring one variable of each, then proving its behaviour with `terraform
 console` and with deliberate failures.
 
-Almost all of that happens without creating anything. The lab builds a small private network — one
-VPC, one subnet, one security group — and a single `t3.micro` instance inside it, so you can see
-variables reach real infrastructure. Every type lesson itself is done with variables, locals, and
-outputs, which cost nothing and run in under a second. The instance is deliberately not reachable
-from the internet; Lab 21 is where a public instance gets built.
+Almost all of that happens without creating anything: the type lessons run against variables, locals,
+and outputs, which cost nothing and answer in under a second. The lab does then build real
+infrastructure so you can watch variables reach AWS — a small private network of one VPC, one subnet,
+and one security group, with a single `t3.micro` instance inside it. That instance is deliberately
+not reachable from the internet; Lab 21 is where a public instance gets built.
 
 ## What you will build
 
@@ -1047,6 +1047,8 @@ VPC.
 | `InvalidAMIID.NotFound` | AMI lookup returned nothing in this region | Confirm `aws_region` is `us-east-2` |
 | `InvalidSubnet.Range: The CIDR '...' is invalid` on `aws_subnet.main` | `subnet_cidr` is not inside `vpc_cidr` | Pick a range within `vpc_cidr`, e.g. `10.0.1.0/24` inside `10.0.0.0/16` |
 | `InvalidParameterValue: Value (...) for parameter availabilityZone is invalid` | `subnet_az` is not a zone of `aws_region` | Use a zone the error lists — `us-east-2a`, `us-east-2b`, or `us-east-2c` |
+| `destroy` sits on `aws_subnet.main: Still destroying...` for many minutes, then `Request cancelled` | Something Terraform does not manage still lives in the subnet, so AWS refuses the delete and the provider retries until it times out | Find it with `aws ec2 delete-subnet --subnet-id <id>`, which fails immediately and names the cause: `DependencyViolation: The subnet '<id>' has dependencies and cannot be deleted`. Delete the leftover — usually a network interface, from `aws ec2 describe-network-interfaces --filters Name=subnet-id,Values=<id>` — then re-run `terraform destroy` |
+| `DependencyViolation: The vpc '<id>' has dependencies and cannot be deleted` | Same cause one level up: a subnet, security group, or interface inside the VPC survived | Clear the contents first; a `terraform destroy` that completes does this in the right order by itself |
 
 ## Cleanup
 
@@ -1057,6 +1059,6 @@ rm -f /tmp/null-test.tfvars
 
 ## Next steps
 
-- Deep dive: [docs/intermediate/06-variables.md](../docs/intermediate/06-variables.md)
-- Visual: [html/intermediate.html](../html/intermediate.html)
+- Deep dive: [docs/05-variables.md](../docs/05-variables.md)
+- Visual: [Concept page — this lab's topic](../html/concepts.html#lab06-variables-outputs)
 - Continue to [Lab 07 — tfvars and Secrets](lab07-tfvars-secrets.md)

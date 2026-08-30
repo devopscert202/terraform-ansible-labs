@@ -297,6 +297,6 @@ its [cleanup section](lab16-workspaces.md#cleanup) and run the commands you defe
 
 ## Next steps
 
-- Deep dive: [../docs/17-project-structure.md](../docs/17-project-structure.md)
-- Visual: [../html/advanced.html](../html/advanced.html)
+- Deep dive: [../docs/13-remote-state.md](../docs/13-remote-state.md)
+- Visual: [Concept page — this lab's topic](../html/concepts.html#lab20-remote-state-consumer)
 - Continue to [Lab 21 — Dynamic Blocks](lab21-dynamic-blocks.md)

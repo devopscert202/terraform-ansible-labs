@@ -166,12 +166,10 @@ Use HTML **before or after** the matching lab — not instead of doing the hands
 |---------|--------|
 | [Ansible essentials HTML](ansible/essentials/html/index.html) | Architecture, inventory, playbooks, variables, roles, vault |
 | [Ansible extended HTML](ansible/extended/html/index.html) | Loops, facts, dynamic inventory, break-fix |
-| [Terraform track catalog](terraform/html/index.html) | Tier cards, all 25 labs, searchable lab table |
+| [Terraform track catalog](terraform/html/index.html) | Entry-point sequence and the searchable table of all 25 labs |
 | [Terraform 101](terraform/html/terraform-101.html) | **Read first.** What Terraform is and who owns it, HCL and block anatomy, providers, every version-constraint operator, the CLI and plan symbols, state, drift |
 | [Terraform AWS primer](terraform/html/aws-primer.html) | **Read second.** AWS concepts from scratch plus the capstone architecture diagram |
-| [Terraform Basic](terraform/html/basic.html) | Credentials, providers, resources, the core workflow, quality gates |
-| [Terraform Intermediate](terraform/html/intermediate.html) | Variables, tfvars, state, modules, the capstone, collections, functions |
-| [Terraform Advanced](terraform/html/advanced.html) | Multiple providers, provisioners, workspaces, remote state, dynamic blocks, S3 |
+| [Terraform concepts](terraform/html/concepts.html) | All 26 topics, `lab00`–`lab24`, in one continuous sequence with a sticky topic index — credentials, providers, resources, the core workflow, quality gates, variables, tfvars, state, modules, the capstone, collections, functions, multiple providers, provisioners, workspaces, remote state, dynamic blocks, S3, `count` vs `for_each` |
 
 ---
 
@@ -211,26 +209,30 @@ Use HTML **before or after** the matching lab — not instead of doing the hands
 
 ## Full index — Terraform
 
-**25 labs, `lab00`–`lab24`.** Full table with tier and topic columns: [terraform/labmanuals/README.md](terraform/labmanuals/README.md). Track landing page: [terraform/README.md](terraform/README.md).
+**25 labs, `lab00`–`lab24`, run in numeric order.** Full table with tier, topic and per-lab concept
+links: [terraform/labmanuals/README.md](terraform/labmanuals/README.md). Track landing page:
+[terraform/README.md](terraform/README.md). Every topic is on the single
+[terraform/html/concepts.html](terraform/html/concepts.html); the tier headings below group the
+table only, and tier is a difficulty label rather than a separate path.
 
-### Tier 1 — Basic (lab00–lab05, instructor-led)
+### Basic — lab00–lab05 (instructor-led)
 
 | Lab | Manual | Lab directory | Topic |
 |-----|--------|---------------|-------|
 | 00 | [lab00-aws-setup-and-init.md](terraform/labmanuals/lab00-aws-setup-and-init.md) | [lab00-aws-setup-and-init/](terraform/labs/lab00-aws-setup-and-init/) | AWS credentials, provider block, first `init` |
 | 01 | [lab01-providers-init.md](terraform/labmanuals/lab01-providers-init.md) | [lab01-providers-init/](terraform/labs/lab01-providers-init/) | `required_providers`, lock file, `validate` |
 | 02 | [lab02-console-vpc.md](terraform/labmanuals/lab02-console-vpc.md) | [lab02-console-vpc/](terraform/labs/lab02-console-vpc/) | Console build, contrasted with IaC (no `.tf`) |
-| 03 | [lab03-first-ec2.md](terraform/labmanuals/lab03-first-ec2.md) | [lab03-first-ec2/](terraform/labs/lab03-first-ec2/) | AMI data source, security group, instance |
+| 03 | [lab03-first-ec2.md](terraform/labmanuals/lab03-first-ec2.md) | [lab03-first-ec2/](terraform/labs/lab03-first-ec2/) | AMI data source, own VPC and subnets, security group, instance |
 | 04 | [lab04-plan-apply-destroy.md](terraform/labmanuals/lab04-plan-apply-destroy.md) | [lab04-plan-apply-destroy/](terraform/labs/lab04-plan-apply-destroy/) | The core workflow, no cloud cost |
 | 05 | [lab05-fmt-validate.md](terraform/labmanuals/lab05-fmt-validate.md) | [lab05-fmt-validate/](terraform/labs/lab05-fmt-validate/) | `fmt`, `validate`, CI-style gates |
 
-**Docs:** [terraform/docs/basic/](terraform/docs/README.md) · **Concepts:** [terraform/html/basic.html](terraform/html/basic.html)
+**Docs:** [terraform/docs/](terraform/docs/README.md) — [`00-getting-started.md`](terraform/docs/00-getting-started.md), [`01-providers.md`](terraform/docs/01-providers.md), [`02-resources.md`](terraform/docs/02-resources.md), [`03-workflow.md`](terraform/docs/03-workflow.md), [`04-quality.md`](terraform/docs/04-quality.md) · **Concepts:** [`lab00` onward](terraform/html/concepts.html#lab00-foundations)
 
-### Tier 2 — Intermediate (lab06–lab12)
+### Intermediate — lab06–lab12
 
 | Lab | Manual | Lab directory | Topic |
 |-----|--------|---------------|-------|
-| 06 | [lab06-variables-outputs.md](terraform/labmanuals/lab06-variables-outputs.md) | [lab06-variables-outputs/](terraform/labs/lab06-variables-outputs/) | Typed inputs, locals, outputs |
+| 06 | [lab06-variables-outputs.md](terraform/labmanuals/lab06-variables-outputs.md) | [lab06-variables-outputs/](terraform/labs/lab06-variables-outputs/) | Every variable type, locals, outputs, own VPC and subnet |
 | 07 | [lab07-tfvars-secrets.md](terraform/labmanuals/lab07-tfvars-secrets.md) | [lab07-tfvars-secrets/](terraform/labs/lab07-tfvars-secrets/) | tfvars, precedence, `sensitive` |
 | 08 | [lab08-local-state.md](terraform/labmanuals/lab08-local-state.md) | [lab08-local-state/](terraform/labs/lab08-local-state/) | `terraform.tfstate`, refresh, drift |
 | 09 | [lab09-modules.md](terraform/labmanuals/lab09-modules.md) | [lab09-modules/](terraform/labs/lab09-modules/) | Child modules, inputs, outputs |
@@ -238,9 +240,9 @@ Use HTML **before or after** the matching lab — not instead of doing the hands
 | 11 | [lab11-collections.md](terraform/labmanuals/lab11-collections.md) | [lab11-collections/](terraform/labs/lab11-collections/) | `for_each` over maps and sets |
 | 12 | [lab12-functions.md](terraform/labmanuals/lab12-functions.md) | [lab12-functions/](terraform/labs/lab12-functions/) | String, collection, CIDR, encoding |
 
-**Docs:** [terraform/docs/intermediate/](terraform/docs/README.md) · **Concepts:** [terraform/html/intermediate.html](terraform/html/intermediate.html)
+**Docs:** [terraform/docs/](terraform/docs/README.md) — [`05-variables.md`](terraform/docs/05-variables.md), [`06-state.md`](terraform/docs/06-state.md), [`07-modules.md`](terraform/docs/07-modules.md), [`08-capstone.md`](terraform/docs/08-capstone.md), [`09-collections-functions.md`](terraform/docs/09-collections-functions.md) · **Concepts:** [`lab06` onward](terraform/html/concepts.html#lab06-variables-outputs)
 
-### Tier 3 — Advanced (lab13–lab24)
+### Advanced — lab13–lab24
 
 | Lab | Manual | Lab directory | Topic |
 |-----|--------|---------------|-------|
@@ -257,7 +259,7 @@ Use HTML **before or after** the matching lab — not instead of doing the hands
 | 23 | [lab23-s3-bucket.md](terraform/labmanuals/lab23-s3-bucket.md) | [lab23-s3-bucket/](terraform/labs/lab23-s3-bucket/) | `aws_s3_bucket`, versioning, encryption |
 | 24 | [lab24-count-foreach-buckets.md](terraform/labmanuals/lab24-count-foreach-buckets.md) | [lab24-count-foreach-buckets/](terraform/labs/lab24-count-foreach-buckets/) | `count` by position vs `for_each` by name |
 
-**Docs:** [terraform/docs/advanced/](terraform/docs/README.md) · **Concepts:** [terraform/html/advanced.html](terraform/html/advanced.html)
+**Docs:** [terraform/docs/](terraform/docs/README.md) — [`10-multi-provider.md`](terraform/docs/10-multi-provider.md), [`11-provisioners.md`](terraform/docs/11-provisioners.md), [`12-workspaces.md`](terraform/docs/12-workspaces.md), [`13-remote-state.md`](terraform/docs/13-remote-state.md), [`14-dynamic-blocks.md`](terraform/docs/14-dynamic-blocks.md), [`15-s3-buckets.md`](terraform/docs/15-s3-buckets.md), [`16-count-foreach.md`](terraform/docs/16-count-foreach.md), [`17-project-structure.md`](terraform/docs/17-project-structure.md) · **Concepts:** [`lab13` onward](terraform/html/concepts.html#lab13-multi-provider)
 
 ---
 
@@ -288,14 +290,14 @@ terraform-ansible-labs/
 │   │   └── html/             Offline interactive guides
 │   ├── extended/             Optional depth (lab01–09)
 │   └── projects/webapp-co/   Shared scenario
-└── terraform/                One flat track, 25 labs in 3 tiers
+└── terraform/                One flat track, 25 labs, lab00–lab24
     ├── labmanuals/           lab00–lab24 + README.md (the lab index)
     ├── labs/                 lab00-*/ … lab24-*/, one root module each
-    ├── docs/                 basic/ intermediate/ advanced/
-    └── html/                 index, terraform-101, aws-primer, basic, intermediate, advanced
+    ├── docs/                 00-getting-started.md … 17-project-structure.md, one flat numbered set
+    └── html/                 index, terraform-101, aws-primer, concepts
 ```
 
-Terraform tiers: **Basic** `lab00`–`lab05` (6 labs), **Intermediate** `lab06`–`lab12` (7, capstone at `lab10`), **Advanced** `lab13`–`lab24` (12).
+Terraform tier labels: **Basic** `lab00`–`lab05` (6 labs), **Intermediate** `lab06`–`lab12` (7, capstone at `lab10`), **Advanced** `lab13`–`lab24` (12). Tier records how much a lab assumes; there is no tier page and no tier navigation.
 
 ---
 

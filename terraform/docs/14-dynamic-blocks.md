@@ -103,9 +103,10 @@ aws ec2 describe-vpcs --filters Name=isDefault,Values=true \
 aws ec2 create-default-vpc
 ```
 
-Lab10 and lab22 avoid this entirely by building their own VPC and setting `vpc_id` explicitly, and
-that is the better pattern: the network a resource lands in is stated in the configuration rather
-than inherited from whatever the account happens to have.
+Labs 03, 06, 10 and 22 avoid this entirely by building their own VPC and setting `vpc_id` and
+`subnet_id` explicitly, and that is the better pattern: the network a resource lands in is stated in
+the configuration rather than inherited from whatever the account happens to have. Lab21 and lab15
+are the only two labs in the track that still need a default VPC.
 
 ## When not to use dynamic
 
@@ -113,8 +114,10 @@ than inherited from whatever the account happens to have.
 when you can, and use `dynamic` only when the collection is genuinely variable — supplied by a
 caller, or differing per environment. Two or three fixed rules are clearer written plainly.
 
-Lab10's capstone shows the justified case: `var.ingress_ports` is an input, so the set of open
-ports is a decision the caller makes rather than something baked into the resource body.
+Lab10's capstone is the counter-example: its security group needs exactly one rule, so it writes
+an `ingress` block out literally rather than generating it. Lab21 is the justified case — its
+`ingress_rules` map is an input, so the number of rules and their ports are decisions the caller
+makes rather than something baked into the resource body.
 
 ## Command reference
 

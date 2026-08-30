@@ -666,5 +666,5 @@ i-0f3922bc72788c323	terminated
 ## Next steps
 
 - Deep dive: [../docs/13-remote-state.md](../docs/13-remote-state.md)
-- Visual: [../html/advanced.html](../html/advanced.html)
+- Visual: [Concept page — this lab's topic](../html/concepts.html#lab22-ec2-s3-backend)
 - Continue to [Lab 23 — S3 bucket as a Terraform resource](lab23-s3-bucket.md)
