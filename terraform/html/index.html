@@ -30,7 +30,7 @@ h1 { font-size: 1.6rem; color: var(--blue); margin-bottom: 4px; }
          margin-top: 12px; font-size: 0.82rem; color: var(--slate-700); }
 .stats span { padding: 4px 10px; background: #eff6ff; border-radius: 999px; }
 
-/* tier nav */
+/* page nav */
 .tiernav { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 14px; }
 .tiernav a {
     padding: 6px 14px; border-radius: 999px; text-decoration: none; font-size: 0.84rem;
@@ -118,16 +118,6 @@ td.lineref { white-space: nowrap; font-family: "SF Mono", Menlo, monospace;
     border: 1px solid var(--slate-200); border-radius: 10px; outline: none;
 }
 .search-bar input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37,99,235,0.12); }
-.tiergrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px;
-            margin-bottom: 18px; }
-.tiercard {
-    background: #fff; border: 1px solid var(--slate-200); border-radius: 14px;
-    padding: 16px 18px; box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
-}
-.tiercard h2 { font-size: 1.05rem; margin: 6px 0 4px; }
-.tiercard p { color: var(--slate-700); font-size: 0.88rem; margin-bottom: 8px; }
-.tiercard .range { display: block; color: var(--slate-500); font-size: 0.78rem;
-                   font-family: "SF Mono", Menlo, monospace; margin-bottom: 8px; }
 /* entry-point sequence: Terraform 101 -> AWS primer -> lab00 */
 .startcard {
     background: #fff; border: 2px solid var(--blue); border-radius: 14px;
@@ -153,25 +143,23 @@ td.lineref { white-space: nowrap; font-family: "SF Mono", Menlo, monospace;
           margin-top: 6px; }
 .arrow { color: var(--slate-500); font-weight: 800; }
 .no-results { display: none; padding: 14px; color: var(--slate-500); font-size: 0.9rem; }
-@media (max-width: 768px) { .tiergrid { grid-template-columns: 1fr; } }
+@media (max-width: 768px) { .seq { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
     <div class="container">
         <header>
             <h1>Terraform Track</h1>
-            <p class="subtitle">22 labs across three tiers &mdash; from your first <code class="inline">terraform init</code> to a working public web server built entirely in code.</p>
+            <p class="subtitle">25 labs, lab00 to lab24 &mdash; from your first <code class="inline">terraform init</code> to a working public web server built entirely in code.</p>
             <p class="subtitle" style="margin-top:8px;">
                 <a class="backlink" href="../../index.html">&larr; All tracks catalog</a>
             </p>
-            <div class="stats"><span>22 labs</span><span>3 tiers</span><span>6 HTML pages</span><span>Terraform &gt;= 1.5.0</span><span>AWS provider ~&gt; 5.0</span><span>Region us-east-1</span><span>Offline</span></div>
+            <div class="stats"><span>25 labs</span><span>26 topics</span><span>4 HTML pages</span><span>Terraform &gt;= 1.5.0</span><span>AWS provider ~&gt; 5.0</span><span>Region us-east-2</span><span>Offline</span></div>
             <nav class="tiernav">
             <a href="./index.html" class="active">Track Home</a>
             <a href="./terraform-101.html">Terraform 101</a>
             <a href="./aws-primer.html">AWS Primer</a>
-            <a href="./basic.html">Basic</a>
-            <a href="./intermediate.html">Intermediate</a>
-            <a href="./advanced.html">Advanced</a>
+            <a href="./concepts.html">Concepts</a>
             </nav>
         </header>
 
@@ -198,7 +186,7 @@ td.lineref { white-space: nowrap; font-family: "SF Mono", Menlo, monospace;
                     <p>Region and availability zone, VPC and CIDR, public and private subnets,
                         internet gateway, route table, security group, EC2 instance, key pair, and
                         IAM access keys &mdash; each with its Terraform resource type, plus the
-                        diagram of what Lab 21 builds.</p>
+                        diagram of what Lab 10 builds.</p>
                     <span class="q">Answers: what is a VPC?</span>
                 </div>
                 <div>
@@ -211,33 +199,27 @@ td.lineref { white-space: nowrap; font-family: "SF Mono", Menlo, monospace;
                 </div>
             </div>
             <div class="note">Already comfortable with Terraform and AWS? Skip straight to the
-                <a href="basic.html">Basic tier concepts</a> or to
+                <a href="concepts.html">concepts page</a> or to
                 <a href="../labmanuals/lab00-aws-setup-and-init.md">Lab 00</a>.</div>
         </div>
 
-        <div class="tiergrid">
-            <div class="tiercard">
-                <span class="tag basic">Basic</span>
-                <h2><a class="backlink" href="basic.html">Basic &rarr;</a></h2>
-                <span class="range">lab00-lab05 &middot; 6 labs</span>
-                <p>Install, authenticate, declare a provider, create your first resource, and learn the init / plan / apply / destroy loop.</p>
-            </div>
-            <div class="tiercard">
-                <span class="tag intermediate">Intermediate</span>
-                <h2><a class="backlink" href="intermediate.html">Intermediate &rarr;</a></h2>
-                <span class="range">lab06-lab12 &middot; 7 labs</span>
-                <p>Parameterise configuration with variables and tfvars, read state, extract modules, and generate resources from collections.</p>
-            </div>
-            <div class="tiercard">
-                <span class="tag advanced">Advanced</span>
-                <h2><a class="backlink" href="advanced.html">Advanced &rarr;</a></h2>
-                <span class="range">lab13-lab21 &middot; 9 labs</span>
-                <p>Multiple providers, provisioners, workspaces, remote state in S3 with locking, state migration, and the end-to-end capstone.</p>
-            </div>
+        <div class="card">
+            <span class="eyebrow">All 26 topics on one page</span>
+            <h2><a class="backlink" href="concepts.html">Terraform concepts &rarr;</a></h2>
+            <p class="concept">One page, lab00 to lab24, in lab order &mdash; no tier pages and
+                no tier navigation. Each topic gives the concept in plain English, a real HCL
+                example, every significant line explained, and a link to the lab that practises
+                it. A sticky topic index at the top jumps to any of the 26 cards, and
+                the Concepts column in the table below deep-links to the topic for each lab.</p>
+            <p class="concept">Tier is still recorded per lab, in the Tier column below:
+                <span class="tag basic">Basic</span> lab00&ndash;lab05,
+                <span class="tag intermediate">Intermediate</span> lab06&ndash;lab12,
+                <span class="tag advanced">Advanced</span> lab13&ndash;lab24. It tells you how
+                much a lab assumes; it is not a place to navigate to.</p>
         </div>
 
         <div class="card">
-            <span class="eyebrow">All 22 labs</span>
+            <span class="eyebrow">All 25 labs</span>
             <h2>Lab sequence</h2>
             <p class="concept">Work through them in order: each lab assumes the one before it.
                 Every manual links to its runnable code under
@@ -255,47 +237,48 @@ td.lineref { white-space: nowrap; font-family: "SF Mono", Menlo, monospace;
                     <th style="width:16%;">Concepts</th>
                 </tr></thead>
                 <tbody>
-                    <tr><td class="lineref">lab00</td><td><a href="../labmanuals/lab00-aws-setup-and-init.md">AWS Setup and Init</a></td><td><span class="tag basic">Basic</span></td><td>Credentials, provider block, first init</td><td><a href="basic.html">Basic concepts</a></td></tr>
-                    <tr><td class="lineref">lab01</td><td><a href="../labmanuals/lab01-providers-init.md">Providers and Init</a></td><td><span class="tag basic">Basic</span></td><td>required_providers, lock file, validate</td><td><a href="basic.html">Basic concepts</a></td></tr>
-                    <tr><td class="lineref">lab02</td><td><a href="../labmanuals/lab02-console-vpc.md">Console VPC</a></td><td><span class="tag basic">Basic</span></td><td>Manual console build, contrasted with IaC</td><td><a href="basic.html">Basic concepts</a></td></tr>
-                    <tr><td class="lineref">lab03</td><td><a href="../labmanuals/lab03-first-ec2.md">First EC2 Instance</a></td><td><span class="tag basic">Basic</span></td><td>AMI data source, security group, instance</td><td><a href="basic.html">Basic concepts</a></td></tr>
-                    <tr><td class="lineref">lab04</td><td><a href="../labmanuals/lab04-plan-apply-destroy.md">Plan, Apply, Destroy</a></td><td><span class="tag basic">Basic</span></td><td>The core workflow with no cloud cost</td><td><a href="basic.html">Basic concepts</a></td></tr>
-                    <tr><td class="lineref">lab05</td><td><a href="../labmanuals/lab05-fmt-validate.md">Format and Validate</a></td><td><span class="tag basic">Basic</span></td><td>fmt, validate, CI-style quality gates</td><td><a href="basic.html">Basic concepts</a></td></tr>
-                    <tr><td class="lineref">lab06</td><td><a href="../labmanuals/lab06-variables-outputs.md">Variables and Outputs</a></td><td><span class="tag intermediate">Intermediate</span></td><td>Typed inputs, locals, outputs</td><td><a href="intermediate.html">Intermediate concepts</a></td></tr>
-                    <tr><td class="lineref">lab07</td><td><a href="../labmanuals/lab07-tfvars-secrets.md">tfvars and Secrets</a></td><td><span class="tag intermediate">Intermediate</span></td><td>tfvars files, precedence, sensitive</td><td><a href="intermediate.html">Intermediate concepts</a></td></tr>
-                    <tr><td class="lineref">lab08</td><td><a href="../labmanuals/lab08-local-state.md">Local State</a></td><td><span class="tag intermediate">Intermediate</span></td><td>terraform.tfstate, refresh, drift</td><td><a href="intermediate.html">Intermediate concepts</a></td></tr>
-                    <tr><td class="lineref">lab09</td><td><a href="../labmanuals/lab09-modules.md">Modules</a></td><td><span class="tag intermediate">Intermediate</span></td><td>Child modules, inputs, outputs</td><td><a href="intermediate.html">Intermediate concepts</a></td></tr>
-                    <tr><td class="lineref">lab10</td><td><a href="../labmanuals/lab10-collections.md">Collections</a></td><td><span class="tag intermediate">Intermediate</span></td><td>for_each over maps and sets</td><td><a href="intermediate.html">Intermediate concepts</a></td></tr>
-                    <tr><td class="lineref">lab11</td><td><a href="../labmanuals/lab11-functions.md">Functions</a></td><td><span class="tag intermediate">Intermediate</span></td><td>String, collection, CIDR, encoding</td><td><a href="intermediate.html">Intermediate concepts</a></td></tr>
-                    <tr><td class="lineref">lab12</td><td><a href="../labmanuals/lab12-dynamic-blocks.md">Dynamic Blocks</a></td><td><span class="tag intermediate">Intermediate</span></td><td>Generated nested blocks from data</td><td><a href="intermediate.html">Intermediate concepts</a></td></tr>
-                    <tr><td class="lineref">lab13</td><td><a href="../labmanuals/lab13-multi-provider.md">Multiple Providers</a></td><td><span class="tag advanced">Advanced</span></td><td>Two providers, provider aliases</td><td><a href="advanced.html">Advanced concepts</a></td></tr>
-                    <tr><td class="lineref">lab14</td><td><a href="../labmanuals/lab14-local-exec-provisioner.md">local-exec Provisioner</a></td><td><span class="tag advanced">Advanced</span></td><td>Run a command on the Terraform host</td><td><a href="advanced.html">Advanced concepts</a></td></tr>
-                    <tr><td class="lineref">lab15</td><td><a href="../labmanuals/lab15-remote-exec-provisioner.md">remote-exec Provisioner</a></td><td><span class="tag advanced">Advanced</span></td><td>SSH connection block, inline commands</td><td><a href="advanced.html">Advanced concepts</a></td></tr>
-                    <tr><td class="lineref">lab16</td><td><a href="../labmanuals/lab16-workspaces.md">Workspaces</a></td><td><span class="tag advanced">Advanced</span></td><td>terraform.workspace, per-env naming</td><td><a href="advanced.html">Advanced concepts</a></td></tr>
-                    <tr><td class="lineref">lab17</td><td><a href="../labmanuals/lab17-s3-backend.md">S3 Backend</a></td><td><span class="tag advanced">Advanced</span></td><td>Remote state in S3, backend config files</td><td><a href="advanced.html">Advanced concepts</a></td></tr>
-                    <tr><td class="lineref">lab18</td><td><a href="../labmanuals/lab18-state-keys-locking.md">State Keys and Locking</a></td><td><span class="tag advanced">Advanced</span></td><td>Key conventions, S3 native lockfile</td><td><a href="advanced.html">Advanced concepts</a></td></tr>
-                    <tr><td class="lineref">lab19</td><td><a href="../labmanuals/lab19-state-migration.md">State Migration</a></td><td><span class="tag advanced">Advanced</span></td><td>init -migrate-state, backups</td><td><a href="advanced.html">Advanced concepts</a></td></tr>
-                    <tr><td class="lineref">lab20</td><td><a href="../labmanuals/lab20-remote-state-consumer.md">Remote State Consumer</a></td><td><span class="tag advanced">Advanced</span></td><td>terraform_remote_state data source</td><td><a href="advanced.html">Advanced concepts</a></td></tr>
-                    <tr><td class="lineref">lab21</td><td><a href="../labmanuals/lab21-capstone-vpc-ec2.md">Capstone: VPC and EC2</a></td><td><span class="tag advanced">Advanced</span></td><td>VPC, IGW, subnet, route table, SG, EC2</td><td><a href="advanced.html">Advanced concepts</a></td></tr>
+                    <tr><td class="lineref">lab00</td><td><a href="../labmanuals/lab00-aws-setup-and-init.md">AWS Setup and First Init</a></td><td><span class="tag basic">Basic</span></td><td>Credentials, provider block, first init</td><td><a href="concepts.html#lab00-foundations">lab00 concepts</a></td></tr>
+                    <tr><td class="lineref">lab01</td><td><a href="../labmanuals/lab01-providers-init.md">Providers and Initialization</a></td><td><span class="tag basic">Basic</span></td><td>required_providers, lock file, validate</td><td><a href="concepts.html#lab01-providers-init">lab01 concepts</a></td></tr>
+                    <tr><td class="lineref">lab02</td><td><a href="../labmanuals/lab02-console-vpc.md">Building a Network by Hand in the Console</a></td><td><span class="tag basic">Basic</span></td><td>Manual console build, contrasted with IaC</td><td><a href="concepts.html#lab02-console-vpc">lab02 concepts</a></td></tr>
+                    <tr><td class="lineref">lab03</td><td><a href="../labmanuals/lab03-first-ec2.md">Your First EC2 Instance</a></td><td><span class="tag basic">Basic</span></td><td>VPC, two subnets, security group, instance</td><td><a href="concepts.html#lab03-first-ec2">lab03 concepts</a></td></tr>
+                    <tr><td class="lineref">lab04</td><td><a href="../labmanuals/lab04-plan-apply-destroy.md">Plan, Apply, and Destroy</a></td><td><span class="tag basic">Basic</span></td><td>The core workflow with no cloud cost</td><td><a href="concepts.html#lab04-plan-apply-destroy">lab04 concepts</a></td></tr>
+                    <tr><td class="lineref">lab05</td><td><a href="../labmanuals/lab05-fmt-validate.md">Format and Validate</a></td><td><span class="tag basic">Basic</span></td><td>fmt, validate, CI-style quality gates</td><td><a href="concepts.html#lab05-fmt-validate">lab05 concepts</a></td></tr>
+                    <tr><td class="lineref">lab06</td><td><a href="../labmanuals/lab06-variables-outputs.md">Variables and Outputs</a></td><td><span class="tag intermediate">Intermediate</span></td><td>Typed inputs, locals, outputs, own VPC</td><td><a href="concepts.html#lab06-variables-outputs">lab06 concepts</a></td></tr>
+                    <tr><td class="lineref">lab07</td><td><a href="../labmanuals/lab07-tfvars-secrets.md">tfvars and Secrets</a></td><td><span class="tag intermediate">Intermediate</span></td><td>tfvars files, precedence, sensitive</td><td><a href="concepts.html#lab07-tfvars-secrets">lab07 concepts</a></td></tr>
+                    <tr><td class="lineref">lab08</td><td><a href="../labmanuals/lab08-local-state.md">Local State</a></td><td><span class="tag intermediate">Intermediate</span></td><td>terraform.tfstate, refresh, drift</td><td><a href="concepts.html#lab08-local-state">lab08 concepts</a></td></tr>
+                    <tr><td class="lineref">lab09</td><td><a href="../labmanuals/lab09-modules.md">Modules</a></td><td><span class="tag intermediate">Intermediate</span></td><td>Child modules, inputs, outputs</td><td><a href="concepts.html#lab09-modules">lab09 concepts</a></td></tr>
+                    <tr><td class="lineref">lab10</td><td><a href="../labmanuals/lab10-capstone-vpc-ec2.md">Capstone: VPC to public web server</a></td><td><span class="tag intermediate">Intermediate</span></td><td>VPC, IGW, subnet, route table, SG, EC2</td><td><a href="concepts.html#lab10-capstone-vpc-ec2">lab10 concepts</a></td></tr>
+                    <tr><td class="lineref">lab11</td><td><a href="../labmanuals/lab11-collections.md">Collections</a></td><td><span class="tag intermediate">Intermediate</span></td><td>for_each over maps and sets</td><td><a href="concepts.html#lab11-collections">lab11 concepts</a></td></tr>
+                    <tr><td class="lineref">lab12</td><td><a href="../labmanuals/lab12-functions.md">Functions</a></td><td><span class="tag intermediate">Intermediate</span></td><td>String, collection, CIDR, encoding</td><td><a href="concepts.html#lab12-functions">lab12 concepts</a></td></tr>
+                    <tr><td class="lineref">lab13</td><td><a href="../labmanuals/lab13-multi-provider.md">Multi-provider configuration</a></td><td><span class="tag advanced">Advanced</span></td><td>Two providers, provider aliases</td><td><a href="concepts.html#lab13-multi-provider">lab13 concepts</a></td></tr>
+                    <tr><td class="lineref">lab14</td><td><a href="../labmanuals/lab14-local-exec-provisioner.md">local-exec provisioner</a></td><td><span class="tag advanced">Advanced</span></td><td>Run a command on the Terraform host</td><td><a href="concepts.html#lab14-local-exec-provisioner">lab14 concepts</a></td></tr>
+                    <tr><td class="lineref">lab15</td><td><a href="../labmanuals/lab15-remote-exec-provisioner.md">remote-exec provisioner</a></td><td><span class="tag advanced">Advanced</span></td><td>SSH connection block, inline commands</td><td><a href="concepts.html#lab15-remote-exec-provisioner">lab15 concepts</a></td></tr>
+                    <tr><td class="lineref">lab16</td><td><a href="../labmanuals/lab16-workspaces.md">Workspaces</a></td><td><span class="tag advanced">Advanced</span></td><td>terraform.workspace, per-env naming</td><td><a href="concepts.html#lab16-workspaces">lab16 concepts</a></td></tr>
+                    <tr><td class="lineref">lab17</td><td><a href="../labmanuals/lab17-s3-backend.md">S3 backend</a></td><td><span class="tag advanced">Advanced</span></td><td>Remote state in S3, backend config files</td><td><a href="concepts.html#lab17-s3-backend">lab17 concepts</a></td></tr>
+                    <tr><td class="lineref">lab18</td><td><a href="../labmanuals/lab18-state-keys-locking.md">State keys and locking</a></td><td><span class="tag advanced">Advanced</span></td><td>Key conventions, S3 native lockfile</td><td><a href="concepts.html#lab18-state-keys-locking">lab18 concepts</a></td></tr>
+                    <tr><td class="lineref">lab19</td><td><a href="../labmanuals/lab19-state-migration.md">State migration</a></td><td><span class="tag advanced">Advanced</span></td><td>init -migrate-state, backups</td><td><a href="concepts.html#lab19-state-migration">lab19 concepts</a></td></tr>
+                    <tr><td class="lineref">lab20</td><td><a href="../labmanuals/lab20-remote-state-consumer.md">Remote state consumer</a></td><td><span class="tag advanced">Advanced</span></td><td>terraform_remote_state data source</td><td><a href="concepts.html#lab20-remote-state-consumer">lab20 concepts</a></td></tr>
+                    <tr><td class="lineref">lab21</td><td><a href="../labmanuals/lab21-dynamic-blocks.md">Dynamic Blocks</a></td><td><span class="tag advanced">Advanced</span></td><td>Generated nested blocks from data</td><td><a href="concepts.html#lab21-dynamic-blocks">lab21 concepts</a></td></tr>
+                    <tr><td class="lineref">lab22</td><td><a href="../labmanuals/lab22-ec2-s3-backend.md">EC2 with remote state in S3</a></td><td><span class="tag advanced">Advanced</span></td><td>The capstone build, state kept in S3</td><td><a href="concepts.html#lab22-ec2-s3-backend">lab22 concepts</a></td></tr>
+                    <tr><td class="lineref">lab23</td><td><a href="../labmanuals/lab23-s3-bucket.md">S3 bucket as a Terraform resource</a></td><td><span class="tag advanced">Advanced</span></td><td>aws_s3_bucket, versioning, encryption</td><td><a href="concepts.html#lab23-s3-bucket">lab23 concepts</a></td></tr>
+                    <tr><td class="lineref">lab24</td><td><a href="../labmanuals/lab24-count-foreach-buckets.md">count and for_each on real buckets</a></td><td><span class="tag advanced">Advanced</span></td><td>count by position vs for_each by name</td><td><a href="concepts.html#lab24-count-foreach-buckets">lab24 concepts</a></td></tr>
                 </tbody>
             </table>
             <div class="no-results" id="no-results">No labs match that filter.</div>
         </div>
 
         <div class="card">
-            <span class="eyebrow">All 6 pages</span>
+            <span class="eyebrow">All 4 pages</span>
             <h2>The HTML set</h2>
-            <p class="concept">Six self-contained pages. No CDN, no external fonts, no build step
+            <p class="concept">Four self-contained pages. No CDN, no external fonts, no build step
                 &mdash; open any of them offline, or print them.</p>
             <table>
                 <thead><tr><th style="width:22%;">Page</th><th style="width:14%;">Read it</th><th>Contents</th></tr></thead>
                 <tbody>
                 <tr><td class="lineref"><a href="terraform-101.html">terraform-101.html</a></td><td><strong>1st</strong></td><td>Terraform fundamentals from absolute zero: the tool, HCL, providers, version constraints, the CLI, state, drift.</td></tr>
                 <tr><td class="lineref"><a href="aws-primer.html">aws-primer.html</a></td><td><strong>2nd</strong></td><td>AWS concepts from absolute zero, each with its Terraform resource type, plus the capstone architecture diagram.</td></tr>
-                <tr><td class="lineref">index.html</td><td>as needed</td><td>This page: the entry-point sequence, the tier cards, and the searchable table of all 22 labs.</td></tr>
-                <tr><td class="lineref"><a href="basic.html">basic.html</a></td><td>with lab00&ndash;05</td><td>Tier 1 concepts.</td></tr>
-                <tr><td class="lineref"><a href="intermediate.html">intermediate.html</a></td><td>with lab06&ndash;12</td><td>Tier 2 concepts.</td></tr>
-                <tr><td class="lineref"><a href="advanced.html">advanced.html</a></td><td>with lab13&ndash;21</td><td>Tier 3 concepts.</td></tr>
+                <tr><td class="lineref"><a href="concepts.html">concepts.html</a></td><td>alongside every lab</td><td>All 26 topics, lab00 to lab24, in one continuous sequence with a sticky topic index.</td></tr>
+                <tr><td class="lineref">index.html</td><td>as needed</td><td>This page: the entry-point sequence and the searchable table of all 25 labs.</td></tr>
                 </tbody>
             </table>
         </div>
@@ -306,10 +289,10 @@ td.lineref { white-space: nowrap; font-family: "SF Mono", Menlo, monospace;
             <table>
                 <thead><tr><th style="width:26%;">Where</th><th>What it is for</th></tr></thead>
                 <tbody>
-                <tr><td class="lineref">html/</td><td>The 6 pages above. Concept, example, line-by-line explanation, and a link to the matching lab.</td></tr>
+                <tr><td class="lineref">html/</td><td>The 4 pages above. Concept, example, line-by-line explanation, and a link to the matching lab.</td></tr>
                 <tr><td class="lineref">labmanuals/</td><td>The step-by-step manual you follow at the keyboard, with expected output after every command.</td></tr>
                 <tr><td class="lineref">labs/</td><td>The runnable <code class="inline">.tf</code> code, one root module per lab. Edit files here rather than pasting from the manual.</td></tr>
-                <tr><td class="lineref">docs/</td><td>Longer written deep dives per tier, for after the lab.</td></tr>
+                <tr><td class="lineref">docs/</td><td>Longer written deep dives, one flat numbered file per subject, for after the lab.</td></tr>
                 </tbody>
             </table>
             <div class="warn">Every AWS lab costs money while it is running. Finish with

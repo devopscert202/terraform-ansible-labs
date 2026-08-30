@@ -1,7 +1,7 @@
 variable "aws_region" {
   type        = string
   description = "AWS region the network is created in."
-  default     = "us-east-1"
+  default     = "us-east-2"
 }
 
 variable "name" {

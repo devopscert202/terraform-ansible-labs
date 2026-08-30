@@ -34,7 +34,7 @@ which use separate state keys instead.
 
 - [ ] [Lab 15 — remote-exec provisioner](lab15-remote-exec-provisioner.md) completed
 - [ ] Terraform 1.5.0 or newer (`terraform version`)
-- [ ] Read the state model notes in [../docs/advanced/state.md](../docs/advanced/state.md)
+- [ ] Read the state model notes in [../docs/12-workspaces.md](../docs/12-workspaces.md)
 
 No AWS resources and no credentials are needed.
 
@@ -308,6 +308,6 @@ terraform workspace delete dev
 
 ## Next steps
 
-- Deep dive: [../docs/advanced/state.md](../docs/advanced/state.md)
-- Visual: [../html/advanced.html](../html/advanced.html)
+- Deep dive: [../docs/12-workspaces.md](../docs/12-workspaces.md)
+- Visual: [Concept page — this lab's topic](../html/concepts.html#lab16-workspaces)
 - Continue to [Lab 17 — S3 backend](lab17-s3-backend.md)

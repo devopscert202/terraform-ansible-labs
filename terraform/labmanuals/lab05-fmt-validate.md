@@ -257,6 +257,26 @@ terraform validate
 
 If all three exit `0`, the configuration is ready for someone to review a plan.
 
+### Step 14 — Destroy
+
+Nothing here is billable, but leaving state behind makes the next lab's `state list` confusing.
+Type `yes` when prompted.
+
+```bash
+terraform destroy
+```
+
+**Expected output**
+
+```text
+random_string.formatted_example: Destroying... [id=4$fqJ-M&e2]
+terraform_data.validation_probe: Destroying... [id=bebaf852-03ad-e834-a6e7-1149a27e30ab]
+random_string.formatted_example: Destruction complete after 0s
+terraform_data.validation_probe: Destruction complete after 0s
+
+Destroy complete! Resources: 2 destroyed.
+```
+
 ## Done when
 
 - [ ] `terraform fmt -check` exited `3` on the unformatted file, then `0` after `terraform fmt`
@@ -289,6 +309,6 @@ rm -f terraform.tfstate terraform.tfstate.backup
 
 ## Next steps
 
-- Deep dive: [Quality checks](../docs/basic/05-quality.md)
-- Visual: [Basic tier concepts](../html/basic.html)
-- Continue to [Lab 06 — Variables and outputs](lab06-variables-outputs.md)
+- Deep dive: [Quality checks](../docs/04-quality.md)
+- Visual: [Concept page — this lab's topic](../html/concepts.html#lab05-fmt-validate)
+- Continue to [Lab 06 — Variables and Outputs](lab06-variables-outputs.md)

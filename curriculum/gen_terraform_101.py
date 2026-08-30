@@ -121,7 +121,7 @@ INTRO = card(
         ),
         note(
             f"This track targets Terraform <strong>{TRACK_TF}</strong> and the AWS "
-            f"provider <strong>{TRACK_AWS}</strong>, in region {c('us-east-1')}. "
+            f"provider <strong>{TRACK_AWS}</strong>, in region {c('us-east-2')}. "
             f"Section 9 explains exactly what those two version strings permit."
         ),
     ],
@@ -533,7 +533,7 @@ variable "environment" {
 locals {
   instance_count = 2                            # number
   enable_logging = true                         # bool
-  zones          = ["us-east-1a", "us-east-1b"] # list of string
+  zones          = ["us-east-2a", "us-east-2b"] # list of string
 
   # map of string
   common_tags = {
@@ -571,7 +571,7 @@ BASICS_ROWS = [
         "<code>[ ... ]</code>",
         "A <strong>list</strong>: ordered values in square brackets, reached by position "
         "starting at zero, so <code>local.zones[0]</code> is "
-        "<code>&quot;us-east-1a&quot;</code>.",
+        "<code>&quot;us-east-2a&quot;</code>.",
     ),
     (
         "<code>{ ... }</code>",
@@ -710,7 +710,7 @@ ADD_CODE = """terraform {
 }
 
 provider "aws" {
-  region = "us-east-1"
+  region = "us-east-2"
 }"""
 
 ADD_ROWS = [
@@ -755,7 +755,7 @@ ADD_ROWS = [
     (
         "<code>region</code>",
         "An AWS-provider-specific setting. Every AWS resource in this configuration is "
-        "created in <code>us-east-1</code>. Different providers take completely different "
+        "created in <code>us-east-2</code>. Different providers take completely different "
         "settings.",
     ),
 ]

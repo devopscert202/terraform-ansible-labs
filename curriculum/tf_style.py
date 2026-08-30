@@ -45,7 +45,7 @@ h1 { font-size: 1.6rem; color: var(--blue); margin-bottom: 4px; }
          margin-top: 12px; font-size: 0.82rem; color: var(--slate-700); }
 .stats span { padding: 4px 10px; background: #eff6ff; border-radius: 999px; }
 
-/* tier nav */
+/* page nav */
 .tiernav { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 14px; }
 .tiernav a {
     padding: 6px 14px; border-radius: 999px; text-decoration: none; font-size: 0.84rem;
@@ -138,9 +138,7 @@ def page(title: str, subtitle: str, body: str, *, active: str = "", stats=None,
         ("index.html", "Track Home", "index"),
         ("terraform-101.html", "Terraform 101", "tf101"),
         ("aws-primer.html", "AWS Primer", "primer"),
-        ("basic.html", "Basic", "basic"),
-        ("intermediate.html", "Intermediate", "intermediate"),
-        ("advanced.html", "Advanced", "advanced"),
+        ("concepts.html", "Concepts", "concepts"),
     ]
     nav = "\n".join(
         f'            <a href="./{href}"{" class=\"active\"" if key == active else ""}>{label}</a>'
@@ -184,10 +182,12 @@ def page(title: str, subtitle: str, body: str, *, active: str = "", stats=None,
 
 
 def topic(eyebrow: str, heading: str, concept: str, code: str, explain_rows,
-          lab_href: str = "", lab_label: str = "", *, lang_note: str = "") -> str:
+          lab_href: str = "", lab_label: str = "", *, lang_note: str = "",
+          anchor: str = "") -> str:
     """One topic section: concept overview -> example code -> line-by-line -> lab link.
 
     explain_rows: iterable of (line_or_token, meaning) pairs.
+    anchor: stable element id, so an in-page nav can link straight to this card.
     """
     rows = "\n".join(
         f"                <tr><td class=\"lineref\">{ref}</td><td>{meaning}</td></tr>"
@@ -196,7 +196,8 @@ def topic(eyebrow: str, heading: str, concept: str, code: str, explain_rows,
     note = f'\n            <div class="note">{lang_note}</div>' if lang_note else ""
     lab = (f'\n            <a class="lablink" href="{lab_href}">Practise it in {lab_label} &rarr;</a>'
            if lab_href else "")
-    return f"""        <div class="card">
+    card_id = f' id="{anchor}"' if anchor else ""
+    return f"""        <div class="card"{card_id}>
             <span class="eyebrow">{eyebrow}</span>
             <h2>{heading}</h2>
             <p class="concept">{concept}</p>

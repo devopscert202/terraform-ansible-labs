@@ -27,7 +27,7 @@ Terraform is involved at all. Work through them in order and do not skip ahead: 
 by `ssh` is far easier to read than the same failure caught by a provisioner.
 
 **A note on the expected output below.** The Terraform `validate` and `plan` blocks and the AWS
-CLI blocks in steps 3 to 6 were captured from a real run in `us-east-1`. The `ssh` and
+CLI blocks in steps 3 to 6 were captured from a real run in `us-east-2`. The `ssh` and
 `remote-exec` handshake blocks depend on your account, network, and instance, so they are marked
 *(yours will differ)* and show the documented shape.
 
@@ -58,12 +58,12 @@ The instance is the only billable item. Complete the lab in one sitting and run 
 - [ ] [Lab 14 — local-exec provisioner](lab14-local-exec-provisioner.md) completed
 - [ ] The AWS CLI configured and verified — `aws sts get-caller-identity` returns your account,
       as set up in [Lab 00](lab00-aws-setup-and-init.md)
-- [ ] A default VPC in `us-east-1`. Check with
+- [ ] A default VPC in `us-east-2`. Check with
       `aws ec2 describe-vpcs --filters Name=isDefault,Values=true --query 'Vpcs[].VpcId' --output text`.
       If that prints nothing, run `aws ec2 create-default-vpc` once
 - [ ] Outbound TCP 22 permitted from your network. Many corporate networks block it; see the
       first row of [If something fails](#if-something-fails) for how that failure looks
-- [ ] Read [../docs/advanced/provisioners.md](../docs/advanced/provisioners.md)
+- [ ] Read [../docs/11-provisioners.md](../docs/11-provisioners.md)
 
 ## Steps
 
@@ -318,7 +318,7 @@ ssh -i ~/.ssh/lab-key.pem ec2-user@203.0.113.10 'hostname'
 **Expected output** *(yours will differ)*
 
 ```text
-ip-10-0-1-42.ec2.internal
+ip-10-0-1-42.us-east-2.compute.internal
 ```
 
 If this hangs for about a minute and then times out, return to step 7 — the security group is
@@ -413,7 +413,7 @@ terraform_data.bootstrap (remote-exec):   Host: 203.0.113.10
 terraform_data.bootstrap (remote-exec):   User: ec2-user
 terraform_data.bootstrap (remote-exec):   Private key: true
 terraform_data.bootstrap (remote-exec): Connected!
-terraform_data.bootstrap (remote-exec): Terraform remote-exec connected to ip-10-0-1-42.ec2.internal
+terraform_data.bootstrap (remote-exec): Terraform remote-exec connected to ip-10-0-1-42.us-east-2.compute.internal
 
 Apply complete! Resources: 1 added, 0 changed, 0 destroyed.
 
@@ -522,6 +522,6 @@ rerun that one command.
 
 ## Next steps
 
-- Deep dive: [../docs/advanced/provisioners.md](../docs/advanced/provisioners.md)
-- Visual: [../html/advanced.html](../html/advanced.html)
+- Deep dive: [../docs/11-provisioners.md](../docs/11-provisioners.md)
+- Visual: [Concept page — this lab's topic](../html/concepts.html#lab15-remote-exec-provisioner)
 - Continue to [Lab 16 — Workspaces](lab16-workspaces.md)

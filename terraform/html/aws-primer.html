@@ -30,7 +30,7 @@ h1 { font-size: 1.6rem; color: var(--blue); margin-bottom: 4px; }
          margin-top: 12px; font-size: 0.82rem; color: var(--slate-700); }
 .stats span { padding: 4px 10px; background: #eff6ff; border-radius: 999px; }
 
-/* tier nav */
+/* page nav */
 .tiernav { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 14px; }
 .tiernav a {
     padding: 6px 14px; border-radius: 999px; text-decoration: none; font-size: 0.84rem;
@@ -120,14 +120,12 @@ td.lineref { white-space: nowrap; font-family: "SF Mono", Menlo, monospace;
             <p class="subtitle" style="margin-top:8px;">
                 <a class="backlink" href="../../index.html">&larr; All tracks catalog</a>
             </p>
-            <div class="stats"><span>9 concepts</span><span>Terraform resource types</span><span>Lab 21 architecture diagram</span></div>
+            <div class="stats"><span>9 concepts</span><span>Terraform resource types</span><span>Lab 10 architecture diagram</span></div>
             <nav class="tiernav">
             <a href="./index.html">Track Home</a>
             <a href="./terraform-101.html">Terraform 101</a>
             <a href="./aws-primer.html" class="active">AWS Primer</a>
-            <a href="./basic.html">Basic</a>
-            <a href="./intermediate.html">Intermediate</a>
-            <a href="./advanced.html">Advanced</a>
+            <a href="./concepts.html">Concepts</a>
             </nav>
         </header>
 
@@ -139,8 +137,8 @@ td.lineref { white-space: nowrap; font-family: "SF Mono", Menlo, monospace;
             resource type that creates it, in the order the pieces stack up: a region holds a
             VPC, the VPC holds subnets, a subnet holds an instance, and a gateway plus a route
             table make that instance reachable. The diagram at the end is exactly what
-            <a class="lablink" href="../labmanuals/lab21-capstone-vpc-ec2.md"
-               style="margin:0;">Lab 21</a> builds.</p>
+            <a class="lablink" href="../labmanuals/lab10-capstone-vpc-ec2.md"
+               style="margin:0;">Lab 10</a> builds.</p>
             <div class="note"><strong>Read <a href="./terraform-101.html">Terraform 101</a>
             first.</strong> This page teaches AWS, not Terraform. It shows HCL &mdash; the
             language Terraform configuration is written in &mdash; to name the resource type
@@ -172,10 +170,10 @@ td.lineref { white-space: nowrap; font-family: "SF Mono", Menlo, monospace;
         <div class="card">
             <span class="eyebrow">Where things live</span>
             <h2>Region and Availability Zone</h2>
-            <p class="concept">A <strong>region</strong> is a geographic cluster of AWS data centres, such as <code class="inline">us-east-1</code> in North Virginia. Every resource you create belongs to exactly one region, and resources in different regions cannot see each other by default. An <strong>Availability Zone</strong> (AZ) is one isolated data-centre group inside a region, named by suffixing a letter: <code class="inline">us-east-1a</code>. This whole track uses <code class="inline">us-east-1</code>.</p>
+            <p class="concept">A <strong>region</strong> is a geographic cluster of AWS data centres, such as <code class="inline">us-east-2</code> in North Virginia. Every resource you create belongs to exactly one region, and resources in different regions cannot see each other by default. An <strong>Availability Zone</strong> (AZ) is one isolated data-centre group inside a region, named by suffixing a letter: <code class="inline">us-east-2a</code>. This whole track uses <code class="inline">us-east-2</code>.</p>
             <h3>Example</h3>
 <pre>provider "aws" {
-  region = "us-east-1"
+  region = "us-east-2"
 }</pre>
             <h3>Line by line</h3>
             <table>
@@ -197,7 +195,7 @@ td.lineref { white-space: nowrap; font-family: "SF Mono", Menlo, monospace;
   cidr_block           = "10.0.0.0/16"
   enable_dns_hostnames = true
 
-  tags = { Name = "tflabs-capstone", Lab = "lab21" }
+  tags = { Name = "tflabs-capstone", Lab = "lab10" }
 }</pre>
             <h3>Line by line</h3>
             <table>
@@ -209,10 +207,10 @@ td.lineref { white-space: nowrap; font-family: "SF Mono", Menlo, monospace;
                 <tr><td class="lineref"><code>tags</code></td><td>Free-form key/value labels. Every resource in this track carries <code>Name</code> and <code>Lab</code>.</td></tr>
                 </tbody>
             </table>
-            <div class="note"><strong>Check you have a default VPC before your first apply.</strong> An <code class="inline">aws_instance</code> with no <code class="inline">subnet_id</code>, or an <code class="inline">aws_security_group</code> with no <code class="inline">vpc_id</code>, is placed in the region's <em>default VPC</em> — a VPC AWS pre-creates per region. A fresh training account may have none, and <code class="inline">terraform plan</code> does not detect it: the failure appears only at apply, as <code class="inline">VPCIdNotSpecified: No default VPC for this user</code>. Labs 03, 06 and 12 rely on it. Check, then create one if the result is empty:<pre>aws ec2 describe-vpcs --filters Name=isDefault,Values=true \
+            <div class="note"><strong>Check you have a default VPC before your first apply.</strong> An <code class="inline">aws_instance</code> with no <code class="inline">subnet_id</code>, or an <code class="inline">aws_security_group</code> with no <code class="inline">vpc_id</code>, is placed in the region's <em>default VPC</em> — a VPC AWS pre-creates per region. A fresh training account may have none, and <code class="inline">terraform plan</code> does not detect it: the failure appears only at apply, as <code class="inline">VPCIdNotSpecified: No default VPC for this user</code>. Labs 15 and 21 rely on it; every other AWS lab builds its own network. Check, then create one if the result is empty:<pre>aws ec2 describe-vpcs --filters Name=isDefault,Values=true \
     --query 'Vpcs[].VpcId' --output text
 
-aws ec2 create-default-vpc</pre>Lab 21 is unaffected because it builds its own VPC and sets <code class="inline">subnet_id</code> and <code class="inline">vpc_id</code> explicitly. That is the better pattern: the network a resource lands in is stated in the configuration rather than inherited from whatever the account happens to have.</div>
+aws ec2 create-default-vpc</pre>Lab 10 is unaffected because it builds its own VPC and sets <code class="inline">subnet_id</code> and <code class="inline">vpc_id</code> explicitly. That is the better pattern: the network a resource lands in is stated in the configuration rather than inherited from whatever the account happens to have.</div>
             <a class="lablink" href="../labmanuals/lab02-console-vpc.md">Practise it in Lab 02 — build a VPC in the console &rarr;</a>
         </div>
         <div class="card">
@@ -237,8 +235,8 @@ resource "aws_subnet" "public" {
                 <tr><td class="lineref"><code>aws_subnet</code></td><td>The Terraform resource type for a subnet.</td></tr>
                 <tr><td class="lineref"><code>vpc_id</code></td><td>Places the subnet inside the VPC. This reference is also what tells Terraform to create the VPC first.</td></tr>
                 <tr><td class="lineref"><code>cidr_block</code></td><td>A /24 (256 addresses) carved out of the VPC's /16. Subnet ranges may not overlap.</td></tr>
-                <tr><td class="lineref"><code>data &quot;aws_availability_zones&quot;</code></td><td>Asks the account which zones it can actually use. Zone names are mapped per account, so <code>us-east-1a</code> is not the same hardware in two accounts and may be absent or out of capacity in yours.</td></tr>
-                <tr><td class="lineref"><code>availability_zone</code></td><td>Pins the subnet to one AZ, which must sit inside the provider's region. Take it from the data source with <code>names[0]</code> rather than hardcoding a name — this is what Lab 21 does, and it is not a value you set by hand.</td></tr>
+                <tr><td class="lineref"><code>data &quot;aws_availability_zones&quot;</code></td><td>Asks the account which zones it can actually use. Zone names are mapped per account, so <code>us-east-2a</code> is not the same hardware in two accounts and may be absent or out of capacity in yours.</td></tr>
+                <tr><td class="lineref"><code>availability_zone</code></td><td>Pins the subnet to one AZ, which must sit inside the provider's region. Take it from the data source with <code>names[0]</code> rather than hardcoding a name — this is what Lab 10 does, and it is not a value you set by hand.</td></tr>
                 <tr><td class="lineref"><code>map_public_ip_on_launch</code></td><td>Auto-assigns a public IPv4 address to instances launched in this subnet.</td></tr>
                 </tbody>
             </table>
@@ -252,7 +250,7 @@ resource "aws_subnet" "public" {
 <pre>resource "aws_internet_gateway" "this" {
   vpc_id = aws_vpc.this.id
 
-  tags = { Name = "tflabs-capstone-igw", Lab = "lab21" }
+  tags = { Name = "tflabs-capstone-igw", Lab = "lab10" }
 }</pre>
             <h3>Line by line</h3>
             <table>
@@ -262,7 +260,7 @@ resource "aws_subnet" "public" {
                 <tr><td class="lineref"><code>vpc_id</code></td><td>Attaches the gateway to the VPC. An unattached gateway carries no traffic.</td></tr>
                 </tbody>
             </table>
-            <a class="lablink" href="../labmanuals/lab21-capstone-vpc-ec2.md">Practise it in Lab 21 — the capstone build &rarr;</a>
+            <a class="lablink" href="../labmanuals/lab10-capstone-vpc-ec2.md">Practise it in Lab 10 — the capstone build &rarr;</a>
         </div>
         <div class="card">
             <span class="eyebrow">Traffic direction</span>
@@ -292,7 +290,7 @@ resource "aws_route_table_association" "public" {
                 <tr><td class="lineref"><code>aws_route_table_association</code></td><td>Binds the table to a subnet. Without it the subnet keeps the VPC's main table and stays private.</td></tr>
                 </tbody>
             </table>
-            <a class="lablink" href="../labmanuals/lab21-capstone-vpc-ec2.md">Practise it in Lab 21 — the capstone build &rarr;</a>
+            <a class="lablink" href="../labmanuals/lab10-capstone-vpc-ec2.md">Practise it in Lab 10 — the capstone build &rarr;</a>
         </div>
         <div class="card">
             <span class="eyebrow">Instance firewall</span>
@@ -303,14 +301,12 @@ resource "aws_route_table_association" "public" {
   description = "Allow inbound web traffic, all outbound"
   vpc_id      = aws_vpc.this.id
 
-  dynamic "ingress" {
-    for_each = var.ingress_ports  # [80]
-    content {
-      from_port   = ingress.value
-      to_port     = ingress.value
-      protocol    = "tcp"
-      cidr_blocks = [var.allowed_cidr]
-    }
+  ingress {
+    description = "Inbound HTTP"
+    from_port   = var.http_port  # 80
+    to_port     = var.http_port
+    protocol    = "tcp"
+    cidr_blocks = [var.allowed_cidr]
   }
 
   egress {
@@ -326,13 +322,13 @@ resource "aws_route_table_association" "public" {
                 <tbody>
                 <tr><td class="lineref"><code>aws_security_group</code></td><td>The Terraform resource type.</td></tr>
                 <tr><td class="lineref"><code>vpc_id</code></td><td>Places the group in your VPC. Omit it and the group is created in the region's default VPC instead — see the warning in the VPC section above.</td></tr>
-                <tr><td class="lineref"><code>dynamic &quot;ingress&quot;</code></td><td>Generates one ingress rule per element of the list instead of repeating the block by hand. Lab 21 opens a single port, 80.</td></tr>
+                <tr><td class="lineref"><code>dynamic &quot;ingress&quot;</code></td><td>Generates one ingress rule per element of the list instead of repeating the block by hand. Lab 10 opens a single port, 80.</td></tr>
                 <tr><td class="lineref"><code>from_port</code> / <code>to_port</code></td><td>A port range. Setting both to the same number opens exactly one port.</td></tr>
-                <tr><td class="lineref"><code>cidr_blocks</code></td><td>Who may connect. Lab 21's <code>allowed_cidr</code> defaults to <code>0.0.0.0/0</code>, the entire internet — defensible for a public web port, dangerous for an administrative port such as SSH on 22. Narrow it to your own address outside a lab account.</td></tr>
+                <tr><td class="lineref"><code>cidr_blocks</code></td><td>Who may connect. Lab 10's <code>allowed_cidr</code> defaults to <code>0.0.0.0/0</code>, the entire internet — defensible for a public web port, dangerous for an administrative port such as SSH on 22. Narrow it to your own address outside a lab account.</td></tr>
                 <tr><td class="lineref"><code>egress</code></td><td>Outbound, written as one ordinary block. Groups are stateful, so replies to allowed inbound requests need no rule of their own.</td></tr>
                 </tbody>
             </table>
-            <a class="lablink" href="../labmanuals/lab21-capstone-vpc-ec2.md">Practise it in Lab 21 — the capstone build &rarr;</a>
+            <a class="lablink" href="../labmanuals/lab10-capstone-vpc-ec2.md">Practise it in Lab 10 — the capstone build &rarr;</a>
         </div>
         <div class="card">
             <span class="eyebrow">Compute</span>
@@ -400,7 +396,7 @@ resource "aws_instance" "web" {
 <pre>unset AWS_PROFILE AWS_SESSION_TOKEN
 export AWS_ACCESS_KEY_ID="AKIA..."
 export AWS_SECRET_ACCESS_KEY="..."
-export AWS_DEFAULT_REGION="us-east-1"
+export AWS_DEFAULT_REGION="us-east-2"
 
 aws sts get-caller-identity</pre>
             <h3>Line by line</h3>
@@ -417,7 +413,7 @@ aws sts get-caller-identity</pre>
         </div>
         <div class="card">
             <span class="eyebrow">Putting it together</span>
-            <h2>The Lab 21 architecture</h2>
+            <h2>The Lab 10 architecture</h2>
             <p class="concept">Seven resources, one reachable web server. Follow the numbered
             blue arrows:
             <strong>1</strong> a request from the internet reaches the internet gateway;
@@ -436,7 +432,7 @@ aws sts get-caller-identity</pre>
             table, which has no default route, and step 2 fails. Remove any one piece and the
             path breaks.</p>
             <div class="diagram">
-<svg viewBox="0 0 1060 700" role="img" aria-label="Lab 21 topology. A request from the internet enters the AWS region through the internet gateway, passes into the public subnet, is admitted by the security group on TCP port 80, and reaches the EC2 instance running httpd, which replies back out through the gateway. The route table is shown with dashed lines because it configures the path rather than carrying traffic: its 0.0.0.0/0 route targets the internet gateway, and it is associated with the public subnet.">
+<svg viewBox="0 0 1060 700" role="img" aria-label="Lab 10 topology. A request from the internet enters the AWS region through the internet gateway, passes into the public subnet, is admitted by the security group on TCP port 80, and reaches the EC2 instance running httpd, which replies back out through the gateway. The route table is shown with dashed lines because it configures the path rather than carrying traffic: its 0.0.0.0/0 route targets the internet gateway, and it is associated with the public subnet.">
     <defs>
         <marker id="arrowhead" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
             <path d="M 0 0 L 10 5 L 0 10 z" fill="#2563eb" />
@@ -457,7 +453,7 @@ aws sts get-caller-identity</pre>
     <text x="100" y="522" font-family="&quot;Segoe UI&quot;, system-ui, sans-serif" font-size="11" font-weight="600" fill="#64748b" text-anchor="middle">output web_url</text>
     <rect x="220" y="30" width="810" height="640" rx="14" fill="#ffffff" stroke="#64748b" stroke-width="2" stroke-dasharray="7 5" />
     <text x="240" y="58" font-family="&quot;Segoe UI&quot;, system-ui, sans-serif" font-size="15" font-weight="700" fill="#0f172a" text-anchor="start">AWS Region</text>
-    <text x="340" y="58" font-family="&quot;SF Mono&quot;, Menlo, Consolas, monospace" font-size="13" font-weight="600" fill="#64748b" text-anchor="start">us-east-1</text>
+    <text x="340" y="58" font-family="&quot;SF Mono&quot;, Menlo, Consolas, monospace" font-size="13" font-weight="600" fill="#64748b" text-anchor="start">us-east-2</text>
     <text x="1010" y="58" font-family="&quot;SF Mono&quot;, Menlo, Consolas, monospace" font-size="11" font-weight="600" fill="#64748b" text-anchor="end">provider aws { region }</text>
     <rect x="250" y="80" width="750" height="570" rx="14" fill="#f8fbff" stroke="#2563eb" stroke-width="2" />
     <text x="272" y="108" font-family="&quot;Segoe UI&quot;, system-ui, sans-serif" font-size="15" font-weight="700" fill="#2563eb" text-anchor="start">VPC 10.0.0.0/16</text>
@@ -510,12 +506,12 @@ aws sts get-caller-identity</pre>
                     <tr><td class="lineref">Security group</td><td><code class="inline">aws_security_group</code></td></tr>
                     <tr><td class="lineref">EC2 instance</td><td><code class="inline">aws_instance</code></td></tr>
                     <tr><td class="lineref">Machine image</td><td><code class="inline">data.aws_ami</code></td></tr>
-                    <tr><td class="lineref">Availability Zone</td><td><code class="inline">data.aws_availability_zones</code> &mdash; the capstone takes the first zone the account can actually use rather than hardcoding <code class="inline">us-east-1a</code></td></tr>
+                    <tr><td class="lineref">Availability Zone</td><td><code class="inline">data.aws_availability_zones</code> &mdash; the capstone takes the first zone the account can actually use rather than hardcoding <code class="inline">us-east-2a</code></td></tr>
                 </tbody>
             </table>
             <div class="warn">The EC2 instance is the only billable resource in the diagram.
             Run <code class="inline">terraform destroy</code> when the lab ends.</div>
-            <a class="lablink" href="../labmanuals/lab21-capstone-vpc-ec2.md">Build it in Lab 21 &rarr;</a>
+            <a class="lablink" href="../labmanuals/lab10-capstone-vpc-ec2.md">Build it in Lab 10 &rarr;</a>
         </div>
 
 

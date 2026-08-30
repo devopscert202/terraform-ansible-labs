@@ -1,0 +1,15 @@
+# Copy to terraform.tfvars and edit if you want your own names or settings.
+# terraform.tfvars is git-ignored; this example file is not.
+
+aws_region  = "us-east-2"
+name_prefix = "tf-lab24"
+
+# Drives the count example. Order matters here - that is the whole point.
+bucket_names = ["logs", "assets", "backups"]
+
+# Drives the for_each example. The key is the instance identity.
+buckets = {
+  logs    = { versioning = true, tags = { Retention = "30d", Tier = "ops" } }
+  assets  = { versioning = false, tags = { Retention = "none", Tier = "web" } }
+  backups = { versioning = true, tags = { Retention = "1y", Tier = "data" } }
+}

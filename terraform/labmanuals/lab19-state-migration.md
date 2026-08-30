@@ -39,7 +39,7 @@ prompt in step 8 is Terraform's documented wording.
 - [ ] `TF_STATE_BUCKET` exported in this terminal, holding the name you invented in lab 17
 - [ ] Terraform 1.11.0 or newer, for generally-available `use_lockfile` (`terraform version`)
 - [ ] AWS credentials exported and `aws sts get-caller-identity` working
-- [ ] Read [../docs/advanced/state.md](../docs/advanced/state.md)
+- [ ] Read [../docs/13-remote-state.md](../docs/13-remote-state.md)
 
 **If you are starting at this lab, or opened a new terminal since lab 17**, re-export the bucket
 name and confirm the bucket exists before you migrate anything into it. A migration that fails
@@ -183,7 +183,7 @@ cat backend.hcl
 ```text
 bucket       = "tfstate-yourname-4821"
 key          = "labs/lab19/terraform.tfstate"
-region       = "us-east-1"
+region       = "us-east-2"
 encrypt      = true
 use_lockfile = true
 ```
@@ -405,6 +405,6 @@ unset TF_STATE_BUCKET
 
 ## Next steps
 
-- Deep dive: [../docs/advanced/state.md](../docs/advanced/state.md)
-- Visual: [../html/advanced.html](../html/advanced.html)
+- Deep dive: [../docs/13-remote-state.md](../docs/13-remote-state.md)
+- Visual: [Concept page — this lab's topic](../html/concepts.html#lab19-state-migration)
 - Continue to [Lab 20 — Remote state consumer](lab20-remote-state-consumer.md)

@@ -1,5 +1,5 @@
 bucket       = "replace-with-your-globally-unique-state-bucket"
 key          = "labs/dev/network/terraform.tfstate"
-region       = "us-east-1"
+region       = "us-east-2"
 encrypt      = true
 use_lockfile = true

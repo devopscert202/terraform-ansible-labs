@@ -41,7 +41,7 @@ exact wording varies between versions.
 - [ ] Terraform 1.11.0 or newer, for generally-available `use_lockfile` (`terraform version`)
 - [ ] AWS credentials exported and `aws sts get-caller-identity` working
 - [ ] Two terminals available, both in this directory, for the locking drill
-- [ ] Read [../docs/advanced/state.md](../docs/advanced/state.md)
+- [ ] Read [../docs/13-remote-state.md](../docs/13-remote-state.md)
 
 **If you are starting at this lab, or opened a new terminal since lab 17**, re-export the bucket
 name and confirm the bucket is really there before running anything else. `TF_STATE_BUCKET` is a
@@ -144,7 +144,7 @@ cat backend.hcl
 ```text
 bucket       = "tfstate-yourname-4821"
 key          = "labs/dev/network/terraform.tfstate"
-region       = "us-east-1"
+region       = "us-east-2"
 encrypt      = true
 use_lockfile = true
 ```
@@ -347,6 +347,6 @@ versions all three labs accumulated.
 
 ## Next steps
 
-- Deep dive: [../docs/advanced/state.md](../docs/advanced/state.md)
-- Visual: [../html/advanced.html](../html/advanced.html)
+- Deep dive: [../docs/13-remote-state.md](../docs/13-remote-state.md)
+- Visual: [Concept page — this lab's topic](../html/concepts.html#lab18-state-keys-locking)
 - Continue to [Lab 19 — State migration](lab19-state-migration.md)

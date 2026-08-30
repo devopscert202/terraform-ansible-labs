@@ -400,6 +400,6 @@ terraform destroy
 
 ## Next steps
 
-- Deep dive: [docs/intermediate/08-modules.md](../docs/intermediate/08-modules.md)
-- Visual: [html/intermediate.html](../html/intermediate.html)
-- Continue to [Lab 10 — Collections](lab10-collections.md)
+- Deep dive: [docs/07-modules.md](../docs/07-modules.md)
+- Visual: [Concept page — this lab's topic](../html/concepts.html#lab09-modules)
+- Continue to [Lab 10 — Capstone: VPC and EC2](lab10-capstone-vpc-ec2.md)

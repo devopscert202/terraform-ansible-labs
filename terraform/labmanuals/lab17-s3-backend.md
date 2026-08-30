@@ -33,7 +33,7 @@ floor and then fail at `init` with `Unsupported argument: use_lockfile`, so the 
 here to fail early with a clear message instead.
 
 **A note on the expected output below.** Every block in this lab was captured from a real run in
-`us-east-1`, including the bucket commands and the two `create-bucket` region errors. Values that
+`us-east-2`, including the bucket commands and the two `create-bucket` region errors. Values that
 are unique to your account — bucket name, object sizes, timestamps, resource ids — are marked
 *(yours will differ)*.
 
@@ -50,7 +50,7 @@ are unique to your account — bucket name, object sizes, timestamps, resource i
 - [ ] [Lab 16 — Workspaces](lab16-workspaces.md) completed
 - [ ] Terraform 1.11.0 or newer, for generally-available `use_lockfile` (`terraform version`)
 - [ ] AWS CLI version 2, and AWS credentials exported (see [Lab 00](lab00-aws-setup-and-init.md)) with `aws sts get-caller-identity` working
-- [ ] Read [../docs/advanced/state.md](../docs/advanced/state.md)
+- [ ] Read [../docs/13-remote-state.md](../docs/13-remote-state.md)
 
 No bucket is required in advance. You create it in this lab and reuse it in labs 18 and 19.
 
@@ -156,7 +156,8 @@ terminal you open across labs 17 to 19, and write the name down somewhere.
 ### Step 6 — Create the state bucket
 
 ```bash
-aws s3api create-bucket --bucket "$TF_STATE_BUCKET" --region us-east-1
+aws s3api create-bucket --bucket "$TF_STATE_BUCKET" --region us-east-2 \
+  --create-bucket-configuration LocationConstraint=us-east-2
 ```
 
 **Expected output** *(yours will differ)*
@@ -168,16 +169,9 @@ aws s3api create-bucket --bucket "$TF_STATE_BUCKET" --region us-east-1
 }
 ```
 
-**The `us-east-1` region quirk.** In `us-east-1` — the region this whole track uses — you must
-*not* pass `--create-bucket-configuration LocationConstraint=us-east-1`. `us-east-1` is the S3
-API's default location and naming it explicitly is rejected:
-
-```text
-An error occurred (InvalidLocationConstraint) when calling the CreateBucket operation: The
-specified location-constraint is not valid
-```
-
-Every *other* region requires the flag. Omitting it outside `us-east-1` fails the opposite way:
+**Why the `--create-bucket-configuration` flag is there.** `CreateBucket` treats `us-east-1` as
+its default location, so that one region — and only that one — must *omit* the flag. Every other
+region, including the `us-east-2` this track uses, must pass it. Omitting it here fails with:
 
 ```text
 An error occurred (IllegalLocationConstraintException) when calling the CreateBucket operation:
@@ -185,11 +179,22 @@ The unspecified location constraint is incompatible for the region specific endp
 was sent to.
 ```
 
-If you move this track to another region, the command becomes:
+The rule is inverted in `us-east-1`, where passing the flag is what fails:
+
+```text
+An error occurred (InvalidLocationConstraint) when calling the CreateBucket operation: The
+specified location-constraint is not valid
+```
+
+So the flag follows the region: name the region explicitly everywhere except `us-east-1`.
 
 ```bash
-aws s3api create-bucket --bucket "$TF_STATE_BUCKET" --region eu-west-1 \
-  --create-bucket-configuration LocationConstraint=eu-west-1
+# us-east-2, ap-south-1, eu-central-1 ... : pass the flag
+aws s3api create-bucket --bucket "$TF_STATE_BUCKET" --region ap-south-1 \
+  --create-bucket-configuration LocationConstraint=ap-south-1
+
+# us-east-1 only: omit it
+aws s3api create-bucket --bucket "$TF_STATE_BUCKET" --region us-east-1
 ```
 
 ### Step 7 — Enable versioning on the bucket
@@ -277,7 +282,7 @@ cat backend.hcl
 ```text
 bucket       = "tfstate-yourname-4821"
 key          = "labs/lab17/terraform.tfstate"
-region       = "us-east-1"
+region       = "us-east-2"
 encrypt      = true
 use_lockfile = true
 ```
@@ -399,8 +404,8 @@ terraform_data.state_owner
 | `BucketAlreadyExists` on `create-bucket` | Someone else in AWS owns that name | Pick a different name — you used the manual's placeholder or a common word. Re-export `TF_STATE_BUCKET` and retry |
 | `BucketAlreadyOwnedByYou` on `create-bucket` | You already created it | Nothing to fix; continue at step 7 |
 | `InvalidBucketName` | Uppercase letters or underscores in the name | Lowercase letters, digits, hyphens and dots only, 3–63 characters |
-| `InvalidLocationConstraint` | Passed `LocationConstraint=us-east-1` | Omit `--create-bucket-configuration` entirely in `us-east-1` |
-| `IllegalLocationConstraintException` | Region other than `us-east-1` with no `LocationConstraint` | Add `--create-bucket-configuration LocationConstraint=<region>` |
+| `IllegalLocationConstraintException` | `--create-bucket-configuration` omitted. Every region except `us-east-1` requires it | Add `--create-bucket-configuration LocationConstraint=us-east-2` |
+| `InvalidLocationConstraint` | Passed `LocationConstraint=us-east-1` — the one region that must omit it | Drop the flag when, and only when, the region is `us-east-1` |
 | `TF_STATE_BUCKET` expands to nothing | New terminal; the export did not carry over | Re-run step 5 in this terminal |
 | `Unsupported argument: use_lockfile` | Terraform older than 1.10 | Upgrade Terraform to 1.11 or newer |
 | `Unsupported Terraform Core version` | Terraform older than the module's `>= 1.11.0` | Upgrade Terraform; do not lower `required_version` |
@@ -426,6 +431,6 @@ versions this lab's applies accumulated.
 
 ## Next steps
 
-- Deep dive: [../docs/advanced/state.md](../docs/advanced/state.md)
-- Visual: [../html/advanced.html](../html/advanced.html)
+- Deep dive: [../docs/13-remote-state.md](../docs/13-remote-state.md)
+- Visual: [Concept page — this lab's topic](../html/concepts.html#lab17-s3-backend)
 - Continue to [Lab 18 — State keys and locking](lab18-state-keys-locking.md)
