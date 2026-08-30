@@ -23,10 +23,10 @@ You are learning to automate servers with **Ansible** and provision cloud resour
 | Track | Time | Labs | Outcome |
 |-------|------|------|---------|
 | [Ansible essentials](ansible/essentials/labmanuals/) | 10 h | 7 | Inventory, playbooks, roles, vault |
-| [Terraform Basic](terraform/labmanuals/README.md#tier-1--basic-lab00lab05) | 10 h (with early Intermediate) | 6 | Credentials, providers, first EC2, the core workflow, `fmt` and `validate` |
+| [Terraform Basic](terraform/labmanuals/README.md#all-25-labs) | 10 h (with early Intermediate) | 6 | Credentials, providers, first EC2, the core workflow, `fmt` and `validate` |
 | [Ansible extended](ansible/extended/labmanuals/) | self-paced | 9 | Facts, loops, dynamic inventory, drills |
-| [Terraform Intermediate](terraform/labmanuals/README.md#tier-2--intermediate-lab06lab12) | self-paced | 7 | Variables, tfvars and secrets, state, modules, the capstone at `lab10`, collections, functions |
-| [Terraform Advanced](terraform/labmanuals/README.md#tier-3--advanced-lab13lab24) | self-paced | 12 | Multiple providers, provisioners, workspaces, S3 backend with locking, migration, remote state, dynamic blocks, the capstone on a remote backend, S3 buckets |
+| [Terraform Intermediate](terraform/labmanuals/README.md#all-25-labs) | self-paced | 7 | Variables, tfvars and secrets, state, modules, the capstone at `lab10`, collections, functions |
+| [Terraform Advanced](terraform/labmanuals/README.md#all-25-labs) | self-paced | 12 | Multiple providers, provisioners, workspaces, S3 backend with locking, migration, remote state, dynamic blocks, the capstone on a remote backend, S3 buckets |
 
 New to Terraform? Two primers come before lab00, in this order: **[Terraform 101](terraform/html/terraform-101.html)** (what Terraform is, HCL, providers, version constraints, state, drift), then the **[AWS primer](terraform/html/aws-primer.html)** (region, VPC, subnet, gateway, security group, EC2, IAM keys).
 

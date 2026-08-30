@@ -49,7 +49,7 @@ them. Regenerate before
 pushing:
 
 ```bash
-python3 curriculum/gen_terraform_html.py   # index, basic, intermediate, advanced
+python3 curriculum/gen_terraform_html.py   # index, concepts
 python3 curriculum/gen_terraform_101.py    # terraform-101
 python3 curriculum/gen_aws_primer.py       # aws-primer
 ```

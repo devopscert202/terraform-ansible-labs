@@ -170,7 +170,7 @@ td.lineref { white-space: nowrap; font-family: "SF Mono", Menlo, monospace;
         <div class="card">
             <span class="eyebrow">Where things live</span>
             <h2>Region and Availability Zone</h2>
-            <p class="concept">A <strong>region</strong> is a geographic cluster of AWS data centres, such as <code class="inline">us-east-2</code> in North Virginia. Every resource you create belongs to exactly one region, and resources in different regions cannot see each other by default. An <strong>Availability Zone</strong> (AZ) is one isolated data-centre group inside a region, named by suffixing a letter: <code class="inline">us-east-2a</code>. This whole track uses <code class="inline">us-east-2</code>.</p>
+            <p class="concept">A <strong>region</strong> is a geographic cluster of AWS data centres, such as <code class="inline">us-east-2</code> in Ohio. Every resource you create belongs to exactly one region, and resources in different regions cannot see each other by default. An <strong>Availability Zone</strong> (AZ) is one isolated data-centre group inside a region, named by suffixing a letter: <code class="inline">us-east-2a</code>. <code class="inline">us-east-2</code> publishes exactly three, <code class="inline">us-east-2a</code> through <code class="inline">us-east-2c</code>. This whole track uses <code class="inline">us-east-2</code>.</p>
             <h3>Example</h3>
 <pre>provider "aws" {
   region = "us-east-2"
@@ -181,7 +181,7 @@ td.lineref { white-space: nowrap; font-family: "SF Mono", Menlo, monospace;
                 <tbody>
                 <tr><td class="lineref"><code>provider &quot;aws&quot;</code></td><td>Configures the AWS provider — the plugin that turns your configuration into AWS API calls. There is no Terraform resource for a region; the region is a provider setting.</td></tr>
                 <tr><td class="lineref"><code>region</code></td><td>Every resource managed by this provider block is created here. Change it and Terraform will plan to recreate everything elsewhere.</td></tr>
-                <tr><td class="lineref">Availability Zone</td><td>Not set here. It is an argument on zonal resources such as subnets, and this track never hardcodes one — it is resolved from <code>data &quot;aws_availability_zones&quot;</code>. The subnet section below shows how.</td></tr>
+                <tr><td class="lineref">Availability Zone</td><td>Not set here. It is an argument on zonal resources such as subnets. Labs 03 and 06 pass one in through a variable defaulting to <code>us-east-2a</code>; Lab 10 resolves it from <code>data &quot;aws_availability_zones&quot;</code> instead, which is the portable form. The subnet section below shows how.</td></tr>
                 </tbody>
             </table>
             <a class="lablink" href="../labmanuals/lab00-aws-setup-and-init.md">Practise it in Lab 00 — AWS setup and init &rarr;</a>
@@ -322,7 +322,7 @@ resource "aws_route_table_association" "public" {
                 <tbody>
                 <tr><td class="lineref"><code>aws_security_group</code></td><td>The Terraform resource type.</td></tr>
                 <tr><td class="lineref"><code>vpc_id</code></td><td>Places the group in your VPC. Omit it and the group is created in the region's default VPC instead — see the warning in the VPC section above.</td></tr>
-                <tr><td class="lineref"><code>dynamic &quot;ingress&quot;</code></td><td>Generates one ingress rule per element of the list instead of repeating the block by hand. Lab 10 opens a single port, 80.</td></tr>
+                <tr><td class="lineref"><code>ingress</code></td><td>One inbound rule, written out literally. Lab 10 needs exactly one — HTTP on <code>var.http_port</code>, which defaults to 80 — so there is nothing to generate. Lab 21 shows the <code>dynamic</code> form for a group whose rules come from a collection.</td></tr>
                 <tr><td class="lineref"><code>from_port</code> / <code>to_port</code></td><td>A port range. Setting both to the same number opens exactly one port.</td></tr>
                 <tr><td class="lineref"><code>cidr_blocks</code></td><td>Who may connect. Lab 10's <code>allowed_cidr</code> defaults to <code>0.0.0.0/0</code>, the entire internet — defensible for a public web port, dangerous for an administrative port such as SSH on 22. Narrow it to your own address outside a lab account.</td></tr>
                 <tr><td class="lineref"><code>egress</code></td><td>Outbound, written as one ordinary block. Groups are stateful, so replies to allowed inbound requests need no rule of their own.</td></tr>

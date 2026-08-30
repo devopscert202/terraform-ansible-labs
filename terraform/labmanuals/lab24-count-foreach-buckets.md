@@ -9,10 +9,11 @@
 
 ## Overview
 
-[Lab 11](lab11-collections.md) introduced `count` and `for_each` on `terraform_data`, a
-placeholder that creates nothing. The plans there were real, but the consequences were imaginary.
-This lab runs the same comparison against real AWS resources, so the plan you read at the end is
-the plan you would read on a production account.
+[Lab 11](lab11-collections.md) taught the three collection types and reshaped them with `for`
+expressions, but every resource in the track so far has been written out one block at a time. This
+lab introduces the two **meta-arguments** that turn one resource block into many instances —
+`count` and `for_each` — and it does so against real AWS resources, so the plan you read at the end
+is the plan you would read on a production account.
 
 One sentence carries the whole lab: **`count` gives you N identical things addressed by position;
 `for_each` gives you N differently-configured things addressed by name.** Position is the problem.
@@ -667,7 +668,8 @@ against an empty directory; you finished by reading a plan closely enough to see
 list item would have destroyed a bucket nobody asked you to touch. That habit — read the plan,
 believe the plan — is the whole discipline.
 
-- Deep dive: [../docs/16-count-foreach.md](../docs/16-count-foreach.md) for collections and `for` expressions
-- Deep dive: [../docs/13-remote-state.md](../docs/13-remote-state.md) for resource addresses and state surgery
+- Deep dive: [../docs/16-count-foreach.md](../docs/16-count-foreach.md) for `count` versus `for_each` on real resources
+- Deep dive: [../docs/06-state.md](../docs/06-state.md) for resource addresses and state surgery
+- Deep dive: [../docs/17-project-structure.md](../docs/17-project-structure.md) for assembling the whole track into one project layout
 - Visual: [Concept page — this lab's topic](../html/concepts.html#lab24-count-foreach-buckets)
 - Whole-track catalog: [../html/index.html](../html/index.html)

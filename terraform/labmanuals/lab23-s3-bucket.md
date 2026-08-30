@@ -111,7 +111,8 @@ resource "aws_s3_bucket_ownership_controls" "lab" {
 resource "aws_s3_object" "hello" {
 ```
 
-One logical bucket, six resources. That split is deliberate and recent. Until AWS provider 4.x,
+One logical bucket, seven resource blocks: six AWS resources plus the `random_pet` that names it.
+That split is deliberate and recent. Until AWS provider 4.x,
 versioning, encryption and lifecycle rules were **inline blocks** inside `aws_s3_bucket`:
 
 ```hcl

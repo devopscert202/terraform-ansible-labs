@@ -164,7 +164,7 @@ aws s3api create-bucket --bucket "$TF_STATE_BUCKET" --region us-east-2 \
 
 ```text
 {
-    "Location": "/tfstate-yourname-4821",
+    "Location": "http://tfstate-yourname-4821.s3.amazonaws.com/",
     "BucketArn": "arn:aws:s3:::tfstate-yourname-4821"
 }
 ```
@@ -187,6 +187,10 @@ specified location-constraint is not valid
 ```
 
 So the flag follows the region: name the region explicitly everywhere except `us-east-1`.
+
+**Do not run the two commands below.** They illustrate the rule for other regions; running either
+would try to create a second bucket under the same globally unique name and fail with
+`BucketAlreadyOwnedByYou`. This track stays in `us-east-2`.
 
 ```bash
 # us-east-2, ap-south-1, eu-central-1 ... : pass the flag

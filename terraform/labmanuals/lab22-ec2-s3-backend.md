@@ -14,11 +14,20 @@ the record of them in a `terraform.tfstate` file on disk. [Lab 17](lab17-s3-back
 single throwaway resource's state into S3. This lab puts the two together: the same infrastructure
 as Lab 10, with the same S3 backend as Lab 17 underneath it.
 
-**Nothing about the resources changes.** The VPC, gateway, subnet, route table, association,
-security group and instance are identical to Lab 10, byte for byte in intent. The only difference
-is where the state file lives — an object in an S3 bucket rather than a file next to your code.
-That single change is what turns a configuration one person runs on one laptop into a
-configuration a team and a CI pipeline can share, which is why it is worth a lab of its own.
+**Nothing about the AWS topology changes.** The same seven resources are built — VPC, gateway,
+subnet, route table, association, security group and instance — with the same CIDRs, the same
+resolved availability zone and the same `user_data`. The only difference that matters is where the
+state file lives: an object in an S3 bucket rather than a file next to your code. That single
+change is what turns a configuration one person runs on one laptop into a configuration a team and
+a CI pipeline can share, which is why it is worth a lab of its own.
+
+Two details in the code do differ from Lab 10, and neither changes what AWS ends up holding. The
+name prefix is `tflabs-remote` rather than `tflabs-capstone`, so the two labs' resources are
+distinguishable if you ever run them side by side. And the security group's ingress rules come from
+a `dynamic` block over a `list(number)` variable named `ingress_ports`, the technique you learned in
+[Lab 21](lab21-dynamic-blocks.md), rather than Lab 10's single literal `ingress` block. With the
+default `ingress_ports = [80]` the generated rule is identical to Lab 10's; the difference is only
+that adding a second port here is a data change.
 
 ## What you will build
 
@@ -74,7 +83,8 @@ terraform.tfvars.example
 variables.tf
 ```
 
-`main.tf`, `variables.tf` and `outputs.tf` are Lab 10's. `backend.hcl.example` is Lab 17's.
+`main.tf`, `variables.tf` and `outputs.tf` are Lab 10's build with the two changes noted in the
+overview. `backend.hcl.example` is Lab 17's.
 
 ### Step 2 — Read the backend block
 
@@ -289,12 +299,13 @@ Terraform has been successfully initialized!
 
 ```bash
 cp terraform.tfvars.example terraform.tfvars
-grep allowed_cidr terraform.tfvars
+grep -E 'ingress_ports|allowed_cidr' terraform.tfvars
 ```
 
 **Expected output**
 
 ```text
+ingress_ports      = [80]
 allowed_cidr       = "0.0.0.0/0"
 ```
 
@@ -302,6 +313,32 @@ allowed_cidr       = "0.0.0.0/0"
 destroy within the hour; in any account that is not a throwaway lab account, set it to `YOUR_IP/32`
 first. Port 80 is the only port opened — the instance has no key pair and no step here logs into
 it.
+
+`ingress_ports` is a `list(number)` with one element, and the security group expands it with a
+`dynamic "ingress"` block:
+
+```bash
+grep -A 9 'dynamic "ingress"' main.tf
+```
+
+**Expected output**
+
+```text
+  dynamic "ingress" {
+    for_each = var.ingress_ports
+    content {
+      description = "Inbound TCP ${ingress.value}"
+      from_port   = ingress.value
+      to_port     = ingress.value
+      protocol    = "tcp"
+      cidr_blocks = [var.allowed_cidr]
+    }
+  }
+```
+
+One element in the list means one generated `ingress` block, which is why the plan in Step 13 shows
+the same single rule Lab 10 wrote out by hand. Iterating a list rather than a map, `ingress.value`
+is the element itself — the port number — not an object.
 
 ### Step 12 — Confirm the zone is resolved, not hardcoded
 

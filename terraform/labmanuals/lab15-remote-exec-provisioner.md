@@ -174,7 +174,7 @@ AMI id: they are region-specific and are replaced with every new image release.
 
 ```bash
 AMI=$(aws ec2 describe-images --owners amazon \
-  --filters 'Name=name,Values=al2023-ami-2023.*-x86_64' \
+  --filters 'Name=name,Values=al2023-ami-2023.*-kernel-6.12-x86_64' \
   --query 'reverse(sort_by(Images,&CreationDate))[0].ImageId' --output text)
 aws ec2 run-instances --image-id "$AMI" --instance-type t3.micro \
   --key-name lab-key --security-group-ids "$SG" \
