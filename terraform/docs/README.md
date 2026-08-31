@@ -21,7 +21,7 @@ These docs assume you already know what Terraform is. If you do not, read
 | 06 | [`06-state.md`](06-state.md) | What state stores, secrets in plain text, refresh and drift, `state list`/`show`, `-replace` | lab08 |
 | 07 | [`07-modules.md`](07-modules.md) | Root vs child modules, module inputs and outputs, module addresses in state | lab09 |
 | 08 | [`08-capstone.md`](08-capstone.md) | The capstone build resource by resource, `user_data` versus a provisioner, `depends_on` | lab10 |
-| 09 | [`09-collections-functions.md`](09-collections-functions.md) | list vs set vs map, `count` vs `for_each`, built-in functions, `for` expressions | lab11, lab12 |
+| 09 | [`09-collections-functions.md`](09-collections-functions.md) | list vs set vs map, `for` expressions, built-in functions, map indexing into a real subnet | lab11, lab12 |
 | 10 | [`10-multi-provider.md`](10-multi-provider.md) | Several providers in one root module, and provider aliases | lab13 |
 | 11 | [`11-provisioners.md`](11-provisioners.md) | `local-exec`, `remote-exec`, connection blocks, lifecycle hooks, better alternatives | lab14, lab15 |
 | 12 | [`12-workspaces.md`](12-workspaces.md) | What a workspace isolates, `terraform.workspace`, why it is not an environment boundary | lab16 |

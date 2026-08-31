@@ -51,8 +51,22 @@ called `dev`, the same code and the same command produce `environment = "dev"` �
 independent resource, not a modification of the first. That is the isolation demonstrated.
 
 The usual production use of `terraform.workspace` is naming: interpolating it into resource names and
-tags so two workspaces do not collide on a globally unique name. `terraform_data` is used here
-instead of an AWS resource so the lab creates nothing and needs no credentials.
+tags so two workspaces do not collide on a globally unique name. Lab16 does that for real. Alongside
+the `terraform_data` placeholder it creates one free `aws_vpc` per workspace, with the workspace name
+in the `Name` tag and a CIDR selected by workspace name:
+
+```hcl
+locals {
+  name     = "lab16-${terraform.workspace}"
+  vpc_cidr = lookup(var.workspace_cidrs, terraform.workspace, "10.18.0.0/16")
+}
+```
+
+Apply in both workspaces and there are **two VPCs live in the same account at once**, from one
+configuration directory, at `10.16.0.0/16` and `10.17.0.0/16`. `terraform state list` in either
+workspace shows exactly one `aws_vpc.env`, never two. That is the isolation claim tested against
+AWS rather than asserted, and it is also the clearest statement of the limitation: both VPCs are in
+the same account under the same credentials, because a workspace separates state and nothing else.
 
 ## The commands
 
@@ -146,8 +160,9 @@ variable "upstream_state_path" {
 }
 ```
 
-Destroy lab16 early and lab20 fails with `Failed to read state file`. Nothing in lab16 is an AWS
-resource, so leaving it in place costs nothing at all.
+Destroy lab16 early and lab20 fails with `Failed to read state file`. Lab16's two VPCs are free, so
+leaving them in place costs nothing — but they are real, and they count against the five-VPC limit in
+`us-east-2`, so run lab20 promptly and then go back and destroy both workspaces.
 
 Return after lab20 and tear down each workspace separately — destroying one leaves the other
 untouched, and a workspace cannot be deleted while it is active or while its state still holds

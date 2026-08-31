@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Goal** | Run the complete Terraform lifecycle end to end, and see how Terraform remembers what it already built. |
+| **Goal** | Run the complete Terraform lifecycle end to end against real AWS infrastructure, and see how Terraform remembers what it already built. |
 | **Time** | 25–35 minutes |
 | **Tier** | Basic |
 | **Files** | `../labs/lab04-plan-apply-destroy/` |
@@ -10,27 +10,36 @@
 ## Overview
 
 [Lab 03](lab03-first-ec2.md) ran the core commands against a real, billable server. This lab
-runs the same cycle — `init`, `plan`, `apply`, `destroy` — on a resource that costs nothing and
-needs no AWS credentials, so you can concentrate on the workflow rather than on the cloud.
+runs the same cycle — `init`, `plan`, `apply`, `destroy` — against a **VPC**, which is real
+infrastructure in your account but costs nothing to keep. You get the full lifecycle without the
+meter running.
 
-The resource is a random twelve-character string, but the point of the lab is what happens
-between the commands. After `apply`, Terraform writes a file called `terraform.tfstate`
-recording what it created, and every later `plan` compares your configuration against that
-record. That comparison is why running `plan` twice gives different answers, and why Terraform
-destroys exactly what it made and nothing else.
+The point of the lab is what happens *between* the commands. After `apply`, Terraform writes a file
+called `terraform.tfstate` recording what it created, and every later `plan` compares your
+configuration against that record. That comparison is why running `plan` twice gives different
+answers, and why Terraform destroys exactly what it made and nothing else.
+
+Two resources are involved, which makes a second point. `random_string.suffix` is generated on your
+machine; `aws_vpc.lifecycle` is built by AWS and uses that string in its `Name` tag. Because the VPC
+depends on the string, Terraform creates the string first and destroys it last. Dependency order is
+not something you declare here — Terraform infers it from the reference.
 
 ## What you will build
 
 | Resource | Purpose | Cost |
 |---|---|---|
-| `random_string.example` | A twelve-character lowercase string | None |
-| Output `generated_value` | Prints the string after apply | None |
+| `random_string.suffix` | A six-character lowercase string, generated locally | None |
+| `aws_vpc.lifecycle` | A real VPC, `10.4.0.0/16`, named from that string | None |
+| 3 outputs | The generated string, the VPC ID, and the `Name` tag AWS recorded | None |
 | `terraform.tfstate` | Terraform's record of what it created | None |
+
+Two managed resources, no data sources. A VPC is free; nothing in this lab is billable.
 
 ## Before you start
 
 - [ ] [Lab 03](lab03-first-ec2.md) completed
-- [ ] No AWS credentials needed — this lab never contacts AWS
+- [ ] AWS credentials configured for `us-east-2` (`aws sts get-caller-identity` succeeds)
+- [ ] Fewer than five VPCs already in `us-east-2` — the default limit is five
 
 ## Steps
 
@@ -45,8 +54,11 @@ terraform init
 
 ```text
 - Finding hashicorp/random versions matching "~> 3.0"...
+- Finding hashicorp/aws versions matching "~> 5.0"...
 - Installing hashicorp/random v3.9.0...
 - Installed hashicorp/random v3.9.0 (signed by HashiCorp)
+- Installing hashicorp/aws v5.100.0...
+- Installed hashicorp/aws v5.100.0 (signed by HashiCorp)
 
 Terraform has been successfully initialized!
 ```
@@ -57,10 +69,14 @@ Terraform has been successfully initialized!
 cat main.tf
 ```
 
-There is no `provider "aws"` block and no region, because the random provider runs entirely on
-your machine. `resource "random_string" "example"` gives the type first, then a label you
-choose. Together they form the address `random_string.example` used in plans, in state, and in
-the output block at the bottom of the file.
+Two providers, two resources. The `random` provider runs entirely on your machine; the `aws`
+provider talks to `us-east-2`. `resource "random_string" "suffix"` gives the type first, then a label
+you choose — together they form the address `random_string.suffix` used in plans, in state, and in
+the output blocks at the bottom of the file.
+
+Find the line `Name = "lab04-${random_string.suffix.result}"` inside the VPC. That reference is the
+only thing linking the two resources, and it is enough for Terraform to work out that the string has
+to exist before the VPC can be created.
 
 ### Step 3 — Plan the change
 
@@ -71,24 +87,71 @@ terraform plan
 **Expected output**
 
 ```text
-  # random_string.example will be created
-  + resource "random_string" "example" {
-      + length  = 12
-      + lower   = true
-      + result  = (known after apply)
-      + special = false
-      + upper   = false
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  + create
+
+Terraform will perform the following actions:
+
+  # aws_vpc.lifecycle will be created
+  + resource "aws_vpc" "lifecycle" {
+      + arn                                  = (known after apply)
+      + cidr_block                           = "10.4.0.0/16"
+      + default_network_acl_id               = (known after apply)
+      + default_route_table_id               = (known after apply)
+      + default_security_group_id            = (known after apply)
+      + dhcp_options_id                      = (known after apply)
+      + enable_dns_hostnames                 = (known after apply)
+      + enable_dns_support                   = true
+      + enable_network_address_usage_metrics = (known after apply)
+      + id                                   = (known after apply)
+      + instance_tenancy                     = "default"
+      + ipv6_association_id                  = (known after apply)
+      + ipv6_cidr_block                      = (known after apply)
+      + ipv6_cidr_block_network_border_group = (known after apply)
+      + main_route_table_id                  = (known after apply)
+      + owner_id                             = (known after apply)
+      + tags                                 = (known after apply)
+      + tags_all                             = (known after apply)
     }
 
-Plan: 1 to add, 0 to change, 0 to destroy.
+  # random_string.suffix will be created
+  + resource "random_string" "suffix" {
+      + id          = (known after apply)
+      + length      = 6
+      + lower       = true
+      + min_lower   = 0
+      + min_numeric = 0
+      + min_special = 0
+      + min_upper   = 0
+      + number      = false
+      + numeric     = false
+      + result      = (known after apply)
+      + special     = false
+      + upper       = false
+    }
+
+Plan: 2 to add, 0 to change, 0 to destroy.
 
 Changes to Outputs:
   + generated_value = (known after apply)
+  + vpc_id          = (known after apply)
+  + vpc_name        = (known after apply)
+
+─────────────────────────────────────────────────────────────────────────────
+
+Note: You didn't use the -out option to save this plan, so Terraform can't
+guarantee to take exactly these actions if you run "terraform apply" now.
 ```
 
-Terraform has no record of this resource, so it proposes creating one. The `+` symbol marks a
-creation, and `(known after apply)` marks a value that does not exist until the resource does.
-Nothing has been created yet — `plan` only reports.
+`Plan: 2 to add, 0 to change, 0 to destroy.` Terraform has no record of either resource, so it
+proposes creating both. The `+` symbol marks a creation, and `(known after apply)` marks a value that
+does not exist until the resource does — the VPC's `id`, `arn` and `owner_id` are all in that
+category, because AWS assigns them.
+
+Nothing has been created yet. `plan` only reports, and it contacted AWS solely to check whether these
+resources already exist.
 
 ### Step 4 — Apply the change
 
@@ -101,33 +164,128 @@ Terraform reprints the plan and waits. Type `yes` and press Enter.
 **Expected output**
 
 ```text
-random_string.example: Creating...
-random_string.example: Creation complete after 0s [id=itrcs1d4qj44]
 
-Apply complete! Resources: 1 added, 0 changed, 0 destroyed.
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  + create
+
+Terraform will perform the following actions:
+
+  # aws_vpc.lifecycle will be created
+  + resource "aws_vpc" "lifecycle" {
+      + arn                                  = (known after apply)
+      + cidr_block                           = "10.4.0.0/16"
+      + default_network_acl_id               = (known after apply)
+      + default_route_table_id               = (known after apply)
+      + default_security_group_id            = (known after apply)
+      + dhcp_options_id                      = (known after apply)
+      + enable_dns_hostnames                 = (known after apply)
+      + enable_dns_support                   = true
+      + enable_network_address_usage_metrics = (known after apply)
+      + id                                   = (known after apply)
+      + instance_tenancy                     = "default"
+      + ipv6_association_id                  = (known after apply)
+      + ipv6_cidr_block                      = (known after apply)
+      + ipv6_cidr_block_network_border_group = (known after apply)
+      + main_route_table_id                  = (known after apply)
+      + owner_id                             = (known after apply)
+      + tags                                 = (known after apply)
+      + tags_all                             = (known after apply)
+    }
+
+  # random_string.suffix will be created
+  + resource "random_string" "suffix" {
+      + id          = (known after apply)
+      + length      = 6
+      + lower       = true
+      + min_lower   = 0
+      + min_numeric = 0
+      + min_special = 0
+      + min_upper   = 0
+      + number      = false
+      + numeric     = false
+      + result      = (known after apply)
+      + special     = false
+      + upper       = false
+    }
+
+Plan: 2 to add, 0 to change, 0 to destroy.
+
+Changes to Outputs:
+  + generated_value = (known after apply)
+  + vpc_id          = (known after apply)
+  + vpc_name        = (known after apply)
+
+Do you want to perform these actions?
+  Terraform will perform the actions described above.
+  Only 'yes' will be accepted to approve.
+
+  Enter a value: yes
+
+random_string.suffix: Creating...
+random_string.suffix: Creation complete after 0s [id=xgqaoe]
+aws_vpc.lifecycle: Creating...
+aws_vpc.lifecycle: Creation complete after 4s [id=vpc-06d90b060276eebce]
+
+Apply complete! Resources: 2 added, 0 changed, 0 destroyed.
 
 Outputs:
 
-generated_value = "itrcs1d4qj44"
+generated_value = "xgqaoe"
+vpc_id = "vpc-06d90b060276eebce"
+vpc_name = "lab04-xgqaoe"
 ```
 
-Your string will differ. `terraform.tfstate` now exists in the directory.
+`Apply complete! Resources: 2 added, 0 changed, 0 destroyed.`
 
-### Step 5 — Read the value back
+Read the order of the two `Creation complete` lines: `random_string.suffix` finishes first, then
+`aws_vpc.lifecycle`. Terraform did not guess — the VPC's `Name` tag referenced the string, so the
+string had to be created first. Your string and VPC ID will differ from anyone else's.
+`terraform.tfstate` now exists in the directory.
+
+### Step 5 — Read the values back
 
 Outputs are stored, not just printed, so you can read them back at any time.
 
 ```bash
-terraform output generated_value
+terraform output
+terraform output -raw vpc_id
 ```
 
 **Expected output**
 
 ```text
-"itrcs1d4qj44"
+generated_value = "xgqaoe"
+vpc_id = "vpc-06d90b060276eebce"
+vpc_name = "lab04-xgqaoe"
+vpc-06d90b060276eebce
 ```
 
-### Step 6 — Plan a second time
+### Step 6 — Confirm the VPC exists in AWS
+
+Terraform says it built something. Ask AWS.
+
+```bash
+aws ec2 describe-vpcs --region us-east-2 \
+  --filters 'Name=tag:Lab,Values=lab04' \
+  --query 'Vpcs[].[VpcId,CidrBlock,Tags[?Key==`Name`].Value|[0]]' --output table
+```
+
+**Expected output**
+
+```text
+----------------------------------------------------------
+|                      DescribeVpcs                      |
++-----------------------+---------------+----------------+
+|  vpc-06d90b060276eebce|  10.4.0.0/16  |  lab04-xgqaoe  |
++-----------------------+---------------+----------------+
+```
+
+One row, and the `VpcId` matches what `terraform output -raw vpc_id` printed. The `Name` column shows
+`lab04-` followed by the six letters generated on your laptop. A value that existed only in your
+shell a minute ago is now metadata on a real network.
+
+### Step 7 — Plan a second time
 
 This is the step that matters. Nothing about your configuration changed, so run `plan` again.
 
@@ -138,17 +296,23 @@ terraform plan
 **Expected output**
 
 ```text
+random_string.suffix: Refreshing state... [id=xgqaoe]
+aws_vpc.lifecycle: Refreshing state... [id=vpc-06d90b060276eebce]
+
 No changes. Your infrastructure matches the configuration.
 
 Terraform has compared your real infrastructure against your configuration
 and found no differences, so no changes are needed.
 ```
 
-The first plan proposed a creation; this one proposes nothing, and the only difference is the
-state file. Terraform is comparing what you asked for against what it recorded. `No changes` is
+`No changes. Your infrastructure matches the configuration.`
+
+The first plan proposed two creations; this one proposes nothing. Two things changed in between: the
+state file now exists, and the VPC now exists in AWS. Terraform read the VPC back from AWS, compared
+it with the recorded state and your configuration, and found all three in agreement. `No changes` is
 the normal steady state of a healthy configuration.
 
-### Step 7 — Destroy the resource
+### Step 8 — Destroy the resources
 
 ```bash
 terraform destroy
@@ -159,35 +323,123 @@ Terraform lists what will be removed and waits. Type `yes`.
 **Expected output**
 
 ```text
-random_string.example: Destroying... [id=itrcs1d4qj44]
-random_string.example: Destruction complete after 0s
+random_string.suffix: Refreshing state... [id=xgqaoe]
+aws_vpc.lifecycle: Refreshing state... [id=vpc-06d90b060276eebce]
 
-Destroy complete! Resources: 1 destroyed.
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  - destroy
+
+Terraform will perform the following actions:
+
+  # aws_vpc.lifecycle will be destroyed
+  - resource "aws_vpc" "lifecycle" {
+      - arn                                  = "arn:aws:ec2:us-east-2:027488552956:vpc/vpc-06d90b060276eebce" -> null
+      - assign_generated_ipv6_cidr_block     = false -> null
+      - cidr_block                           = "10.4.0.0/16" -> null
+      - default_network_acl_id               = "acl-054364f0d61f786af" -> null
+      - default_route_table_id               = "rtb-055498aed662a0d37" -> null
+      - default_security_group_id            = "sg-048815e3056610904" -> null
+      - dhcp_options_id                      = "dopt-0b3fb1f3b525c8788" -> null
+      - enable_dns_hostnames                 = false -> null
+      - enable_dns_support                   = true -> null
+      - enable_network_address_usage_metrics = false -> null
+      - id                                   = "vpc-06d90b060276eebce" -> null
+      - instance_tenancy                     = "default" -> null
+      - ipv6_netmask_length                  = 0 -> null
+      - main_route_table_id                  = "rtb-055498aed662a0d37" -> null
+      - owner_id                             = "027488552956" -> null
+      - tags                                 = {
+          - "Lab"  = "lab04"
+          - "Name" = "lab04-xgqaoe"
+        } -> null
+      - tags_all                             = {
+          - "Lab"  = "lab04"
+          - "Name" = "lab04-xgqaoe"
+        } -> null
+        # (4 unchanged attributes hidden)
+    }
+
+  # random_string.suffix will be destroyed
+  - resource "random_string" "suffix" {
+      - id          = "xgqaoe" -> null
+      - length      = 6 -> null
+      - lower       = true -> null
+      - min_lower   = 0 -> null
+      - min_numeric = 0 -> null
+      - min_special = 0 -> null
+      - min_upper   = 0 -> null
+      - number      = false -> null
+      - numeric     = false -> null
+      - result      = "xgqaoe" -> null
+      - special     = false -> null
+      - upper       = false -> null
+    }
+
+Plan: 0 to add, 0 to change, 2 to destroy.
+
+Changes to Outputs:
+  - generated_value = "xgqaoe" -> null
+  - vpc_id          = "vpc-06d90b060276eebce" -> null
+  - vpc_name        = "lab04-xgqaoe" -> null
+
+Do you really want to destroy all resources?
+  Terraform will destroy all your managed infrastructure, as shown above.
+  There is no undo. Only 'yes' will be accepted to confirm.
+
+  Enter a value: yes
+
+aws_vpc.lifecycle: Destroying... [id=vpc-06d90b060276eebce]
+aws_vpc.lifecycle: Destruction complete after 2s
+random_string.suffix: Destroying... [id=xgqaoe]
+random_string.suffix: Destruction complete after 0s
+
+Destroy complete! Resources: 2 destroyed.
 ```
 
-### Step 8 — Confirm nothing is left
+`Destroy complete! Resources: 2 destroyed.`
+
+Note the order, which is the reverse of Step 4: `aws_vpc.lifecycle` is destroyed first, then
+`random_string.suffix`. Terraform walks the dependency graph backwards on destroy, because a resource
+cannot be removed while something else still depends on it.
+
+### Step 9 — Confirm nothing is left
 
 ```bash
 terraform state list
+aws ec2 describe-vpcs --region us-east-2 \
+  --filters 'Name=tag:Lab,Values=lab04' --query 'Vpcs[].VpcId'
 ```
 
-The command prints nothing. An empty state means Terraform manages nothing here, and a fresh
-`plan` would again propose creating the string. [Lab 08](lab08-local-state.md) examines state.
+**Expected output**
+
+```text
+[]
+```
+
+`state list` prints nothing and `describe-vpcs` returns an empty list. Both checks matter: the first
+says Terraform manages nothing here, the second says AWS is holding nothing either. A fresh `plan`
+would again propose creating both resources. [Lab 08](lab08-local-state.md) examines state.
 
 ## Done when
 
-- [ ] The first `plan` showed `1 to add`
-- [ ] `apply` printed a value for `generated_value`
+- [ ] The first `plan` showed `2 to add`
+- [ ] `apply` printed a value for `generated_value` and a `vpc-` ID for `vpc_id`
+- [ ] `random_string.suffix` was created before `aws_vpc.lifecycle`, without you declaring an order
+- [ ] `aws ec2 describe-vpcs` found the VPC with a `Name` tag containing your generated suffix
 - [ ] The second `plan` reported `No changes`
-- [ ] `destroy` reported `1 destroyed`
-- [ ] `terraform state list` prints nothing
+- [ ] `destroy` reported `2 destroyed`, removing the VPC before the string
+- [ ] `terraform state list` prints nothing and `describe-vpcs` returns an empty list
 
 ## If something fails
 
 | Symptom | Likely cause | Fix |
 |---|---|---|
 | `Could not load plugin` | `init` not run in this directory | Run `terraform init` |
-| Second plan still shows `1 to add` | The apply was not confirmed with `yes` | Re-run `terraform apply` |
+| Second plan still shows `2 to add` | The apply was not confirmed with `yes` | Re-run `terraform apply` |
+| `VpcLimitExceeded` | Five VPCs already exist in `us-east-2` | Destroy another lab's VPC, then retry |
+| `NoCredentialProviders` or `InvalidClientTokenId` | Credentials missing or expired | Refresh them and confirm with `aws sts get-caller-identity` |
+| `UnauthorizedOperation` on `CreateVpc` | Credentials lack EC2 permissions | Use the account from Lab 00 |
 | `Error asking for approval` | Terminal cannot accept input | Use `terraform apply -auto-approve` |
 | A different string each apply | Expected — the value is random | No action needed |
 | `Error acquiring the state lock` | Another Terraform process is running | Wait for it to finish, then retry |

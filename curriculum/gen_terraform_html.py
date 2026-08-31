@@ -68,23 +68,23 @@ LABS = [
     (3, "lab03-first-ec2", "Your First EC2 Instance", "basic",
      "VPC, two subnets, security group, instance"),
     (4, "lab04-plan-apply-destroy", "Plan, Apply, and Destroy", "basic",
-     "The core workflow with no cloud cost"),
+     "The core workflow on a real VPC, no cloud cost"),
     (5, "lab05-fmt-validate", "Format and Validate", "basic",
      "fmt, validate, CI-style quality gates"),
     (6, "lab06-variables-outputs", "Variables and Outputs", "intermediate",
      "Typed inputs, locals, outputs, own VPC"),
     (7, "lab07-tfvars-secrets", "tfvars and Secrets", "intermediate",
-     "tfvars files, precedence, sensitive"),
+     "tfvars files, precedence, sensitive, values as VPC tags"),
     (8, "lab08-local-state", "Local State", "intermediate",
-     "terraform.tfstate, refresh, drift"),
+     "terraform.tfstate, a real VPC ID in state, drift"),
     (9, "lab09-modules", "Modules", "intermediate",
      "Child modules, inputs, outputs"),
     (10, "lab10-capstone-vpc-ec2", "Capstone: VPC to public web server", "intermediate",
      "VPC, IGW, subnet, route table, SG, EC2"),
     (11, "lab11-collections", "Collections", "intermediate",
-     "for_each over maps and sets"),
+     "list vs set vs map, for expressions, a subnet from a map key"),
     (12, "lab12-functions", "Functions", "intermediate",
-     "String, collection, CIDR, encoding"),
+     "String, collection, CIDR, encoding, cidrsubnet() as a real subnet"),
     (13, "lab13-multi-provider", "Multi-provider configuration", "advanced",
      "Two providers, provider aliases"),
     (14, "lab14-local-exec-provisioner", "local-exec provisioner", "advanced",
@@ -92,13 +92,13 @@ LABS = [
     (15, "lab15-remote-exec-provisioner", "remote-exec provisioner", "advanced",
      "SSH connection block, inline commands"),
     (16, "lab16-workspaces", "Workspaces", "advanced",
-     "terraform.workspace, per-env naming"),
+     "terraform.workspace, one real VPC per workspace"),
     (17, "lab17-s3-backend", "S3 backend", "advanced",
      "Remote state in S3, backend config files"),
     (18, "lab18-state-keys-locking", "State keys and locking", "advanced",
      "Key conventions, S3 native lockfile"),
     (19, "lab19-state-migration", "State migration", "advanced",
-     "init -migrate-state, backups"),
+     "init -migrate-state, backups, a real VPC that must not move"),
     (20, "lab20-remote-state-consumer", "Remote state consumer", "advanced",
      "terraform_remote_state data source"),
     (21, "lab21-dynamic-blocks", "Dynamic Blocks", "advanced",
@@ -436,39 +436,38 @@ resource "aws_instance" "web" {
         eyebrow="Lab 04 &middot; Workflow",
         heading="The core loop: init, plan, apply, destroy",
         concept=(
-            "Terraform is not a daemon; you invoke it. <code class=\"inline\">init</code> installs "
-            "providers, <code class=\"inline\">plan</code> is a dry run that prints the diff "
-            "between your files and reality, <code class=\"inline\">apply</code> executes that "
-            "diff, and <code class=\"inline\">destroy</code> removes everything the directory "
-            "manages. The habit to build is propose-then-commit: read every plan before you "
-            "approve it, and always destroy an AWS lab when you finish it."
+            "<code class=\"inline\">plan</code> compares your configuration against state and "
+            "prints what it would change, without changing anything. "
+            "<code class=\"inline\">apply</code> carries out that plan. "
+            "<code class=\"inline\">destroy</code> removes everything the configuration owns. "
+            "This lab runs the loop against a real VPC, which AWS provides free of charge, so the "
+            "lifecycle is genuine rather than simulated."
         ),
-        code=esc('''terraform init
-terraform plan
-# Plan: 1 to add, 0 to change, 0 to destroy.
+        code=esc('''resource "random_string" "suffix" {
+  length  = 6
+  special = false
+  upper   = false
+  numeric = false
+}
 
-terraform apply
-# Enter a value: yes
-# random_string.example: Creation complete after 0s
-# Outputs:
-# generated_value = "kf3mzq8dvwrt"
+resource "aws_vpc" "lifecycle" {
+  cidr_block         = "10.4.0.0/16"
+  enable_dns_support = true
 
-terraform plan
-# No changes. Your infrastructure matches the configuration.
+  tags = {
+    Lab  = "lab04"
+    Name = "lab04-${random_string.suffix.result}"
+  }
+}
 
-terraform plan -out=tfplan
-terraform apply tfplan
-
-terraform destroy'''),
+# Plan: 2 to add, 0 to change, 0 to destroy.'''),
         rows=[
-            ("terraform init", "First command in any new directory. Installs providers and prepares the backend. Re-run it whenever <code class=\"inline\">required_providers</code> or the backend changes."),
-            ("terraform plan", "Refreshes state from the API, compares it to your files, and prints the actions. It changes nothing."),
-            ("Plan: 1 to add, ...", "The summary line to read first. Any unexpected <em>destroy</em> or <em>forces replacement</em> means stop and investigate."),
-            ("terraform apply", "Re-plans, prompts for <code class=\"inline\">yes</code>, then executes. Resource IDs land in <code class=\"inline\">terraform.tfstate</code>."),
-            ("second terraform plan", "Reports no changes. That idempotency is the proof state and configuration agree."),
-            ("plan -out=tfplan", "Saves the exact diff to a file, so the applied change cannot differ from the reviewed one. This is the CI pattern."),
-            ("apply tfplan", "Applies the saved plan with no prompt and no re-planning."),
-            ("terraform destroy", "Plans and executes the removal of every resource in this directory's state."),
+            ("two resources, one dependency", "The VPC's Name tag reads <code class=\"inline\">random_string.suffix.result</code>, so Terraform must create the string first. The apply log shows that ordering."),
+            ("Plan: 2 to add, 0 to change, 0 to destroy.", "The summary line. Read it before every apply &mdash; the counts are the fastest check that you are changing what you think you are."),
+            ("a VPC is free", "An empty VPC costs nothing. It is the smallest real thing AWS will build, which makes it the right subject for a lab about the lifecycle itself."),
+            ("its own VPC", "The lab never touches the account's default VPC, so it cannot fail with <code class=\"inline\">VPCIdNotSpecified</code> on an account that has none."),
+            ("plan again after apply", "It reports no changes. That is Terraform comparing state against reality, not remembering what it just did."),
+            ("destroy", "Removes both resources in reverse dependency order: the VPC first, then the string it depended on."),
         ],
         lab=4,
     ),
@@ -657,38 +656,44 @@ output "instance_id" {
         eyebrow="Lab 07 &middot; Values and secrets",
         heading="tfvars files, value precedence, and sensitive",
         concept=(
-            "A <em>tfvars</em> file supplies values for your variables without editing the code. "
-            "<code class=\"inline\">terraform.tfvars</code> is loaded automatically; any other "
-            "file needs <code class=\"inline\">-var-file</code>. Marking a variable or output "
-            "<code class=\"inline\">sensitive = true</code> keeps its value out of CLI output and "
-            "plan logs, but <strong>not</strong> out of the state file, so state must be protected "
-            "as if it contained the secret &mdash; because it does."
+            "A <code class=\"inline\">terraform.tfvars</code> file supplies values for variables "
+            "that have no default, and Terraform loads it automatically. Secrets are the "
+            "exception: mark them <code class=\"inline\">sensitive</code> and pass them by "
+            "environment variable, because a tfvars file is a file like any other and gets "
+            "committed by accident. This lab tags a real VPC from those values so you can read "
+            "them back off AWS &mdash; and see that the password is not among them."
         ),
-        code=esc('''# variables.tf
+        code=esc('''variable "project"     { type = string }     # no default, so required
+variable "environment" { type = string }     # validated: dev | test | prod
+variable "cost_code"   { type = string }     # validated: exactly 3 characters
+
 variable "db_password" {
-  type        = string
-  description = "Database password, supplied at runtime."
-  sensitive   = true
+  type      = string
+  sensitive = true                           # never written to tfvars
 }
 
-# terraform.tfvars.example  -> copy to terraform.tfvars, never commit the copy
-# instance_name = "demo-web"
-# db_password   = "replace-me"
+locals {
+  common_tags = {
+    Lab         = "lab07"
+    Name        = "${var.project}-${var.environment}"
+    Project     = var.project
+    Environment = var.environment
+    CostCode    = var.cost_code
+  }
+}
 
-# outputs.tf
-output "connection_string" {
-  description = "Redacted in CLI output; still stored in plain text in state."
-  value       = "postgres://app:${var.db_password}@db.internal:5432/app"
-  sensitive   = true
+resource "aws_vpc" "main" {
+  cidr_block = var.vpc_cidr
+  tags       = local.common_tags
 }'''),
         rows=[
-            ("sensitive = true (variable)", "Terraform refuses to print the value in plan or apply output and marks anything derived from it as sensitive too."),
-            ("no default", "Forces the value to be supplied explicitly. Terraform prompts if it is missing rather than silently using a placeholder."),
-            ("terraform.tfvars.example", "The committed template. The real <code class=\"inline\">terraform.tfvars</code> is gitignored."),
-            ("${var.db_password}", "String interpolation. Because the input is sensitive, the whole interpolated string is sensitive."),
-            ("sensitive = true (output)", "Required here: Terraform errors out if an output derives from a sensitive value without this flag."),
-            ("precedence, highest first", "<code class=\"inline\">-var</code> and <code class=\"inline\">-var-file</code>, then <code class=\"inline\">*.auto.tfvars</code> alphabetically, then <code class=\"inline\">terraform.tfvars</code>, then <code class=\"inline\">TF_VAR_name</code> environment variables, then the block <code class=\"inline\">default</code>."),
-            ("TF_VAR_db_password", "The environment-variable form. Preferred in CI, where the value comes from a secret store and never touches disk."),
+            ("no default", "A variable without a default is mandatory. Terraform refuses to plan until it is supplied, which is why this lab needs a <code class=\"inline\">terraform.tfvars</code> file and most others do not."),
+            ("validation blocks", "<code class=\"inline\">environment</code> must be dev, test or prod; <code class=\"inline\">cost_code</code> must be exactly three characters. Bad input fails at plan with your message, not at apply with an AWS one."),
+            ("sensitive = true", "Redacts the value in plan and apply output. It does <em>not</em> encrypt it &mdash; the value is still plain text inside the state file."),
+            ("db_password is absent from common_tags", "Deliberate. A tag is readable by anyone holding describe permission on the account, so a secret in a tag is a published secret."),
+            ("TF_VAR_db_password", "Terraform reads any environment variable named <code class=\"inline\">TF_VAR_&lt;name&gt;</code> as that variable, which keeps the password off disk entirely."),
+            ("reading the tags back", "<code class=\"inline\">aws ec2 describe-vpcs</code> shows Project, Environment and CostCode on the real VPC. That is the proof the tfvars values reached AWS."),
+            ("precedence", "<code class=\"inline\">-var</code> beats <code class=\"inline\">terraform.tfvars</code>, which beats the variable's default. Overriding one now changes a tag on a real resource rather than only an output."),
         ],
         lab=7,
     ),
@@ -696,40 +701,43 @@ output "connection_string" {
         eyebrow="Lab 08 &middot; State",
         heading="Local state, refresh, and drift",
         concept=(
-            "<em>State</em> is Terraform's memory: a JSON file mapping each address in your "
-            "configuration to the real object's ID and last-known attributes. Without it, "
-            "Terraform could not tell whether to create a second VPC or update the existing one. "
-            "With no <code class=\"inline\">backend</code> block the state is a local "
-            "<code class=\"inline\">terraform.tfstate</code> beside your files. <em>Drift</em> is "
-            "when someone changes infrastructure outside Terraform; the next plan shows it."
+            "With no backend configured, Terraform writes "
+            "<code class=\"inline\">terraform.tfstate</code> beside your configuration. It maps "
+            "each resource address to the real object's ID and to every attribute AWS returned. "
+            "This lab puts a real VPC in state, so the file holds an ID that AWS also holds "
+            "&mdash; which is what makes losing the file an incident rather than an inconvenience."
         ),
-        code=esc('''terraform apply
+        code=esc('''resource "random_pet" "server" {
+  prefix = "lab08"
+  length = 2
+}
 
-terraform state list
-# random_pet.first
+resource "random_password" "db" {
+  length  = 16
+  special = false
+}
 
-terraform state show random_pet.first
-# resource "random_pet" "first" {
-#     id     = "state-lab-clever-mongoose"
-#     length = 2
-#     prefix = "state-lab"
-# }
+resource "aws_vpc" "main" {
+  cidr_block = "10.8.0.0/16"
 
-terraform plan -refresh-only
+  tags = {
+    Lab  = "lab08"
+    Name = random_pet.server.id
+  }
+}
 
-terraform apply -replace=random_pet.first
-
-cp terraform.tfstate terraform.tfstate.backup.manual'''),
+# terraform state list
+# aws_vpc.main
+# random_password.db
+# random_pet.server'''),
         rows=[
-            ("terraform state list", "Prints every address Terraform manages here. The first command to run when you are unsure what a directory owns."),
-            ("terraform state show ADDR", "Prints the recorded attributes for one address. Safer and clearer than opening the JSON."),
-            ("plan -refresh-only", "Updates state from the API and reports drift without proposing configuration changes. This is how you detect console edits."),
-            ("apply -replace=ADDR", "Destroys and recreates one resource without editing code. Replaces the deprecated <code class=\"inline\">terraform taint</code>."),
-            ("cp terraform.tfstate ...", "Manual backup before any risky state operation. Terraform also writes <code class=\"inline\">terraform.tfstate.backup</code> automatically."),
-            ("no backend block", "Means local state. Fine for one person; Tier 3 moves it to S3 so a team and CI can share it."),
+            ("no backend block", "State goes to <code class=\"inline\">./terraform.tfstate</code>. Fine for one person learning, unworkable for a team &mdash; which is what labs 17 to 19 solve."),
+            ("terraform state list", "Prints the three addresses Terraform tracks. Addresses, not names: this is how you refer to a resource in every state command."),
+            ("terraform state show aws_vpc.main", "Shows roughly twenty attributes against the two you wrote. Everything else was assigned by AWS and recorded at apply."),
+            ("random_password in state", "Stored as plain text. State is a secret-bearing file: never commit it, and prefer a backend that encrypts at rest."),
+            ("losing the file", "The VPC still exists but Terraform no longer knows about it. The next apply builds a <em>second</em> one, and the first becomes an orphan nobody manages."),
+            ("drift", "Change a tag in the console, then run <code class=\"inline\">plan</code>. Terraform refreshes, sees reality differ from state, and proposes putting it back."),
         ],
-        lang_note="Never hand-edit <code class=\"inline\">terraform.tfstate</code>, and never commit it: "
-                  "it holds resource IDs and any value marked sensitive, in plain text.",
         lab=8,
     ),
     dict(
@@ -917,39 +925,46 @@ output "web_url" {
             "duplicates, addressed by position. A <strong>set</strong> is unordered and discards "
             "duplicates. A <strong>map</strong> is keyed by string. A <em>for expression</em> "
             "builds a new collection from an existing one, and the shape of the result follows "
-            "the brackets you wrap it in: <code class=\"inline\">[ ]</code> produces a list, "
-            "<code class=\"inline\">{ }</code> produces a map. Everything here evaluates at plan "
-            "time, so this lab creates nothing in AWS and costs nothing to run."
+            "the brackets: <code class=\"inline\">[ ]</code> gives a list, "
+            "<code class=\"inline\">{ }</code> gives a map. The map then does real work &mdash; "
+            "it supplies the CIDR and zone of an actual subnet, so changing a map entry changes "
+            "AWS. The lab builds a free VPC and subnet, so it needs credentials."
         ),
-        code=esc('''locals {
-  # toset() discards the duplicate the list keeps; sort() gives a stable order,
-  # because a set has no order of its own.
-  unique_tag_names = sort(tolist(toset(var.tag_names)))
-
-  # A for expression over a list produces a list, still addressed by position.
-  tag_labels = [for name in var.tag_names : upper(name)]
-
-  # A for expression over a map produces a map. name is the key, subnet is the
-  # object stored under it, so subnet.cidr reaches a single attribute.
-  subnet_cidrs = { for name, subnet in var.subnets : name => subnet.cidr }
-
-  # An if clause at the end of a for expression filters the result.
-  zone_a_subnets = [for name, subnet in var.subnets : name if subnet.az == "us-east-2a"]
+        code=esc('''variable "subnets" {
+  type = map(object({ cidr = string, az = string }))
+  default = {
+    app_a = { cidr = "10.0.1.0/24", az = "us-east-2a" }
+    app_b = { cidr = "10.0.2.0/24", az = "us-east-2b" }
+  }
 }
 
-# One resource block, one instance. Turning a collection into many copies of a
-# resource needs the count and for_each meta-arguments, which Lab 24 introduces.
-resource "terraform_data" "collections" {
-  input = local.collection_shapes
+locals {
+  unique_tag_names = sort(tolist(toset(var.tag_names)))
+  tag_labels       = [for name in var.tag_names : upper(name)]
+  subnet_cidrs     = { for name, subnet in var.subnets : name => subnet.cidr }
+  zone_a_subnets   = [for name, subnet in var.subnets : name if subnet.az == "us-east-2a"]
+}
+
+# Map indexing doing real work: one object selected by key, two of its
+# attributes reached with a dot. Change the map entry and AWS changes.
+#
+# One resource block is still one subnet. Creating one per map entry needs
+# the for_each meta-argument, which Lab 24 introduces.
+resource "aws_subnet" "app_a" {
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = var.subnets["app_a"].cidr
+  availability_zone = var.subnets["app_a"].az
 }'''),
         rows=[
-            ("terraform_data", "A built-in placeholder resource. It creates nothing in any cloud, so this lab needs no credentials and leaves nothing to destroy."),
-            ("toset(var.tag_names)", "Converts the list to a set, which silently drops the repeated entry. Converting back with <code class=\"inline\">tolist()</code> is what lets <code class=\"inline\">sort()</code> apply."),
+            ("map(object({ cidr, az }))", "A map whose values are structured. Terraform checks at plan time that every entry has both attributes with the right types."),
+            ("toset(var.tag_names)", "Converts the list to a set, silently dropping the repeated entry. Converting back with <code class=\"inline\">tolist()</code> is what lets <code class=\"inline\">sort()</code> apply."),
             ("sort(...)", "A set has no order of its own, so Terraform may render it in any sequence. Sorting makes the output stable between runs."),
-            ("[for name in var.tag_names : upper(name)]", "A for expression over a list. Square brackets mean the result is a list, one element per input element, order preserved."),
-            ("{ for name, subnet in var.subnets : name =&gt; subnet.cidr }", "Iterating a map yields two loop variables, the key and the value. Braces and <code class=\"inline\">=&gt;</code> mean the result is a map."),
-            ("if subnet.az == \"us-east-2a\"", "An optional if clause filters entries out of the result. Only subnets in that zone reach the output."),
+            ("[for name in var.tag_names : upper(name)]", "A for expression over a list. Square brackets mean a list result, one element per input, order preserved."),
+            ("{ for name, subnet in var.subnets : name =&gt; subnet.cidr }", "Iterating a map yields two loop variables, key and value. Braces and <code class=\"inline\">=&gt;</code> mean a map result."),
+            ("if subnet.az == \"us-east-2a\"", "An optional if clause filters entries out of the result. Only subnets in that zone survive."),
+            ("var.subnets[\"app_a\"].cidr", "Square brackets select one object by key; the dot reaches one of its attributes. This is the value AWS actually receives as the subnet's CIDR."),
             ("why not count or for_each here", "Those meta-arguments turn a collection into many <em>resources</em>, which is a different subject. Lab 24 covers it. This lab is about the collections themselves."),
+            ("addressing by key beats by position", "Because the subnet names a key rather than an index, removing <code class=\"inline\">app_b</code> from the map leaves the real subnet untouched. A positional reference would have shifted and replaced it."),
         ],
         lab=11,
     ),
@@ -957,38 +972,46 @@ resource "terraform_data" "collections" {
         eyebrow="Lab 12 &middot; Functions",
         heading="Built-in functions transform values at plan time",
         concept=(
-            "HCL has no loops or user-defined functions, but it ships a large library of built-in "
-            "ones for strings, collections, CIDR arithmetic, and encoding. They evaluate during "
-            "plan, so results are visible before anything is created. "
-            "<code class=\"inline\">terraform console</code> gives you an interactive prompt to "
-            "test an expression before you commit it to a file."
+            "HCL has no loops and no user-defined functions, but it ships a large library of "
+            "built-in ones for strings, collections, CIDR arithmetic and encoding. They evaluate "
+            "during plan, so results are visible before anything is created, and "
+            "<code class=\"inline\">terraform console</code> lets you try an expression before "
+            "committing it to a file. Here the results are consumed by real resources rather than "
+            "only printed: a computed CIDR becomes a subnet, and a deduplicated list becomes a "
+            "security group's ingress ranges."
         ),
-        code=esc('''variable "application" {
-  type        = string
-  description = "Human-readable application name."
-  default     = "Payments API"
-}
-
-variable "cidrs" {
-  type        = list(string)
-  description = "Candidate CIDR ranges, possibly duplicated and unordered."
-  default     = ["10.0.2.0/24", "10.0.1.0/24", "10.0.1.0/24"]
-}
-
-locals {
+        code=esc('''locals {
   slug          = lower(replace(var.application, " ", "-"))
   unique_cidrs  = sort(tolist(toset(var.cidrs)))
-  subnet_prefix = cidrsubnet("10.20.0.0/16", 8, 12)
-  configuration = jsonencode({ name = local.slug, cidrs = local.unique_cidrs })
+  cidr_count    = length(local.unique_cidrs)
+  subnet_prefix = cidrsubnet(var.vpc_cidr, var.subnet_newbits, var.subnet_netnum)
+  summary       = format("%s uses %d unique CIDR(s)", local.slug, local.cidr_count)
+}
+
+resource "aws_subnet" "derived" {
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = local.subnet_prefix   # never typed by hand
+  availability_zone = var.subnet_az
+}
+
+resource "aws_security_group" "app" {
+  vpc_id = aws_vpc.main.id
+
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = local.unique_cidrs        # deduplicated and sorted
+  }
 }'''),
         rows=[
-            ("replace(var.application, \" \", \"-\")", "Swaps every space for a hyphen: <code class=\"inline\">Payments-API</code>."),
-            ("lower(...)", "Lowercases the result, giving the DNS-safe slug <code class=\"inline\">payments-api</code>. Functions nest inside out."),
-            ("toset(var.cidrs)", "Converts the list to a set, which discards the duplicate <code class=\"inline\">10.0.1.0/24</code>."),
-            ("tolist(...) then sort(...)", "Back to a list, then ordered, so the value is stable between plans and the diff stays empty."),
-            ("cidrsubnet(\"10.20.0.0/16\", 8, 12)", "Carves a subnet out of a parent range: add 8 bits to the /16 prefix and take block 12, giving <code class=\"inline\">10.20.12.0/24</code>."),
-            ("jsonencode({ ... })", "Serialises an HCL object to a JSON string, for user-data, IAM policies, or an output another tool reads."),
-            ("terraform console", "Evaluates any of these interactively. Try <code class=\"inline\">cidrsubnet(\"10.0.0.0/16\", 8, 1)</code>."),
+            ("lower(replace(...))", "Functions nest: the inner call runs first. This turns <code class=\"inline\">\"Payments API\"</code> into <code class=\"inline\">payments-api</code>, safe for a resource name."),
+            ("sort(tolist(toset(var.cidrs)))", "Three functions in sequence: drop duplicates, convert back to a list, then order it. The result becomes the security group's real source ranges."),
+            ("cidrsubnet(var.vpc_cidr, newbits, netnum)", "Carves a subnet out of a larger range. Derived from the VPC's own CIDR, so widening the VPC moves the subnet with it and neither is retyped."),
+            ("becomes aws_subnet.derived.cidr_block", "This is the difference from printing it. Change <code class=\"inline\">var.vpc_cidr</code> and the plan replaces both the VPC and the subnet together."),
+            ("format(\"%s uses %d ...\")", "Builds a display string with typed placeholders. <code class=\"inline\">%d</code> requires a number, so a type error is caught at plan."),
+            ("jsonencode stays an output", "Its real destination is an IAM policy document, which this track does not cover. Printed here so you can see the encoding, not wired to a resource."),
+            ("terraform console", "An interactive prompt against your real variables and locals. Try an expression there before you put it in a file."),
         ],
         lab=12,
     ),
@@ -1157,35 +1180,45 @@ resource "terraform_data" "bootstrap" {
             "directory. Every directory starts in the workspace called "
             "<code class=\"inline\">default</code>. Switching workspace switches which state "
             "Terraform reads, so <code class=\"inline\">dev</code> and "
-            "<code class=\"inline\">default</code> can coexist from identical code. Reference the "
-            "current name as <code class=\"inline\">terraform.workspace</code>. This lab creates "
-            "nothing in AWS &mdash; the point is the state files, not the resources."
+            "<code class=\"inline\">default</code> coexist from identical code. This lab builds "
+            "one free VPC per workspace, so two exist in the account at once and "
+            "<code class=\"inline\">state list</code> in either shows only its own &mdash; the "
+            "isolation claim, tested rather than asserted."
         ),
-        code=esc('''locals {
-  environment = terraform.workspace
-  labels      = { environment = terraform.workspace, managed_by = "terraform" }
+        code=esc('''variable "workspace_cidrs" {
+  type = map(string)
+  default = {
+    default = "10.16.0.0/16"
+    dev     = "10.17.0.0/16"
+  }
 }
 
-resource "terraform_data" "workspace" { input = local.labels }
+locals {
+  name     = "lab16-${terraform.workspace}"
+  vpc_cidr = lookup(var.workspace_cidrs, terraform.workspace, "10.18.0.0/16")
+}
 
-output "workspace" { value = terraform.workspace }
-output "labels" { value = terraform_data.workspace.output }
+resource "aws_vpc" "env" {
+  cidr_block = local.vpc_cidr
 
-# terraform workspace list
-# * default
+  tags = {
+    Lab         = "lab16"
+    Name        = local.name
+    Environment = terraform.workspace
+  }
+}
+
 # terraform workspace new dev
 # terraform workspace select dev
-# terraform apply
-# terraform workspace show'''),
+# terraform apply'''),
         rows=[
-            ("terraform.workspace", "A built-in value holding the active workspace name. Available anywhere in the configuration, no variable needed."),
-            ("terraform_data", "A placeholder resource that creates nothing. It exists so each workspace has something in its state, which is what makes the two state files visibly different."),
-            ("labels map", "Stamps the workspace name into the resource's input, so the output proves which workspace produced it."),
-            ("workspace new dev", "Creates the workspace and switches to it. Its state starts empty, so the first plan proposes creating everything."),
+            ("terraform.workspace", "A built-in value holding the active workspace name. No variable declares it, and it is available anywhere in the configuration."),
+            ("lookup(map, key, fallback)", "Selects this workspace's CIDR, falling back to a third range for any workspace name not in the map. Without distinct CIDRs the two VPCs would overlap."),
+            ("Name = \"lab16-${terraform.workspace}\"", "Interpolating the workspace into every name is what stops two workspaces colliding on an AWS name. Omit it and the second apply fails."),
+            ("two VPCs at once", "After applying in both workspaces, <code class=\"inline\">describe-vpcs</code> shows both. Each state file lists only its own &mdash; that is the isolation."),
+            ("what a workspace is not", "Both VPCs live in one account under one set of credentials. A workspace separates <em>state</em>, not blast radius. Production deserves a separate account, or at least separate state keys as in Lab 18."),
             ("workspace select dev", "Switches without creating. Always run <code class=\"inline\">workspace show</code> before an apply you care about."),
-            ("in a real configuration", "Interpolate <code class=\"inline\">terraform.workspace</code> into every resource name and tag, or two workspaces will try to create the same AWS name and collide."),
-            ("workspace vs separate keys", "Workspaces share one backend key prefix and suit short-lived sandboxes. Production boundaries deserve wholly separate state keys, as in Lab 18."),
-            ("do not destroy yet", "Lab 20 reads both of this lab's state files. Its cleanup is deliberately deferred until after that lab."),
+            ("do not destroy yet", "Lab 20 reads both of this lab's state files, so its cleanup is deliberately deferred until after that lab."),
         ],
         lab=16,
     ),
@@ -1362,6 +1395,7 @@ terraform state pull > remote-copy.tfstate'''),
             ("Enter a value: yes", "The confirmation prompt. Answering no leaves the local state in place and the remote backend empty."),
             ("terraform state list", "First check after migration: the same addresses must be present as before."),
             ("terraform plan", "Second check, and the real one. No changes means the migrated state still matches reality, so nothing will be recreated."),
+            ("terraform output -raw vpc_id", "Third check, and the most concrete. Record the VPC ID before migrating and compare it after: an identical ID proves the state moved while the infrastructure did not."),
             ("terraform state pull", "Fetches the state from the backend to stdout. Use it for backups; never edit and push it by hand."),
         ],
         lab=19,
@@ -1401,6 +1435,7 @@ resource "aws_instance" "app" {
             ("key = \"labs/dev/network/...\"", "Points at the network state specifically. Pointing at the wrong environment's key is the classic way to attach production subnets to a dev instance."),
             (".outputs.subnet_id", "Only values the producer declared as <code class=\"inline\">output</code> appear under <code class=\"inline\">.outputs</code>. Undeclared internals are unreachable."),
             ("read permissions", "The consumer needs S3 read access to that key. Read-only is enough and is what it should be granted."),
+            ("in this lab", "The producer is Lab 16, read over the <code class=\"inline\">local</code> backend rather than S3, and it publishes a real <code class=\"inline\">vpc_id</code> and <code class=\"inline\">vpc_cidr</code>. The consumer reads a genuine VPC ID out of a state file while making no AWS call of its own."),
         ],
         lab=20,
     ),
@@ -1717,53 +1752,78 @@ def check_topic_order(topics: list[dict]) -> None:
 
 
 CONCEPTS_CSS = """
-/* sticky in-page topic nav */
+/* Wide screens: topic index is a real sidebar column beside the content, so the two
+   never overlap. The column itself is sticky and scrolls independently of the page. */
+.concepts-layout {
+    display: grid; grid-template-columns: 268px minmax(0, 1fr);
+    gap: 20px; align-items: start;
+}
+.concepts-main { min-width: 0; }
 .topicnav {
-    position: sticky; top: 0; z-index: 20; margin-bottom: 18px;
-    background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(6px);
-    border: 1px solid var(--slate-200); border-radius: 14px; padding: 12px 16px;
-    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.08);
+    position: sticky; top: 16px; max-height: calc(100vh - 32px);
+    display: flex; flex-direction: column;
+    background: #fff; border: 1px solid var(--slate-200); border-radius: 14px;
+    padding: 12px 14px; box-shadow: 0 2px 12px rgba(15, 23, 42, 0.06);
 }
 .topicnav h2 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em;
                color: var(--slate-500); margin-bottom: 8px; }
-.topicnav ol {
-    list-style: none; display: grid; gap: 6px;
-    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-    max-height: 42vh; overflow-y: auto;
-}
-.topicnav a {
-    display: block; padding: 5px 10px; border-radius: 8px; text-decoration: none;
-    font-size: 0.8rem; color: var(--slate-700); background: #f8fbff;
+.topicnav .topiclist { overflow-y: auto; overscroll-behavior: contain; }
+.topiclist { list-style: none; display: grid; gap: 4px; }
+.topiclist a {
+    display: block; padding: 5px 9px; border-radius: 8px; text-decoration: none;
+    font-size: 0.78rem; line-height: 1.35; color: var(--slate-700); background: #f8fbff;
     border: 1px solid rgba(37, 99, 235, 0.12);
 }
-.topicnav a:hover { background: var(--blue); color: #fff; border-color: var(--blue); }
-.topicnav a b { color: var(--blue); font-family: "SF Mono", Menlo, monospace;
-                font-size: 0.76rem; margin-right: 6px; }
-.topicnav a:hover b { color: #fff; }
-/* clear the sticky nav when an anchor is jumped to */
-.card[id] { scroll-margin-top: 46vh; }
-@media (max-width: 768px) {
-    .topicnav ol { grid-template-columns: 1fr 1fr; max-height: 34vh; }
+.topiclist a:hover { background: var(--blue); color: #fff; border-color: var(--blue); }
+.topiclist a b { color: var(--blue); font-family: "SF Mono", Menlo, monospace;
+                 font-size: 0.74rem; margin-right: 6px; }
+.topiclist a:hover b { color: #fff; }
+/* narrow-screen disclosure and its jump-back pill: off entirely on wide screens */
+.topicnav-mobile, .topicfab { display: none; }
+/* nothing is pinned above the content, so an anchor jump needs only breathing room */
+.card[id] { scroll-margin-top: 18px; }
+#topic-index { scroll-margin-top: 12px; }
+
+@media (max-width: 1100px) {
+    .concepts-layout { grid-template-columns: minmax(0, 1fr); }
+    .topicnav { display: none; }
+    .topicnav-mobile {
+        display: block; background: #fff; border: 1px solid var(--slate-200);
+        border-radius: 12px; box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+    }
+    .topicnav-mobile summary {
+        cursor: pointer; padding: 9px 12px; font-size: 0.82rem; font-weight: 700;
+        color: var(--blue);
+    }
+    .topicnav-mobile[open] summary { border-bottom: 1px solid var(--slate-200); }
+    .topicnav-mobile .topiclist {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        padding: 10px 12px; max-height: 60vh; overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+    .topicfab {
+        display: block; position: fixed; right: 14px; bottom: 14px; z-index: 30;
+        padding: 9px 14px; border-radius: 999px; background: var(--blue); color: #fff;
+        font-size: 0.78rem; font-weight: 800; text-decoration: none;
+        box-shadow: 0 6px 18px rgba(37, 99, 235, 0.35);
+    }
 }
 """
 
 
-def render_topic_nav(topics: list[dict], anchors: list[str]) -> str:
+def render_topic_nav(topics: list[dict], anchors: list[str], *, indent: str) -> str:
+    """The 26 topic links as an <ol>. Rendered twice: sidebar and narrow-screen details."""
     items = []
     for spec, anchor in zip(topics, anchors):
         title = spec["heading"].replace('"', "&quot;")
         tail = spec["eyebrow"].split("&middot;")[-1].strip()
         items.append(
-            f'                <li><a href="#{anchor}" title="{title}">'
+            f'{indent}    <li><a href="#{anchor}" title="{title}">'
             f'<b>lab{spec["lab"]:02d}</b>{tail}</a></li>'
         )
-    return f"""        <nav class="topicnav">
-            <h2>All {len(topics)} topics &mdash; lab00 to lab24</h2>
-            <ol>
-{chr(10).join(items)}
-            </ol>
-        </nav>
-"""
+    return (f'{indent}<ol class="topiclist">\n'
+            + "\n".join(items)
+            + f"\n{indent}</ol>")
 
 
 def render_concepts() -> str:
@@ -1780,7 +1840,8 @@ def render_concepts() -> str:
                 <code class="inline">for_each</code> on real S3 buckets. Each card gives the
                 concept in plain English, a real example, every significant line explained, and a
                 link to the lab that practises it. Read straight down, or jump with the topic
-                index above.</p>
+                index &mdash; the sidebar on a wide screen, the collapsible list at the top of
+                the page on a narrow one.</p>
             <div class="note">Starting from zero? Read
                 <a href="terraform-101.html">Terraform 101</a> first &mdash; what Terraform is,
                 HCL, providers, version constraints, state, and drift &mdash; then the
@@ -1790,20 +1851,36 @@ def render_concepts() -> str:
         </div>
 """
 
-    sections = [render_topic_nav(TOPICS, anchors), intro]
+    cards = [intro]
     for spec, anchor in zip(TOPICS, anchors):
         href, label = practises(spec["lab"])
-        sections.append(topic(
+        cards.append(topic(
             spec["eyebrow"], spec["heading"], spec["concept"], spec["code"],
             spec["rows"], href, label, lang_note=spec.get("lang_note", ""),
             anchor=anchor,
         ))
 
+    nav_title = f"All {len(TOPICS)} topics &mdash; lab00 to lab24"
+    body = f"""        <div class="concepts-layout">
+            <nav class="topicnav" aria-label="Topic index">
+                <h2>{nav_title}</h2>
+{render_topic_nav(TOPICS, anchors, indent=" " * 16)}
+            </nav>
+            <details class="topicnav-mobile" id="topic-index">
+                <summary>{nav_title}</summary>
+{render_topic_nav(TOPICS, anchors, indent=" " * 16)}
+            </details>
+            <div class="concepts-main">
+{"".join(cards)}            </div>
+        </div>
+        <a class="topicfab" href="#topic-index">&#9776; Topics</a>
+"""
+
     return page(
         "Terraform &mdash; Concepts",
         f"{len(TOPICS)} topics across all {len(LABS)} labs, in lab order. Each one: what it is, "
         "a real example, every significant line explained, and the lab that practises it.",
-        "".join(sections),
+        body,
         active="concepts",
         stats=[f"{len(TOPICS)} topics", f"{len(LABS)} labs", "lab00&ndash;lab24", TF_FLOOR,
                AWS_PIN, "Region us-east-2"],
@@ -2094,10 +2171,15 @@ def check_anchors() -> int:
               f"extra {sorted(ids - expected)}")
         bad += 1
 
+    # every id on concepts.html, not just the topic cards: the topic index itself is a
+    # link target, so a bare #anchor may resolve to a card or to a page control.
+    concepts_ids = set(re.findall(
+        r' id="([a-z0-9-]+)"', (OUT_DIR / "concepts.html").read_text(encoding="utf-8")))
     for name in OWNED_PAGES:
         text = (OUT_DIR / name).read_text(encoding="utf-8")
+        resolvable = concepts_ids | set(re.findall(r' id="([a-z0-9-]+)"', text))
         for target in re.findall(r'href="(?:concepts\.html)?#([a-z0-9-]+)"', text):
-            if target not in ids:
+            if target not in resolvable:
                 print(f"  DANGLING ANCHOR {name} -> #{target}")
                 bad += 1
 
@@ -2109,7 +2191,7 @@ def check_anchors() -> int:
         bad += 1
 
     if not bad:
-        print(f"anchor check: {len(ids)} topic ids on concepts.html, the sticky nav lists all "
+        print(f"anchor check: {len(ids)} topic ids on concepts.html, the topic index lists all "
               "of them, and every in-page link resolves.")
     return bad
 

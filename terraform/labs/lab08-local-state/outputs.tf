@@ -8,3 +8,8 @@ output "db_password" {
   value       = random_password.db.result
   sensitive   = true
 }
+
+output "vpc_id" {
+  description = "The real VPC ID AWS assigned. State is the only local record that this exists."
+  value       = aws_vpc.main.id
+}

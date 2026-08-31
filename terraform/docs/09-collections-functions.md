@@ -14,7 +14,7 @@ invisible.
 
 | Lab | Tool | Turns |
 |---|---|---|
-| lab11 | `count` and `for_each` | One resource block into many resource instances |
+| lab11 | Collection types and `for` expressions | One collection into another, and a map entry into a real subnet |
 | lab12 | Built-in functions | Raw input values into the shape you actually need |
 | lab21 | `dynamic` blocks | One nested block into many nested blocks |
 | lab24 | `count` and `for_each` again | The same two blocks into real S3 buckets, where a bad plan costs something |
@@ -64,9 +64,27 @@ The list keeps both copies of `web` and keeps its order. The set silently drops 
 a function call. The map holds a structured object per key, which is the shape `for_each` most
 wants.
 
+Lab11 does not stop at printing them. It indexes the map by key and hands the result to a real
+resource:
+
+```hcl
+resource "aws_subnet" "app_a" {
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = var.subnets["app_a"].cidr
+  availability_zone = var.subnets["app_a"].az
+}
+```
+
+That is one `resource` block and therefore one subnet, even though the map holds two entries.
+Producing one subnet per entry needs `for_each`, which lab24 teaches; until then, name the key you
+want. The payoff is that the map value is load-bearing — edit `app_a`'s CIDR and a real subnet moves
+— while the address `aws_subnet.app_a` stays stable no matter what happens to `app_b`.
+
 `us-east-2` has three availability zones, `us-east-2a` through `us-east-2c`, so a set of zone names
-here has at most three distinct members. Nothing in the track pins a zone name in a resource; these
-are literals in a variable used only to demonstrate set behaviour.
+here has at most three distinct members. `var.availability_zones` is a literal set used only to
+demonstrate set behaviour, but `var.subnets[*].az` is not: lab11 passes it straight to
+`availability_zone`, so an invalid zone name there fails at apply with
+`InvalidParameterValue`.
 
 Because a set has no meaningful order, printing one reproducibly needs a sort:
 
@@ -79,10 +97,14 @@ output "set_removed_duplicates" {
 
 `tolist` converts the set to a list so `sort` can order it.
 
-## count versus for_each (lab11)
+## count versus for_each (lab24)
 
 Both create multiple instances from one block. Choosing wrongly causes real damage, so this is
 worth getting right the first time.
+
+Neither appears in lab11's configuration — the track deliberately withholds them until lab24, so
+that the collection types are learned before the meta-arguments that consume them. Read this section
+now for the shape of the problem; lab24 is where you run it.
 
 ```hcl
 # count makes copies addressed by number: terraform_data.by_count[0], [1], [2].
@@ -131,8 +153,10 @@ else, because each address is bound to its key rather than its position.
 interchangeable, positionally identical copies, or as a conditional
 (`count = var.enabled ? 1 : 0`).
 
-Lab11 demonstrates all of this on `terraform_data`, so the plans are real and the consequences are
-not. Lab24 repeats the experiment on S3 buckets and captures both plans:
+Lab11 shows the *addressing* half of this lesson without the meta-arguments: shortening
+`var.subnets` leaves `aws_subnet.app_a` untouched, because a key survives its neighbours' removal,
+whereas a positional reference would have repointed a real subnet at a different CIDR. Lab24 runs
+the full experiment on S3 buckets and captures both plans:
 `1 to add, 0 to change, 2 to destroy` for the list, `0 to add, 0 to change, 2 to destroy` for the
 map. That comparison is [`16-count-foreach.md`](16-count-foreach.md).
 
@@ -156,8 +180,9 @@ address — so changing a CIDR here replaces that subnet, which is usually what 
 Terraform ships a fixed library of built-in functions. You cannot define your own. They are pure
 transformations, evaluated at plan time.
 
-Lab12 creates no resources at all — every value is a function result, so it runs free and needs no
-credentials:
+Lab12 computes every value with a function and then *uses* the results: `local.subnet_prefix` becomes
+a real subnet's `cidr_block`, and `local.unique_cidrs` becomes a real security group's ingress
+ranges. The resources are free, but they are in AWS, so the arithmetic has consequences:
 
 ```hcl
 locals {
@@ -260,8 +285,8 @@ expression:
 ```
 
 Square brackets produce a list, braces produce a map — and a map needs the `key => value` arrow.
-Lab11's output uses exactly this to turn a set of resource instances into a keyed map of their
-values.
+Lab11's `subnet_cidrs` output uses exactly this to project a map of subnet objects down to the one
+attribute a `cidr_block` argument needs.
 
 The splat operator is a shorthand for the simplest list case:
 
@@ -275,14 +300,14 @@ terraform_data.by_count[*].output          # equivalent to [for r in ... : r.out
 cd terraform/labs/lab11-collections
 terraform init
 terraform apply
-terraform state list      # note [0]/[1] from count vs ["app_a"] from for_each
-terraform output
+terraform state list      # terraform_data, aws_vpc.main, aws_subnet.app_a
+terraform output          # app_a_subnet_from_map: requested vs actual
 terraform destroy
 
 cd ../lab12-functions
 terraform init
 terraform console         # try: cidrsubnet("10.0.0.0/16", 8, 1)
-terraform apply           # creates nothing; every output is a function result
+terraform apply           # VPC + subnet at the cidrsubnet() result + security group
 ```
 
 ## Where next
@@ -297,5 +322,5 @@ terraform apply           # creates nothing; every output is a function result
 
 | Lab | Description |
 |---|---|
-| [Lab 11: Collections](../labmanuals/lab11-collections.md) | list vs set vs map, `count` vs `for_each`, address stability |
-| [Lab 12: Functions](../labmanuals/lab12-functions.md) | String, collection, CIDR, encoding and format functions, `terraform console` |
+| [Lab 11: Collections](../labmanuals/lab11-collections.md) | list vs set vs map, `for` expressions, and a real subnet built from a map entry read by key |
+| [Lab 12: Functions](../labmanuals/lab12-functions.md) | String, collection, CIDR, encoding and format functions, `terraform console`, and a real subnet at the `cidrsubnet()` result |

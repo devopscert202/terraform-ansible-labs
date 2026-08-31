@@ -19,10 +19,14 @@ exposes its outputs as read-only values. The module reading is the **consumer**;
 read is the **producer**. Nothing is created or modified — the consumer only looks.
 
 The consequence is that a producer's `output` names stop being an implementation detail. They are
-a published interface: rename `vpc_id` and every consumer's next plan breaks. The capstone you
-built in [Lab 10](lab10-capstone-vpc-ec2.md) is the kind of stack whose `vpc_id` and `public_ip`
-outputs another team would consume this way; here the producer is [Lab 16](lab16-workspaces.md),
-because it left two state files behind and needs no AWS credentials to read.
+a published interface: rename `vpc_id` and every consumer's next plan breaks. Here the producer is
+[Lab 16](lab16-workspaces.md), which left two state files behind, each holding a **real VPC** in a
+different CIDR. So this is not a toy read: `upstream_vpc_id` returns the ID of a network that exists
+in AWS right now, and an application stack would build its subnets and security groups against it.
+
+Note what the consumer still does not do. It creates nothing, and it never calls AWS — it opens a
+state file. That is the whole point of the pattern: values cross the boundary without either stack
+gaining permission over the other's resources.
 
 ## What you will build
 
@@ -31,6 +35,8 @@ because it left two state files behind and needs no AWS credentials to read.
 | `data.terraform_remote_state.upstream` | Reads the lab 16 producer's state file | Free |
 | Output `upstream_outputs` | The producer's entire output map | Free |
 | Output `upstream_environment` | A single value reached into the map, the realistic pattern | Free |
+| Output `upstream_vpc_id` | The producer's real VPC ID — the classic cross-stack value | Free |
+| Output `upstream_vpc_cidr` | The producer's VPC CIDR, as a route or rule would need it | Free |
 
 ## Before you start
 
@@ -41,8 +47,9 @@ because it left two state files behind and needs no AWS credentials to read.
       until after this lab; if you already ran it, reapply lab 16 steps 5 to 8 before continuing.
 - [ ] Read [../docs/13-remote-state.md](../docs/13-remote-state.md)
 
-This lab creates no resources and needs no AWS credentials. The producer's state is a local file,
-which keeps it runnable offline; the S3 producer variant is shown in step 9.
+This lab creates no resources and needs no AWS credentials of its own — it reads a local file. Lab 16
+does need credentials, because its VPCs are real, so make sure those two VPCs still exist before you
+start. The S3 producer variant is shown in step 9.
 
 ## Steps
 
@@ -77,8 +84,7 @@ ls ../lab16-workspaces/terraform.tfstate
 
 ### Step 3 — Check which outputs the producer actually publishes
 
-Read the contract before you consume it. These two names are everything this consumer can rely
-on.
+Read the contract before you consume it. These five names are everything this consumer can rely on.
 
 ```bash
 terraform -chdir=../lab16-workspaces output
@@ -91,8 +97,16 @@ labels = {
   "environment" = "default"
   "managed_by" = "terraform"
 }
+vpc_cidr = "10.16.0.0/16"
+vpc_id = "vpc-0efb0b80941b4805e"
+vpc_name = "lab16-default"
 workspace = "default"
 ```
+
+Five outputs: `labels`, `workspace`, `vpc_cidr`, `vpc_id` and `vpc_name`. `vpc_id` is a real
+`vpc-` identifier. Everything else this consumer might want — a subnet ID, a route table ID — is
+*not* on that list, and therefore not available, no matter that lab 16's state file contains it.
+Only declared outputs cross the boundary.
 
 ### Step 4 — Read the data source
 
@@ -154,12 +168,26 @@ Changes to Outputs:
           + environment = "default"
           + managed_by  = "terraform"
         }
+      + vpc_cidr  = "10.16.0.0/16"
+      + vpc_id    = "vpc-0efb0b80941b4805e"
+      + vpc_name  = "lab16-default"
       + workspace = "default"
     }
+  + upstream_vpc_cidr    = "10.16.0.0/16"
+  + upstream_vpc_id      = "vpc-0efb0b80941b4805e"
 
 You can apply this plan to save these new output values to the Terraform
 state, without changing any real infrastructure.
+
+─────────────────────────────────────────────────────────────────────────────
+
+Note: You didn't use the -out option to save this plan, so Terraform can't
+guarantee to take exactly these actions if you run "terraform apply" now.
 ```
+
+Every value is already resolved rather than showing `(known after apply)`, including
+`upstream_vpc_id`. The plan ends with `You can apply this plan to save these new output values to the
+Terraform state, without changing any real infrastructure.`
 
 ### Step 7 — Apply and read the values
 
@@ -173,6 +201,24 @@ terraform apply -auto-approve
 data.terraform_remote_state.upstream: Reading...
 data.terraform_remote_state.upstream: Read complete after 0s
 
+Changes to Outputs:
+  + upstream_environment = "default"
+  + upstream_outputs     = {
+      + labels    = {
+          + environment = "default"
+          + managed_by  = "terraform"
+        }
+      + vpc_cidr  = "10.16.0.0/16"
+      + vpc_id    = "vpc-0efb0b80941b4805e"
+      + vpc_name  = "lab16-default"
+      + workspace = "default"
+    }
+  + upstream_vpc_cidr    = "10.16.0.0/16"
+  + upstream_vpc_id      = "vpc-0efb0b80941b4805e"
+
+You can apply this plan to save these new output values to the Terraform
+state, without changing any real infrastructure.
+
 Apply complete! Resources: 0 added, 0 changed, 0 destroyed.
 
 Outputs:
@@ -183,12 +229,24 @@ upstream_outputs = {
     "environment" = "default"
     "managed_by" = "terraform"
   }
+  "vpc_cidr" = "10.16.0.0/16"
+  "vpc_id" = "vpc-0efb0b80941b4805e"
+  "vpc_name" = "lab16-default"
   "workspace" = "default"
 }
+upstream_vpc_cidr = "10.16.0.0/16"
+upstream_vpc_id = "vpc-0efb0b80941b4805e"
 ```
 
-`0 added` confirms the consumer touched nothing. `upstream_environment` reached two levels into
-the producer's `labels` map — indexing like that is the contract at its most brittle.
+`Apply complete! Resources: 0 added, 0 changed, 0 destroyed.`
+
+`0 added` confirms the consumer touched nothing — and it is worth sitting with that. This module now
+holds the ID of a live VPC and could hand it to any resource that needs one, yet it created nothing,
+modified nothing, and made no AWS API call at all.
+
+`upstream_environment` reached two levels into the producer's `labels` map — indexing like that is
+the contract at its most brittle. `upstream_vpc_id` reads a top-level output instead, which is why
+that form is the one to prefer.
 
 ### Step 8 — Confirm the consumer's own state holds only the data source
 
@@ -217,6 +275,27 @@ terraform apply -auto-approve \
 **Expected output**
 
 ```text
+data.terraform_remote_state.upstream: Reading...
+data.terraform_remote_state.upstream: Read complete after 0s
+
+Changes to Outputs:
+  ~ upstream_environment = "default" -> "dev"
+  ~ upstream_outputs     = {
+      ~ labels    = {
+          ~ environment = "default" -> "dev"
+            # (1 unchanged attribute hidden)
+        }
+      ~ vpc_cidr  = "10.16.0.0/16" -> "10.17.0.0/16"
+      ~ vpc_id    = "vpc-0efb0b80941b4805e" -> "vpc-090e81535ff58fe9c"
+      ~ vpc_name  = "lab16-default" -> "lab16-dev"
+      ~ workspace = "default" -> "dev"
+    }
+  ~ upstream_vpc_cidr    = "10.16.0.0/16" -> "10.17.0.0/16"
+  ~ upstream_vpc_id      = "vpc-0efb0b80941b4805e" -> "vpc-090e81535ff58fe9c"
+
+You can apply this plan to save these new output values to the Terraform
+state, without changing any real infrastructure.
+
 Apply complete! Resources: 0 added, 0 changed, 0 destroyed.
 
 Outputs:
@@ -227,9 +306,19 @@ upstream_outputs = {
     "environment" = "dev"
     "managed_by" = "terraform"
   }
+  "vpc_cidr" = "10.17.0.0/16"
+  "vpc_id" = "vpc-090e81535ff58fe9c"
+  "vpc_name" = "lab16-dev"
   "workspace" = "dev"
 }
+upstream_vpc_cidr = "10.17.0.0/16"
+upstream_vpc_id = "vpc-090e81535ff58fe9c"
 ```
+
+`upstream_environment` is now `"dev"`, and `upstream_vpc_id` is a **different** `vpc-` ID —
+lab 16's `dev` VPC, at `10.17.0.0/16` rather than `10.16.0.0/16`. One variable changed and the
+consumer is pointed at a different real network. That is how a single application stack is deployed
+against a per-environment network stack.
 
 For a producer using the S3 backend from labs 17 and 18, the same data source changes only its
 backend and config — the rest of the module is untouched:
@@ -248,31 +337,53 @@ data "terraform_remote_state" "upstream" {
 ### Step 10 — Break the contract on purpose
 
 Ask for an output the producer does not publish — exactly what a rename looks like downstream.
+`subnet_id` is a good example: lab 16 has no subnet, and even if it did, the value would not cross
+this boundary unless someone declared an output for it.
 
 ```bash
 terraform console
 > data.terraform_remote_state.upstream.outputs.vpc_id
+> data.terraform_remote_state.upstream.outputs.subnet_id
 ```
 
 **Expected output**
 
 ```text
+"vpc-090e81535ff58fe9c"
+
 Error: Unsupported attribute
 
-This object does not have an attribute named "vpc_id".
+  on <console-input> line 1:
+  (source code not available)
+
+This object does not have an attribute named "subnet_id".
+
 ```
 
-Type `exit` to leave the console. The failure lands in the *consumer* while the change was made
-in the producer — which is why output names need the same care as a public API.
+The first expression returns the VPC ID — `vpc-090e81535ff58fe9c`, the `dev` VPC, because the console
+reads the data source as step 9's apply recorded it in state. The second fails:
+
+```text
+Error: Unsupported attribute
+
+This object does not have an attribute named "subnet_id".
+```
+
+Type `exit` to leave the console. Now picture the same error arriving because someone renamed
+`vpc_id` to `network_id` in the producer. Nothing is wrong with the producer — it applies cleanly, its
+VPC is healthy — and yet the failure lands in the *consumer*. That asymmetry is why output names need
+the same care as a public API.
 
 ## Done when
 
-- [ ] `terraform -chdir=../lab16-workspaces output` showed the two producer outputs
-- [ ] `terraform plan` read the data source and resolved both output values
+- [ ] `terraform -chdir=../lab16-workspaces output` showed the producer's five outputs
+- [ ] `terraform plan` read the data source and resolved every output value, including `upstream_vpc_id`
 - [ ] Apply reported `0 added, 0 changed, 0 destroyed`
+- [ ] `upstream_vpc_id` matched a real VPC ID from lab 16
 - [ ] `terraform state list` returned only the data source address
-- [ ] Pointing at the `dev` workspace state changed `upstream_environment` to `"dev"`
-- [ ] Requesting a nonexistent output produced `Unsupported attribute`
+- [ ] Pointing at the `dev` workspace state changed `upstream_environment` to `"dev"` and
+      `upstream_vpc_id` to lab 16's other VPC
+- [ ] Requesting `subnet_id` produced `Unsupported attribute` while `vpc_id` succeeded
 - [ ] You can explain why renaming a producer's output breaks its consumers
 
 ## If something fails
@@ -281,7 +392,7 @@ in the producer — which is why output names need the same care as a public API
 |---|---|---|
 | `Error: Failed to read state file` / no such file | Lab 16 was destroyed or never applied | Apply lab 16 in its `default` workspace, then retry |
 | `upstream_outputs = {}` | Producer state exists but has no outputs recorded | Reapply the producer; outputs are only stored on apply |
-| `Unsupported attribute` on `outputs.labels` | Pointing at a producer that publishes different outputs | Check the path, then rerun step 3 against that directory |
+| `Unsupported attribute` on `outputs.labels` or `outputs.vpc_id` | Pointing at a producer that publishes different outputs, or lab 16 applied before it created a VPC | Check the path, then rerun step 3 against that directory; reapply lab 16 if its outputs are missing `vpc_id` |
 | Reads the wrong environment | Pointing at `terraform.tfstate` instead of the workspace file | Named workspaces live under `terraform.tfstate.d/<name>/` |
 | Consumer plan changes after a producer apply | The producer's output values moved | Expected: the consumer re-reads on every plan |
 | `AccessDenied` with the S3 variant | No read permission on the producer's key | A policy boundary, not a config error — request `s3:GetObject` on that prefix |
@@ -293,8 +404,12 @@ in the producer — which is why output names need the same care as a public API
 terraform destroy -auto-approve
 ```
 
-Destroying the consumer does not affect the producer. Lab 16 is now safe to clean up — return to
-its [cleanup section](lab16-workspaces.md#cleanup) and run the commands you deferred.
+Destroying the consumer does not affect the producer — lab 16's two VPCs are still running, which is
+the last thing this lab demonstrates about the read-only nature of the data source.
+
+Lab 16 is now safe to clean up, and it must be: those two VPCs are real. Return to its
+[cleanup section](lab16-workspaces.md#cleanup) and run the commands you deferred, then confirm with
+the `describe-vpcs` check there.
 
 ## Next steps
 

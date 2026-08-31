@@ -22,3 +22,16 @@ output "upstream_outputs" {
 output "upstream_environment" {
   value = data.terraform_remote_state.upstream.outputs.labels.environment
 }
+
+# The realistic cross-stack read: an application stack asking the network stack
+# for the VPC it should build into. The ID belongs to a real VPC in AWS, but this
+# module never contacts AWS — it reads the producer's state file and nothing else.
+output "upstream_vpc_id" {
+  description = "The producer's real VPC ID, read out of its state file."
+  value       = data.terraform_remote_state.upstream.outputs.vpc_id
+}
+
+output "upstream_vpc_cidr" {
+  description = "The producer's VPC CIDR, the value a consumer would use in a route or rule."
+  value       = data.terraform_remote_state.upstream.outputs.vpc_cidr
+}

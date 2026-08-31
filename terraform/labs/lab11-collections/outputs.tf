@@ -32,3 +32,23 @@ output "collection_shapes" {
   description = "Lengths, keys, and one addressed element from each collection type, read back out of state."
   value       = terraform_data.collections.output
 }
+
+output "vpc_id" {
+  description = "The real VPC created in AWS to hold the subnet."
+  value       = aws_vpc.main.id
+}
+
+output "app_a_subnet_id" {
+  description = "A real subnet whose CIDR and zone were read out of var.subnets by key."
+  value       = aws_subnet.app_a.id
+}
+
+output "app_a_subnet_from_map" {
+  description = "The map entry that produced the subnet, beside what AWS actually assigned."
+  value = {
+    requested_cidr = var.subnets["app_a"].cidr
+    requested_az   = var.subnets["app_a"].az
+    actual_cidr    = aws_subnet.app_a.cidr_block
+    actual_az      = aws_subnet.app_a.availability_zone
+  }
+}
