@@ -111,33 +111,61 @@ td.lineref { white-space: nowrap; font-family: "SF Mono", Menlo, monospace;
     pre { font-size: 0.76rem; }
 }
 
-/* sticky in-page topic nav */
+/* Wide screens: topic index is a real sidebar column beside the content, so the two
+   never overlap. The column itself is sticky and scrolls independently of the page. */
+.concepts-layout {
+    display: grid; grid-template-columns: 268px minmax(0, 1fr);
+    gap: 20px; align-items: start;
+}
+.concepts-main { min-width: 0; }
 .topicnav {
-    position: sticky; top: 0; z-index: 20; margin-bottom: 18px;
-    background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(6px);
-    border: 1px solid var(--slate-200); border-radius: 14px; padding: 12px 16px;
-    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.08);
+    position: sticky; top: 16px; max-height: calc(100vh - 32px);
+    display: flex; flex-direction: column;
+    background: #fff; border: 1px solid var(--slate-200); border-radius: 14px;
+    padding: 12px 14px; box-shadow: 0 2px 12px rgba(15, 23, 42, 0.06);
 }
 .topicnav h2 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em;
                color: var(--slate-500); margin-bottom: 8px; }
-.topicnav ol {
-    list-style: none; display: grid; gap: 6px;
-    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-    max-height: 42vh; overflow-y: auto;
-}
-.topicnav a {
-    display: block; padding: 5px 10px; border-radius: 8px; text-decoration: none;
-    font-size: 0.8rem; color: var(--slate-700); background: #f8fbff;
+.topicnav .topiclist { overflow-y: auto; overscroll-behavior: contain; }
+.topiclist { list-style: none; display: grid; gap: 4px; }
+.topiclist a {
+    display: block; padding: 5px 9px; border-radius: 8px; text-decoration: none;
+    font-size: 0.78rem; line-height: 1.35; color: var(--slate-700); background: #f8fbff;
     border: 1px solid rgba(37, 99, 235, 0.12);
 }
-.topicnav a:hover { background: var(--blue); color: #fff; border-color: var(--blue); }
-.topicnav a b { color: var(--blue); font-family: "SF Mono", Menlo, monospace;
-                font-size: 0.76rem; margin-right: 6px; }
-.topicnav a:hover b { color: #fff; }
-/* clear the sticky nav when an anchor is jumped to */
-.card[id] { scroll-margin-top: 46vh; }
-@media (max-width: 768px) {
-    .topicnav ol { grid-template-columns: 1fr 1fr; max-height: 34vh; }
+.topiclist a:hover { background: var(--blue); color: #fff; border-color: var(--blue); }
+.topiclist a b { color: var(--blue); font-family: "SF Mono", Menlo, monospace;
+                 font-size: 0.74rem; margin-right: 6px; }
+.topiclist a:hover b { color: #fff; }
+/* narrow-screen disclosure and its jump-back pill: off entirely on wide screens */
+.topicnav-mobile, .topicfab { display: none; }
+/* nothing is pinned above the content, so an anchor jump needs only breathing room */
+.card[id] { scroll-margin-top: 18px; }
+#topic-index { scroll-margin-top: 12px; }
+
+@media (max-width: 1100px) {
+    .concepts-layout { grid-template-columns: minmax(0, 1fr); }
+    .topicnav { display: none; }
+    .topicnav-mobile {
+        display: block; background: #fff; border: 1px solid var(--slate-200);
+        border-radius: 12px; box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+    }
+    .topicnav-mobile summary {
+        cursor: pointer; padding: 9px 12px; font-size: 0.82rem; font-weight: 700;
+        color: var(--blue);
+    }
+    .topicnav-mobile[open] summary { border-bottom: 1px solid var(--slate-200); }
+    .topicnav-mobile .topiclist {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        padding: 10px 12px; max-height: 60vh; overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+    .topicfab {
+        display: block; position: fixed; right: 14px; bottom: 14px; z-index: 30;
+        padding: 9px 14px; border-radius: 999px; background: var(--blue); color: #fff;
+        font-size: 0.78rem; font-weight: 800; text-decoration: none;
+        box-shadow: 0 6px 18px rgba(37, 99, 235, 0.35);
+    }
 }
 </style>
 </head>
@@ -158,37 +186,70 @@ td.lineref { white-space: nowrap; font-family: "SF Mono", Menlo, monospace;
             </nav>
         </header>
 
-        <nav class="topicnav">
-            <h2>All 26 topics &mdash; lab00 to lab24</h2>
-            <ol>
-                <li><a href="#lab00-foundations" title="Infrastructure as code, and what a root module is"><b>lab00</b>Foundations</a></li>
-                <li><a href="#lab00-authentication" title="AWS credentials: access keys and the environment variables"><b>lab00</b>Authentication</a></li>
-                <li><a href="#lab01-providers-init" title="Providers, version pinning, and the lock file"><b>lab01</b>Providers</a></li>
-                <li><a href="#lab02-console-vpc" title="Why the console does not scale: build a VPC by hand once"><b>lab02</b>Console vs code</a></li>
-                <li><a href="#lab03-first-ec2" title="Resources, data sources, and your first EC2 instance in its own network"><b>lab03</b>Resources</a></li>
-                <li><a href="#lab04-plan-apply-destroy" title="The core loop: init, plan, apply, destroy"><b>lab04</b>Workflow</a></li>
-                <li><a href="#lab05-fmt-validate" title="fmt and validate: the two gates before every plan"><b>lab05</b>Quality</a></li>
-                <li><a href="#lab06-variables-outputs" title="Variables, locals, and outputs"><b>lab06</b>Inputs</a></li>
-                <li><a href="#lab07-tfvars-secrets" title="tfvars files, value precedence, and sensitive"><b>lab07</b>Values and secrets</a></li>
-                <li><a href="#lab08-local-state" title="Local state, refresh, and drift"><b>lab08</b>State</a></li>
-                <li><a href="#lab09-modules" title="Child modules: inputs in, outputs out"><b>lab09</b>Modules</a></li>
-                <li><a href="#lab10-capstone-vpc-ec2" title="The whole picture: VPC, IGW, route table, subnet, SG, EC2"><b>lab10</b>Capstone</a></li>
-                <li><a href="#lab11-collections" title="Lists, sets and maps, and the for expression"><b>lab11</b>Collections</a></li>
-                <li><a href="#lab12-functions" title="Built-in functions transform values at plan time"><b>lab12</b>Functions</a></li>
-                <li><a href="#lab13-multi-provider" title="Several providers in one configuration, and aliases"><b>lab13</b>Providers</a></li>
-                <li><a href="#lab14-local-exec-provisioner" title="local-exec: run a command on the machine running Terraform"><b>lab14</b>Provisioners</a></li>
-                <li><a href="#lab15-remote-exec-provisioner" title="remote-exec: run commands on the host over SSH"><b>lab15</b>Provisioners</a></li>
-                <li><a href="#lab16-workspaces" title="Workspaces: several states from one configuration"><b>lab16</b>Workspaces</a></li>
-                <li><a href="#lab17-s3-backend" title="An S3 backend puts state where the team can reach it"><b>lab17</b>Remote state</a></li>
-                <li><a href="#lab18-state-keys-locking" title="State keys partition environments; locking serialises writes"><b>lab18</b>Keys and locking</a></li>
-                <li><a href="#lab19-state-migration" title="Moving existing local state into a remote backend"><b>lab19</b>Migration</a></li>
-                <li><a href="#lab20-remote-state-consumer" title="Reading another configuration's outputs"><b>lab20</b>Composition</a></li>
-                <li><a href="#lab21-dynamic-blocks" title="dynamic: generate repeated nested blocks"><b>lab21</b>Dynamic blocks</a></li>
-                <li><a href="#lab22-ec2-s3-backend" title="The capstone rebuilt with its state in S3"><b>lab22</b>Remote state in practice</a></li>
-                <li><a href="#lab23-s3-bucket" title="An S3 bucket as a managed resource"><b>lab23</b>Storage</a></li>
-                <li><a href="#lab24-count-foreach-buckets" title="count by position, for_each by name"><b>lab24</b>Meta-arguments</a></li>
-            </ol>
-        </nav>
+        <div class="concepts-layout">
+            <nav class="topicnav" aria-label="Topic index">
+                <h2>All 26 topics &mdash; lab00 to lab24</h2>
+                <ol class="topiclist">
+                    <li><a href="#lab00-foundations" title="Infrastructure as code, and what a root module is"><b>lab00</b>Foundations</a></li>
+                    <li><a href="#lab00-authentication" title="AWS credentials: access keys and the environment variables"><b>lab00</b>Authentication</a></li>
+                    <li><a href="#lab01-providers-init" title="Providers, version pinning, and the lock file"><b>lab01</b>Providers</a></li>
+                    <li><a href="#lab02-console-vpc" title="Why the console does not scale: build a VPC by hand once"><b>lab02</b>Console vs code</a></li>
+                    <li><a href="#lab03-first-ec2" title="Resources, data sources, and your first EC2 instance in its own network"><b>lab03</b>Resources</a></li>
+                    <li><a href="#lab04-plan-apply-destroy" title="The core loop: init, plan, apply, destroy"><b>lab04</b>Workflow</a></li>
+                    <li><a href="#lab05-fmt-validate" title="fmt and validate: the two gates before every plan"><b>lab05</b>Quality</a></li>
+                    <li><a href="#lab06-variables-outputs" title="Variables, locals, and outputs"><b>lab06</b>Inputs</a></li>
+                    <li><a href="#lab07-tfvars-secrets" title="tfvars files, value precedence, and sensitive"><b>lab07</b>Values and secrets</a></li>
+                    <li><a href="#lab08-local-state" title="Local state, refresh, and drift"><b>lab08</b>State</a></li>
+                    <li><a href="#lab09-modules" title="Child modules: inputs in, outputs out"><b>lab09</b>Modules</a></li>
+                    <li><a href="#lab10-capstone-vpc-ec2" title="The whole picture: VPC, IGW, route table, subnet, SG, EC2"><b>lab10</b>Capstone</a></li>
+                    <li><a href="#lab11-collections" title="Lists, sets and maps, and the for expression"><b>lab11</b>Collections</a></li>
+                    <li><a href="#lab12-functions" title="Built-in functions transform values at plan time"><b>lab12</b>Functions</a></li>
+                    <li><a href="#lab13-multi-provider" title="Several providers in one configuration, and aliases"><b>lab13</b>Providers</a></li>
+                    <li><a href="#lab14-local-exec-provisioner" title="local-exec: run a command on the machine running Terraform"><b>lab14</b>Provisioners</a></li>
+                    <li><a href="#lab15-remote-exec-provisioner" title="remote-exec: run commands on the host over SSH"><b>lab15</b>Provisioners</a></li>
+                    <li><a href="#lab16-workspaces" title="Workspaces: several states from one configuration"><b>lab16</b>Workspaces</a></li>
+                    <li><a href="#lab17-s3-backend" title="An S3 backend puts state where the team can reach it"><b>lab17</b>Remote state</a></li>
+                    <li><a href="#lab18-state-keys-locking" title="State keys partition environments; locking serialises writes"><b>lab18</b>Keys and locking</a></li>
+                    <li><a href="#lab19-state-migration" title="Moving existing local state into a remote backend"><b>lab19</b>Migration</a></li>
+                    <li><a href="#lab20-remote-state-consumer" title="Reading another configuration's outputs"><b>lab20</b>Composition</a></li>
+                    <li><a href="#lab21-dynamic-blocks" title="dynamic: generate repeated nested blocks"><b>lab21</b>Dynamic blocks</a></li>
+                    <li><a href="#lab22-ec2-s3-backend" title="The capstone rebuilt with its state in S3"><b>lab22</b>Remote state in practice</a></li>
+                    <li><a href="#lab23-s3-bucket" title="An S3 bucket as a managed resource"><b>lab23</b>Storage</a></li>
+                    <li><a href="#lab24-count-foreach-buckets" title="count by position, for_each by name"><b>lab24</b>Meta-arguments</a></li>
+                </ol>
+            </nav>
+            <details class="topicnav-mobile" id="topic-index">
+                <summary>All 26 topics &mdash; lab00 to lab24</summary>
+                <ol class="topiclist">
+                    <li><a href="#lab00-foundations" title="Infrastructure as code, and what a root module is"><b>lab00</b>Foundations</a></li>
+                    <li><a href="#lab00-authentication" title="AWS credentials: access keys and the environment variables"><b>lab00</b>Authentication</a></li>
+                    <li><a href="#lab01-providers-init" title="Providers, version pinning, and the lock file"><b>lab01</b>Providers</a></li>
+                    <li><a href="#lab02-console-vpc" title="Why the console does not scale: build a VPC by hand once"><b>lab02</b>Console vs code</a></li>
+                    <li><a href="#lab03-first-ec2" title="Resources, data sources, and your first EC2 instance in its own network"><b>lab03</b>Resources</a></li>
+                    <li><a href="#lab04-plan-apply-destroy" title="The core loop: init, plan, apply, destroy"><b>lab04</b>Workflow</a></li>
+                    <li><a href="#lab05-fmt-validate" title="fmt and validate: the two gates before every plan"><b>lab05</b>Quality</a></li>
+                    <li><a href="#lab06-variables-outputs" title="Variables, locals, and outputs"><b>lab06</b>Inputs</a></li>
+                    <li><a href="#lab07-tfvars-secrets" title="tfvars files, value precedence, and sensitive"><b>lab07</b>Values and secrets</a></li>
+                    <li><a href="#lab08-local-state" title="Local state, refresh, and drift"><b>lab08</b>State</a></li>
+                    <li><a href="#lab09-modules" title="Child modules: inputs in, outputs out"><b>lab09</b>Modules</a></li>
+                    <li><a href="#lab10-capstone-vpc-ec2" title="The whole picture: VPC, IGW, route table, subnet, SG, EC2"><b>lab10</b>Capstone</a></li>
+                    <li><a href="#lab11-collections" title="Lists, sets and maps, and the for expression"><b>lab11</b>Collections</a></li>
+                    <li><a href="#lab12-functions" title="Built-in functions transform values at plan time"><b>lab12</b>Functions</a></li>
+                    <li><a href="#lab13-multi-provider" title="Several providers in one configuration, and aliases"><b>lab13</b>Providers</a></li>
+                    <li><a href="#lab14-local-exec-provisioner" title="local-exec: run a command on the machine running Terraform"><b>lab14</b>Provisioners</a></li>
+                    <li><a href="#lab15-remote-exec-provisioner" title="remote-exec: run commands on the host over SSH"><b>lab15</b>Provisioners</a></li>
+                    <li><a href="#lab16-workspaces" title="Workspaces: several states from one configuration"><b>lab16</b>Workspaces</a></li>
+                    <li><a href="#lab17-s3-backend" title="An S3 backend puts state where the team can reach it"><b>lab17</b>Remote state</a></li>
+                    <li><a href="#lab18-state-keys-locking" title="State keys partition environments; locking serialises writes"><b>lab18</b>Keys and locking</a></li>
+                    <li><a href="#lab19-state-migration" title="Moving existing local state into a remote backend"><b>lab19</b>Migration</a></li>
+                    <li><a href="#lab20-remote-state-consumer" title="Reading another configuration's outputs"><b>lab20</b>Composition</a></li>
+                    <li><a href="#lab21-dynamic-blocks" title="dynamic: generate repeated nested blocks"><b>lab21</b>Dynamic blocks</a></li>
+                    <li><a href="#lab22-ec2-s3-backend" title="The capstone rebuilt with its state in S3"><b>lab22</b>Remote state in practice</a></li>
+                    <li><a href="#lab23-s3-bucket" title="An S3 bucket as a managed resource"><b>lab23</b>Storage</a></li>
+                    <li><a href="#lab24-count-foreach-buckets" title="count by position, for_each by name"><b>lab24</b>Meta-arguments</a></li>
+                </ol>
+            </details>
+            <div class="concepts-main">
         <div class="card">
             <span class="eyebrow">lab00 &ndash; lab24 &middot; one continuous sequence</span>
             <h2>Terraform concepts, in the order the labs teach them</h2>
@@ -198,7 +259,8 @@ td.lineref { white-space: nowrap; font-family: "SF Mono", Menlo, monospace;
                 <code class="inline">for_each</code> on real S3 buckets. Each card gives the
                 concept in plain English, a real example, every significant line explained, and a
                 link to the lab that practises it. Read straight down, or jump with the topic
-                index above.</p>
+                index &mdash; the sidebar on a wide screen, the collapsible list at the top of
+                the page on a narrow one.</p>
             <div class="note">Starting from zero? Read
                 <a href="terraform-101.html">Terraform 101</a> first &mdash; what Terraform is,
                 HCL, providers, version constraints, state, and drift &mdash; then the
@@ -1585,6 +1647,9 @@ resource "aws_s3_bucket_versioning" "by_each" {
             <div class="note">Removing the middle item shows the cost of position. Deleting <code class="inline">assets</code> from the list gives <code class="inline">1 to add, 0 to change, 2 to destroy</code>: index [1] is <em>replaced</em>, because a bucket name is immutable and index [1] must now become <code class="inline">backups</code>. Deleting the same key from the map gives <code class="inline">0 to add, 0 to change, 2 to destroy</code>, and both destroyed resources belong to the removed key &mdash; the surviving buckets do not appear in the plan at all. Prefer for_each whenever the collection can change.</div>
             <a class="lablink" href="../labmanuals/lab24-count-foreach-buckets.md">Practise it in Lab 24 &mdash; count and for_each on real buckets &rarr;</a>
         </div>
+            </div>
+        </div>
+        <a class="topicfab" href="#topic-index">&#9776; Topics</a>
 
 
         <div class="footer">

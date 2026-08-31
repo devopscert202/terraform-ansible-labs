@@ -1717,53 +1717,78 @@ def check_topic_order(topics: list[dict]) -> None:
 
 
 CONCEPTS_CSS = """
-/* sticky in-page topic nav */
+/* Wide screens: topic index is a real sidebar column beside the content, so the two
+   never overlap. The column itself is sticky and scrolls independently of the page. */
+.concepts-layout {
+    display: grid; grid-template-columns: 268px minmax(0, 1fr);
+    gap: 20px; align-items: start;
+}
+.concepts-main { min-width: 0; }
 .topicnav {
-    position: sticky; top: 0; z-index: 20; margin-bottom: 18px;
-    background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(6px);
-    border: 1px solid var(--slate-200); border-radius: 14px; padding: 12px 16px;
-    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.08);
+    position: sticky; top: 16px; max-height: calc(100vh - 32px);
+    display: flex; flex-direction: column;
+    background: #fff; border: 1px solid var(--slate-200); border-radius: 14px;
+    padding: 12px 14px; box-shadow: 0 2px 12px rgba(15, 23, 42, 0.06);
 }
 .topicnav h2 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em;
                color: var(--slate-500); margin-bottom: 8px; }
-.topicnav ol {
-    list-style: none; display: grid; gap: 6px;
-    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-    max-height: 42vh; overflow-y: auto;
-}
-.topicnav a {
-    display: block; padding: 5px 10px; border-radius: 8px; text-decoration: none;
-    font-size: 0.8rem; color: var(--slate-700); background: #f8fbff;
+.topicnav .topiclist { overflow-y: auto; overscroll-behavior: contain; }
+.topiclist { list-style: none; display: grid; gap: 4px; }
+.topiclist a {
+    display: block; padding: 5px 9px; border-radius: 8px; text-decoration: none;
+    font-size: 0.78rem; line-height: 1.35; color: var(--slate-700); background: #f8fbff;
     border: 1px solid rgba(37, 99, 235, 0.12);
 }
-.topicnav a:hover { background: var(--blue); color: #fff; border-color: var(--blue); }
-.topicnav a b { color: var(--blue); font-family: "SF Mono", Menlo, monospace;
-                font-size: 0.76rem; margin-right: 6px; }
-.topicnav a:hover b { color: #fff; }
-/* clear the sticky nav when an anchor is jumped to */
-.card[id] { scroll-margin-top: 46vh; }
-@media (max-width: 768px) {
-    .topicnav ol { grid-template-columns: 1fr 1fr; max-height: 34vh; }
+.topiclist a:hover { background: var(--blue); color: #fff; border-color: var(--blue); }
+.topiclist a b { color: var(--blue); font-family: "SF Mono", Menlo, monospace;
+                 font-size: 0.74rem; margin-right: 6px; }
+.topiclist a:hover b { color: #fff; }
+/* narrow-screen disclosure and its jump-back pill: off entirely on wide screens */
+.topicnav-mobile, .topicfab { display: none; }
+/* nothing is pinned above the content, so an anchor jump needs only breathing room */
+.card[id] { scroll-margin-top: 18px; }
+#topic-index { scroll-margin-top: 12px; }
+
+@media (max-width: 1100px) {
+    .concepts-layout { grid-template-columns: minmax(0, 1fr); }
+    .topicnav { display: none; }
+    .topicnav-mobile {
+        display: block; background: #fff; border: 1px solid var(--slate-200);
+        border-radius: 12px; box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+    }
+    .topicnav-mobile summary {
+        cursor: pointer; padding: 9px 12px; font-size: 0.82rem; font-weight: 700;
+        color: var(--blue);
+    }
+    .topicnav-mobile[open] summary { border-bottom: 1px solid var(--slate-200); }
+    .topicnav-mobile .topiclist {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        padding: 10px 12px; max-height: 60vh; overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+    .topicfab {
+        display: block; position: fixed; right: 14px; bottom: 14px; z-index: 30;
+        padding: 9px 14px; border-radius: 999px; background: var(--blue); color: #fff;
+        font-size: 0.78rem; font-weight: 800; text-decoration: none;
+        box-shadow: 0 6px 18px rgba(37, 99, 235, 0.35);
+    }
 }
 """
 
 
-def render_topic_nav(topics: list[dict], anchors: list[str]) -> str:
+def render_topic_nav(topics: list[dict], anchors: list[str], *, indent: str) -> str:
+    """The 26 topic links as an <ol>. Rendered twice: sidebar and narrow-screen details."""
     items = []
     for spec, anchor in zip(topics, anchors):
         title = spec["heading"].replace('"', "&quot;")
         tail = spec["eyebrow"].split("&middot;")[-1].strip()
         items.append(
-            f'                <li><a href="#{anchor}" title="{title}">'
+            f'{indent}    <li><a href="#{anchor}" title="{title}">'
             f'<b>lab{spec["lab"]:02d}</b>{tail}</a></li>'
         )
-    return f"""        <nav class="topicnav">
-            <h2>All {len(topics)} topics &mdash; lab00 to lab24</h2>
-            <ol>
-{chr(10).join(items)}
-            </ol>
-        </nav>
-"""
+    return (f'{indent}<ol class="topiclist">\n'
+            + "\n".join(items)
+            + f"\n{indent}</ol>")
 
 
 def render_concepts() -> str:
@@ -1780,7 +1805,8 @@ def render_concepts() -> str:
                 <code class="inline">for_each</code> on real S3 buckets. Each card gives the
                 concept in plain English, a real example, every significant line explained, and a
                 link to the lab that practises it. Read straight down, or jump with the topic
-                index above.</p>
+                index &mdash; the sidebar on a wide screen, the collapsible list at the top of
+                the page on a narrow one.</p>
             <div class="note">Starting from zero? Read
                 <a href="terraform-101.html">Terraform 101</a> first &mdash; what Terraform is,
                 HCL, providers, version constraints, state, and drift &mdash; then the
@@ -1790,20 +1816,36 @@ def render_concepts() -> str:
         </div>
 """
 
-    sections = [render_topic_nav(TOPICS, anchors), intro]
+    cards = [intro]
     for spec, anchor in zip(TOPICS, anchors):
         href, label = practises(spec["lab"])
-        sections.append(topic(
+        cards.append(topic(
             spec["eyebrow"], spec["heading"], spec["concept"], spec["code"],
             spec["rows"], href, label, lang_note=spec.get("lang_note", ""),
             anchor=anchor,
         ))
 
+    nav_title = f"All {len(TOPICS)} topics &mdash; lab00 to lab24"
+    body = f"""        <div class="concepts-layout">
+            <nav class="topicnav" aria-label="Topic index">
+                <h2>{nav_title}</h2>
+{render_topic_nav(TOPICS, anchors, indent=" " * 16)}
+            </nav>
+            <details class="topicnav-mobile" id="topic-index">
+                <summary>{nav_title}</summary>
+{render_topic_nav(TOPICS, anchors, indent=" " * 16)}
+            </details>
+            <div class="concepts-main">
+{"".join(cards)}            </div>
+        </div>
+        <a class="topicfab" href="#topic-index">&#9776; Topics</a>
+"""
+
     return page(
         "Terraform &mdash; Concepts",
         f"{len(TOPICS)} topics across all {len(LABS)} labs, in lab order. Each one: what it is, "
         "a real example, every significant line explained, and the lab that practises it.",
-        "".join(sections),
+        body,
         active="concepts",
         stats=[f"{len(TOPICS)} topics", f"{len(LABS)} labs", "lab00&ndash;lab24", TF_FLOOR,
                AWS_PIN, "Region us-east-2"],
@@ -2094,10 +2136,15 @@ def check_anchors() -> int:
               f"extra {sorted(ids - expected)}")
         bad += 1
 
+    # every id on concepts.html, not just the topic cards: the topic index itself is a
+    # link target, so a bare #anchor may resolve to a card or to a page control.
+    concepts_ids = set(re.findall(
+        r' id="([a-z0-9-]+)"', (OUT_DIR / "concepts.html").read_text(encoding="utf-8")))
     for name in OWNED_PAGES:
         text = (OUT_DIR / name).read_text(encoding="utf-8")
+        resolvable = concepts_ids | set(re.findall(r' id="([a-z0-9-]+)"', text))
         for target in re.findall(r'href="(?:concepts\.html)?#([a-z0-9-]+)"', text):
-            if target not in ids:
+            if target not in resolvable:
                 print(f"  DANGLING ANCHOR {name} -> #{target}")
                 bad += 1
 
@@ -2109,7 +2156,7 @@ def check_anchors() -> int:
         bad += 1
 
     if not bad:
-        print(f"anchor check: {len(ids)} topic ids on concepts.html, the sticky nav lists all "
+        print(f"anchor check: {len(ids)} topic ids on concepts.html, the topic index lists all "
               "of them, and every in-page link resolves.")
     return bad
 
