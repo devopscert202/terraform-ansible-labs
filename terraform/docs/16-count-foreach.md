@@ -4,11 +4,12 @@ Backs lab 24. Covers the one distinction that decides which meta-argument to use
 by position, `for_each` addresses by key — and what that costs on real infrastructure when an input
 changes.
 
-This is the real-AWS sequel to [`09-collections-functions.md`](09-collections-functions.md). Lab11
-taught the same contrast on `terraform_data`, a placeholder that creates nothing: the plans were real
-but the consequences were imaginary. Lab24 runs the comparison against S3 buckets, so the plan you
-read at the end is the plan you would read on a production account. Read lab11's write-up first if
-`for_each`, `each.key` or `count.index` is unfamiliar.
+This is the sequel to [`09-collections-functions.md`](09-collections-functions.md). Lab11 taught the
+collection types and `for` expressions, and drove a real subnet from a map entry read by key — but
+deliberately without `count` or `for_each`, so that one resource block still meant one resource. This
+page and lab24 supply the missing half: the meta-arguments that turn one block into many, run against
+S3 buckets, so the plan you read at the end is the plan you would read on a production account. Read
+lab11's write-up first if maps, keys and `for` expressions are unfamiliar.
 
 **Visual summary:** [`../html/concepts.html`](../html/concepts.html)
 
@@ -269,5 +270,5 @@ aws s3api list-buckets \
 
 | Lab | Description |
 |---|---|
-| [Lab 11: Collections](../labmanuals/lab11-collections.md) | The same contrast on `terraform_data`, at no cost |
+| [Lab 11: Collections](../labmanuals/lab11-collections.md) | list vs set vs map, `for` expressions, and a real subnet read out of a map by key — without `count` or `for_each` |
 | [Lab 24: count and for_each on real buckets](../labmanuals/lab24-count-foreach-buckets.md) | Six real buckets, two addressing schemes, and the two plans that show why the choice matters |

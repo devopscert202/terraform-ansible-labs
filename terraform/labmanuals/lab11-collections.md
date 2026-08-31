@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Goal** | Tell list, set, and map apart, convert between them, and reshape them with `for` expressions — then read the results back out of state. |
+| **Goal** | Tell list, set, and map apart, convert between them, reshape them with `for` expressions, and drive a real AWS subnet from a map entry read by key. |
 | **Time** | 40–50 minutes |
 | **Tier** | Intermediate |
 | **Files** | `terraform/labs/lab11-collections/` |
@@ -21,12 +21,16 @@ gives you a new list. `{for k, v in map : k => v.cidr}` gives you a new map. Add
 you get a filter. Every reshaping problem you will meet in Terraform — building a tag map, pulling
 one attribute out of a map of objects, selecting the subnets in one zone — is a `for` expression.
 
-Making many *copies of a resource* from a collection is a different job, done by the `count` and
-`for_each` meta-arguments. Those come later, in [Lab 24](lab24-count-foreach-buckets.md), against
-real S3 buckets. This lab stays on the values themselves.
+Reshaping values is only half of it. A map earns its keep when a resource argument reads a value out
+of it, so this lab also builds a real VPC and a real subnet whose `cidr_block` and
+`availability_zone` come from `var.subnets["app_a"]`. Change that map entry and AWS changes with it.
 
-The one resource here is `terraform_data`, a built-in placeholder that creates nothing in any cloud,
-so this lab is free and needs no AWS credentials.
+Making many *copies of a resource* from a collection is a different job, done by the `count` and
+`for_each` meta-arguments. That is why this lab creates **one** subnet rather than one per map
+entry: `for_each` has not been taught yet. It arrives in
+[Lab 24](lab24-count-foreach-buckets.md), against real S3 buckets.
+
+A VPC and a subnet cost nothing, but they are real, so this lab needs AWS credentials.
 
 ## What you will build
 
@@ -35,18 +39,21 @@ so this lab is free and needs no AWS credentials.
 | `var.tag_names` | A `list(string)` with a deliberate duplicate | Free |
 | `var.availability_zones` | A `set(string)` with a duplicate that gets dropped | Free |
 | `var.subnets` | A `map(object(...))` of subnet definitions | Free |
-| 6 locals | Conversions and `for` expressions over all three types | Free |
-| `terraform_data.collections` | One placeholder resource holding the measured shapes in state | Free |
-| 7 outputs | The result of each conversion and each `for` expression | Free |
+| 7 locals | Conversions and `for` expressions over all three types, plus the tag map | Free |
+| `terraform_data.collections` | A placeholder resource holding the measured shapes in state | Free |
+| `aws_vpc.main` | The lab's own VPC, `10.0.0.0/16` | Free |
+| `aws_subnet.app_a` | A real subnet built from `var.subnets["app_a"]` | Free |
+| 10 outputs | Each conversion, each `for` expression, and the subnet AWS actually created | Free |
 
-One managed resource, no data sources.
+Three managed resources, no data sources.
 
 ## Before you start
 
 - [ ] Lab 10 completed ([lab10-capstone-vpc-ec2.md](lab10-capstone-vpc-ec2.md))
 - [ ] You have seen `list(string)`, `set(string)`, and `map(string)` declared in Lab 06
 - [ ] You have used `terraform console` — Lab 06 introduced it, and Step 3 here is a refresher
-- [ ] Working directory: `../labs/lab11-collections/` (no AWS credentials needed)
+- [ ] AWS credentials configured for `us-east-2` (`aws sts get-caller-identity` succeeds)
+- [ ] Working directory: `../labs/lab11-collections/`
 
 ## Steps
 
@@ -60,6 +67,18 @@ cat variables.tf
 **Expected output**
 
 ```text
+variable "aws_region" {
+  type        = string
+  description = "Region for the VPC and subnet. us-east-2 has zones a, b and c only."
+  default     = "us-east-2"
+}
+
+variable "vpc_cidr" {
+  type        = string
+  description = "CIDR of the lab VPC. Every entry in var.subnets must fit inside it."
+  default     = "10.0.0.0/16"
+}
+
 variable "tag_names" {
   type        = list(string)
   description = "A list: ordered, duplicates allowed, indexed by number."
@@ -84,22 +103,29 @@ variable "subnets" {
 
 `tag_names` contains `web` twice. `availability_zones` also lists a value twice — but it is declared
 `set(string)`, so Terraform drops the repeat while reading the default. `subnets` is a map whose
-values are objects, each with two named attributes of declared types.
+values are objects, each with two named attributes of declared types. Every variable has a default,
+so no `terraform.tfvars` file is needed.
 
 ### Step 2 — Initialize
-
-There is no provider in this configuration, but `terraform console` and `terraform plan` still
-require an initialized directory.
 
 ```bash
 terraform init
 ```
 
-**Expected output**
+**Expected output** *(trimmed)*
 
 ```text
+Initializing provider plugins...
+- terraform.io/builtin/terraform is built in to Terraform
+- Finding hashicorp/aws versions matching "~> 5.0"...
+- Installing hashicorp/aws v5.100.0...
+- Installed hashicorp/aws v5.100.0 (signed by HashiCorp)
+
 Terraform has been successfully initialized!
 ```
+
+Two providers are in play: the built-in `terraform` provider supplies `terraform_data`, and the AWS
+provider supplies the VPC and subnet.
 
 ### Step 3 — Explore the three types in the console
 
@@ -171,11 +197,16 @@ locals {
     list_index_1  = var.tag_names[1]
     map_key_app_a = var.subnets["app_a"].cidr
   }
+
+  common_tags = {
+    Lab  = "lab11"
+    Name = "lab11-collections"
+  }
 }
 ```
 
-Five locals plus the summary map. The next three steps take the three `for` expressions one at a
-time.
+Five locals, the summary map, and the tag map every resource in the lab merges from. The next three
+steps take the three `for` expressions one at a time.
 
 ### Step 5 — A `for` expression over a list
 
@@ -241,25 +272,53 @@ echo 'local.zone_a_subnets' | terraform console
 never reached the result. Note that this expression iterates a map but is wrapped in square
 brackets, so the result is a list of keys, not a map.
 
-### Step 8 — Read the one resource
+### Step 8 — Read the three resources
 
 ```bash
-sed -n '/^# One resource block/,$p' main.tf
+sed -n '/^resource "terraform_data"/,$p' main.tf
 ```
 
 **Expected output**
 
 ```text
-# One resource block, one instance. Turning a collection into many copies of a
-# resource needs the count and for_each meta-arguments, which Lab 24 introduces.
 resource "terraform_data" "collections" {
   input = local.collection_shapes
 }
+
+# A VPC of its own, so the lab never depends on the account having a default VPC.
+resource "aws_vpc" "main" {
+  cidr_block         = var.vpc_cidr
+  enable_dns_support = true
+
+  tags = local.common_tags
+}
+
+# A real subnet whose two required arguments are read out of the map by key.
+# var.subnets["app_a"] selects one object; .cidr and .az reach its attributes.
+# This is map indexing doing real work: change the map entry and AWS changes.
+#
+# One resource block is still one subnet. Creating one subnet per map entry
+# needs the for_each meta-argument, which Lab 24 introduces.
+resource "aws_subnet" "app_a" {
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = var.subnets["app_a"].cidr
+  availability_zone = var.subnets["app_a"].az
+
+  tags = merge(local.common_tags, { Name = "lab11-app-a" })
+}
 ```
 
-One resource block and one instance. `terraform_data` stores whatever you put in `input` and echoes
-it back as `output`, which is exactly what is needed here: a way to push the measured shapes through
-a real apply and read them back out of state.
+`terraform_data` stores whatever you put in `input` and echoes it back as `output`, which pushes the
+measured shapes through a real apply so you can read them back out of state.
+
+The subnet is the part to study. `var.subnets["app_a"]` indexes the map by key and returns the whole
+object; `.cidr` and `.az` then reach into it for the two values AWS requires. Nothing here is
+printed for its own sake — those two map values become a real subnet in a real VPC.
+
+Note carefully what this block is **not**. It is one `resource` block, so it creates exactly one
+subnet, even though `var.subnets` holds two entries. Producing one subnet per map entry requires the
+`for_each` meta-argument, which [Lab 24](lab24-count-foreach-buckets.md) teaches. Until then, index
+the map by key and name the entry you want.
 
 ### Step 9 — Apply
 
@@ -270,52 +329,12 @@ terraform apply -auto-approve
 **Expected output**
 
 ```text
-terraform_data.collections: Creating...
-terraform_data.collections: Creation complete after 0s [id=986ba9e0-f6d6-80e7-3e64-013bd2aa2488]
-
-Apply complete! Resources: 1 added, 0 changed, 0 destroyed.
-
-Outputs:
-
-collection_shapes = {
-  "list_index_1" = "api"
-  "list_length" = 3
-  "map_key_app_a" = "10.0.1.0/24"
-  "map_keys" = tolist([
-    "app_a",
-    "app_b",
-  ])
-  "map_length" = 2
-  "set_length" = 2
-}
-list_has_duplicates = tolist([
-  "web",
-  "api",
-  "web",
-])
-set_removed_duplicates = tolist([
-  "us-east-2a",
-  "us-east-2b",
-])
-subnet_cidrs = {
-  "app_a" = "10.0.1.0/24"
-  "app_b" = "10.0.2.0/24"
-}
-tag_labels = [
-  "WEB",
-  "API",
-  "WEB",
-]
-unique_tag_names = tolist([
-  "api",
-  "web",
-])
-zone_a_subnets = [
-  "app_a",
-]
+PENDING CAPTURE — rerun after credentials are restored
 ```
 
-Your `id` will differ; it is a UUID generated locally. One resource, seven outputs.
+Three resources are created and ten outputs are printed. `Plan: 3 to add, 0 to change, 0 to
+destroy.` Confirm that `app_a_subnet_from_map` shows `actual_cidr` equal to `requested_cidr` and
+`actual_az` equal to `requested_az` — proof the map values reached AWS unchanged.
 
 ### Step 10 — Compare list against set in the outputs
 
@@ -354,47 +373,29 @@ repeat at declaration time. `unique_tag_names` is the same list from the first o
 Choose a `list` when order or repetition carries meaning, a `set` when the values are a membership
 question ("which zones?"), and a `map` when each value needs a name you look it up by.
 
-### Step 11 — Read the shapes back out of state
+### Step 11 — Read the shapes and the subnet back out of state
 
 ```bash
 terraform state list
 terraform state show terraform_data.collections
+terraform state show aws_subnet.app_a
 ```
 
 **Expected output**
 
 ```text
-terraform_data.collections
-# terraform_data.collections:
-resource "terraform_data" "collections" {
-    id     = "986ba9e0-f6d6-80e7-3e64-013bd2aa2488"
-    input  = {
-        list_index_1  = "api"
-        list_length   = 3
-        map_key_app_a = "10.0.1.0/24"
-        map_keys      = [
-            "app_a",
-            "app_b",
-        ]
-        map_length    = 2
-        set_length    = 2
-    }
-    output = {
-        list_index_1  = "api"
-        list_length   = 3
-        map_key_app_a = "10.0.1.0/24"
-        map_keys      = [
-            "app_a",
-            "app_b",
-        ]
-        map_length    = 2
-        set_length    = 2
-    }
-}
+PENDING CAPTURE — rerun after credentials are restored
 ```
 
-`list_length` is `3` and `set_length` is `2`, from defaults that both listed three entries. That one
-pair of numbers is the whole list-versus-set lesson, now recorded in a state file.
+`state list` reports three addresses: `aws_subnet.app_a`, `aws_vpc.main` and
+`terraform_data.collections`.
+
+In `terraform_data.collections`, `list_length` is `3` and `set_length` is `2`, from defaults that
+both listed three entries. That one pair of numbers is the whole list-versus-set lesson, now
+recorded in a state file.
+
+In `aws_subnet.app_a`, `cidr_block` is `10.0.1.0/24` and `availability_zone` is `us-east-2a`. Those
+values were never typed into the resource block — they were read out of the map by key.
 
 ### Step 12 — Change an input and watch every dependent value move
 
@@ -454,6 +455,11 @@ Changes to Outputs:
 its key no matter what happens to its neighbours, because a key is part of your data rather than a
 consequence of ordering.
 
+`aws_subnet.app_a` is absent from the plan for the same reason — it reads `var.subnets["app_a"]`, and
+deleting `app_b` cannot move that key. Compare that with what a positional reference would have done:
+had the subnet read `var.subnets[1]`, removing an earlier entry would have silently repointed a real
+subnet at a different CIDR, and Terraform would have destroyed and recreated it.
+
 Keep that contrast in mind: it is the same reason [Lab 24](lab24-count-foreach-buckets.md) prefers
 `for_each` over a map to `count` over a list when creating many copies of a resource.
 
@@ -466,24 +472,28 @@ terraform destroy -auto-approve
 **Expected output**
 
 ```text
-terraform_data.collections: Destroying... [id=986ba9e0-f6d6-80e7-3e64-013bd2aa2488]
-terraform_data.collections: Destruction complete after 0s
-
-Destroy complete! Resources: 1 destroyed.
+PENDING CAPTURE — rerun after credentials are restored
 ```
+
+`Destroy complete! Resources: 3 destroyed.` The subnet goes first, then the VPC that contained it,
+because Terraform reverses the dependency order on destroy.
 
 ## Done when
 
 - [ ] You can state the difference between list, set, and map in one sentence each
 - [ ] `toset(["web","api","web"])` returned two elements, sorted
-- [ ] `apply` created one resource and printed seven outputs
+- [ ] `apply` reported `3 added` and printed ten outputs
 - [ ] `set_removed_duplicates` shows two zones, not three
 - [ ] The list `for` expression returned `["WEB","API","WEB"]` — three elements, order preserved
 - [ ] The map `for` expression returned a map keyed `app_a` and `app_b`
 - [ ] The `if` clause left only `app_a`
 - [ ] `state show` reported `list_length = 3` beside `set_length = 2`
-- [ ] Shortening the list moved `list_index_1`; shortening the map did not move `map_key_app_a`
-- [ ] `terraform destroy` reports `1 destroyed`
+- [ ] `aws_subnet.app_a` exists in AWS with CIDR `10.0.1.0/24` in `us-east-2a`, neither value typed
+      into the resource block
+- [ ] Shortening the list moved `list_index_1`; shortening the map did not move `map_key_app_a`, and
+      left the real subnet untouched
+- [ ] You can say why this lab creates one subnet and not two
+- [ ] `terraform destroy` reports `3 destroyed`
 
 ## If something fails
 
@@ -496,6 +506,10 @@ Destroy complete! Resources: 1 destroyed.
 | `Duplicate object key` from a map `for` expression | Two input elements produced the same key | Make the key expression unique, or produce a list instead |
 | Duplicates unexpectedly gone | Variable declared as `set` rather than `list` | Change the `type` to `list(string)` |
 | `Reference to undeclared local value` | Used `local.x` before adding it to the `locals` block | Declare it in `locals` |
+| `InvalidSubnet.Range: not a valid subnet of the VPC` | A `subnets` entry falls outside `vpc_cidr` | Keep every CIDR inside `10.0.0.0/16`, or raise `vpc_cidr` |
+| `InvalidParameterValue: value for availability zone is invalid` | An `az` outside the region | `us-east-2` has only `us-east-2a`, `us-east-2b` and `us-east-2c` |
+| `VpcLimitExceeded` | Five VPCs already exist in the region | Destroy a previous lab's VPC first |
+| `NoCredentialProviders` or `InvalidClientTokenId` | Credentials missing or expired | Refresh them and confirm with `aws sts get-caller-identity` |
 
 ## Cleanup
 

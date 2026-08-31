@@ -523,37 +523,36 @@ resource "aws_instance" "web" {
         <div class="card" id="lab04-plan-apply-destroy">
             <span class="eyebrow">Lab 04 &middot; Workflow</span>
             <h2>The core loop: init, plan, apply, destroy</h2>
-            <p class="concept">Terraform is not a daemon; you invoke it. <code class="inline">init</code> installs providers, <code class="inline">plan</code> is a dry run that prints the diff between your files and reality, <code class="inline">apply</code> executes that diff, and <code class="inline">destroy</code> removes everything the directory manages. The habit to build is propose-then-commit: read every plan before you approve it, and always destroy an AWS lab when you finish it.</p>
+            <p class="concept"><code class="inline">plan</code> compares your configuration against state and prints what it would change, without changing anything. <code class="inline">apply</code> carries out that plan. <code class="inline">destroy</code> removes everything the configuration owns. This lab runs the loop against a real VPC, which AWS provides free of charge, so the lifecycle is genuine rather than simulated.</p>
             <h3>Example</h3>
-<pre>terraform init
-terraform plan
-# Plan: 1 to add, 0 to change, 0 to destroy.
+<pre>resource "random_string" "suffix" {
+  length  = 6
+  special = false
+  upper   = false
+  numeric = false
+}
 
-terraform apply
-# Enter a value: yes
-# random_string.example: Creation complete after 0s
-# Outputs:
-# generated_value = "kf3mzq8dvwrt"
+resource "aws_vpc" "lifecycle" {
+  cidr_block         = "10.4.0.0/16"
+  enable_dns_support = true
 
-terraform plan
-# No changes. Your infrastructure matches the configuration.
+  tags = {
+    Lab  = "lab04"
+    Name = "lab04-${random_string.suffix.result}"
+  }
+}
 
-terraform plan -out=tfplan
-terraform apply tfplan
-
-terraform destroy</pre>
+# Plan: 2 to add, 0 to change, 0 to destroy.</pre>
             <h3>Line by line</h3>
             <table>
                 <thead><tr><th style="width:30%;">Line</th><th>What it does</th></tr></thead>
                 <tbody>
-                <tr><td class="lineref">terraform init</td><td>First command in any new directory. Installs providers and prepares the backend. Re-run it whenever <code class="inline">required_providers</code> or the backend changes.</td></tr>
-                <tr><td class="lineref">terraform plan</td><td>Refreshes state from the API, compares it to your files, and prints the actions. It changes nothing.</td></tr>
-                <tr><td class="lineref">Plan: 1 to add, ...</td><td>The summary line to read first. Any unexpected <em>destroy</em> or <em>forces replacement</em> means stop and investigate.</td></tr>
-                <tr><td class="lineref">terraform apply</td><td>Re-plans, prompts for <code class="inline">yes</code>, then executes. Resource IDs land in <code class="inline">terraform.tfstate</code>.</td></tr>
-                <tr><td class="lineref">second terraform plan</td><td>Reports no changes. That idempotency is the proof state and configuration agree.</td></tr>
-                <tr><td class="lineref">plan -out=tfplan</td><td>Saves the exact diff to a file, so the applied change cannot differ from the reviewed one. This is the CI pattern.</td></tr>
-                <tr><td class="lineref">apply tfplan</td><td>Applies the saved plan with no prompt and no re-planning.</td></tr>
-                <tr><td class="lineref">terraform destroy</td><td>Plans and executes the removal of every resource in this directory's state.</td></tr>
+                <tr><td class="lineref">two resources, one dependency</td><td>The VPC's Name tag reads <code class="inline">random_string.suffix.result</code>, so Terraform must create the string first. The apply log shows that ordering.</td></tr>
+                <tr><td class="lineref">Plan: 2 to add, 0 to change, 0 to destroy.</td><td>The summary line. Read it before every apply &mdash; the counts are the fastest check that you are changing what you think you are.</td></tr>
+                <tr><td class="lineref">a VPC is free</td><td>An empty VPC costs nothing. It is the smallest real thing AWS will build, which makes it the right subject for a lab about the lifecycle itself.</td></tr>
+                <tr><td class="lineref">its own VPC</td><td>The lab never touches the account's default VPC, so it cannot fail with <code class="inline">VPCIdNotSpecified</code> on an account that has none.</td></tr>
+                <tr><td class="lineref">plan again after apply</td><td>It reports no changes. That is Terraform comparing state against reality, not remembering what it just did.</td></tr>
+                <tr><td class="lineref">destroy</td><td>Removes both resources in reverse dependency order: the VPC first, then the string it depended on.</td></tr>
                 </tbody>
             </table>
             <a class="lablink" href="../labmanuals/lab04-plan-apply-destroy.md">Practise it in Lab 04 &mdash; Plan, Apply, and Destroy &rarr;</a>
@@ -725,36 +724,42 @@ output "instance_id" {
         <div class="card" id="lab07-tfvars-secrets">
             <span class="eyebrow">Lab 07 &middot; Values and secrets</span>
             <h2>tfvars files, value precedence, and sensitive</h2>
-            <p class="concept">A <em>tfvars</em> file supplies values for your variables without editing the code. <code class="inline">terraform.tfvars</code> is loaded automatically; any other file needs <code class="inline">-var-file</code>. Marking a variable or output <code class="inline">sensitive = true</code> keeps its value out of CLI output and plan logs, but <strong>not</strong> out of the state file, so state must be protected as if it contained the secret &mdash; because it does.</p>
+            <p class="concept">A <code class="inline">terraform.tfvars</code> file supplies values for variables that have no default, and Terraform loads it automatically. Secrets are the exception: mark them <code class="inline">sensitive</code> and pass them by environment variable, because a tfvars file is a file like any other and gets committed by accident. This lab tags a real VPC from those values so you can read them back off AWS &mdash; and see that the password is not among them.</p>
             <h3>Example</h3>
-<pre># variables.tf
+<pre>variable "project"     { type = string }     # no default, so required
+variable "environment" { type = string }     # validated: dev | test | prod
+variable "cost_code"   { type = string }     # validated: exactly 3 characters
+
 variable "db_password" {
-  type        = string
-  description = "Database password, supplied at runtime."
-  sensitive   = true
+  type      = string
+  sensitive = true                           # never written to tfvars
 }
 
-# terraform.tfvars.example  -&gt; copy to terraform.tfvars, never commit the copy
-# instance_name = "demo-web"
-# db_password   = "replace-me"
+locals {
+  common_tags = {
+    Lab         = "lab07"
+    Name        = "${var.project}-${var.environment}"
+    Project     = var.project
+    Environment = var.environment
+    CostCode    = var.cost_code
+  }
+}
 
-# outputs.tf
-output "connection_string" {
-  description = "Redacted in CLI output; still stored in plain text in state."
-  value       = "postgres://app:${var.db_password}@db.internal:5432/app"
-  sensitive   = true
+resource "aws_vpc" "main" {
+  cidr_block = var.vpc_cidr
+  tags       = local.common_tags
 }</pre>
             <h3>Line by line</h3>
             <table>
                 <thead><tr><th style="width:30%;">Line</th><th>What it does</th></tr></thead>
                 <tbody>
-                <tr><td class="lineref">sensitive = true (variable)</td><td>Terraform refuses to print the value in plan or apply output and marks anything derived from it as sensitive too.</td></tr>
-                <tr><td class="lineref">no default</td><td>Forces the value to be supplied explicitly. Terraform prompts if it is missing rather than silently using a placeholder.</td></tr>
-                <tr><td class="lineref">terraform.tfvars.example</td><td>The committed template. The real <code class="inline">terraform.tfvars</code> is gitignored.</td></tr>
-                <tr><td class="lineref">${var.db_password}</td><td>String interpolation. Because the input is sensitive, the whole interpolated string is sensitive.</td></tr>
-                <tr><td class="lineref">sensitive = true (output)</td><td>Required here: Terraform errors out if an output derives from a sensitive value without this flag.</td></tr>
-                <tr><td class="lineref">precedence, highest first</td><td><code class="inline">-var</code> and <code class="inline">-var-file</code>, then <code class="inline">*.auto.tfvars</code> alphabetically, then <code class="inline">terraform.tfvars</code>, then <code class="inline">TF_VAR_name</code> environment variables, then the block <code class="inline">default</code>.</td></tr>
-                <tr><td class="lineref">TF_VAR_db_password</td><td>The environment-variable form. Preferred in CI, where the value comes from a secret store and never touches disk.</td></tr>
+                <tr><td class="lineref">no default</td><td>A variable without a default is mandatory. Terraform refuses to plan until it is supplied, which is why this lab needs a <code class="inline">terraform.tfvars</code> file and most others do not.</td></tr>
+                <tr><td class="lineref">validation blocks</td><td><code class="inline">environment</code> must be dev, test or prod; <code class="inline">cost_code</code> must be exactly three characters. Bad input fails at plan with your message, not at apply with an AWS one.</td></tr>
+                <tr><td class="lineref">sensitive = true</td><td>Redacts the value in plan and apply output. It does <em>not</em> encrypt it &mdash; the value is still plain text inside the state file.</td></tr>
+                <tr><td class="lineref">db_password is absent from common_tags</td><td>Deliberate. A tag is readable by anyone holding describe permission on the account, so a secret in a tag is a published secret.</td></tr>
+                <tr><td class="lineref">TF_VAR_db_password</td><td>Terraform reads any environment variable named <code class="inline">TF_VAR_&lt;name&gt;</code> as that variable, which keeps the password off disk entirely.</td></tr>
+                <tr><td class="lineref">reading the tags back</td><td><code class="inline">aws ec2 describe-vpcs</code> shows Project, Environment and CostCode on the real VPC. That is the proof the tfvars values reached AWS.</td></tr>
+                <tr><td class="lineref">precedence</td><td><code class="inline">-var</code> beats <code class="inline">terraform.tfvars</code>, which beats the variable's default. Overriding one now changes a tag on a real resource rather than only an output.</td></tr>
                 </tbody>
             </table>
             <a class="lablink" href="../labmanuals/lab07-tfvars-secrets.md">Practise it in Lab 07 &mdash; tfvars and Secrets &rarr;</a>
@@ -762,38 +767,43 @@ output "connection_string" {
         <div class="card" id="lab08-local-state">
             <span class="eyebrow">Lab 08 &middot; State</span>
             <h2>Local state, refresh, and drift</h2>
-            <p class="concept"><em>State</em> is Terraform's memory: a JSON file mapping each address in your configuration to the real object's ID and last-known attributes. Without it, Terraform could not tell whether to create a second VPC or update the existing one. With no <code class="inline">backend</code> block the state is a local <code class="inline">terraform.tfstate</code> beside your files. <em>Drift</em> is when someone changes infrastructure outside Terraform; the next plan shows it.</p>
+            <p class="concept">With no backend configured, Terraform writes <code class="inline">terraform.tfstate</code> beside your configuration. It maps each resource address to the real object's ID and to every attribute AWS returned. This lab puts a real VPC in state, so the file holds an ID that AWS also holds &mdash; which is what makes losing the file an incident rather than an inconvenience.</p>
             <h3>Example</h3>
-<pre>terraform apply
+<pre>resource "random_pet" "server" {
+  prefix = "lab08"
+  length = 2
+}
 
-terraform state list
-# random_pet.first
+resource "random_password" "db" {
+  length  = 16
+  special = false
+}
 
-terraform state show random_pet.first
-# resource "random_pet" "first" {
-#     id     = "state-lab-clever-mongoose"
-#     length = 2
-#     prefix = "state-lab"
-# }
+resource "aws_vpc" "main" {
+  cidr_block = "10.8.0.0/16"
 
-terraform plan -refresh-only
+  tags = {
+    Lab  = "lab08"
+    Name = random_pet.server.id
+  }
+}
 
-terraform apply -replace=random_pet.first
-
-cp terraform.tfstate terraform.tfstate.backup.manual</pre>
+# terraform state list
+# aws_vpc.main
+# random_password.db
+# random_pet.server</pre>
             <h3>Line by line</h3>
             <table>
                 <thead><tr><th style="width:30%;">Line</th><th>What it does</th></tr></thead>
                 <tbody>
-                <tr><td class="lineref">terraform state list</td><td>Prints every address Terraform manages here. The first command to run when you are unsure what a directory owns.</td></tr>
-                <tr><td class="lineref">terraform state show ADDR</td><td>Prints the recorded attributes for one address. Safer and clearer than opening the JSON.</td></tr>
-                <tr><td class="lineref">plan -refresh-only</td><td>Updates state from the API and reports drift without proposing configuration changes. This is how you detect console edits.</td></tr>
-                <tr><td class="lineref">apply -replace=ADDR</td><td>Destroys and recreates one resource without editing code. Replaces the deprecated <code class="inline">terraform taint</code>.</td></tr>
-                <tr><td class="lineref">cp terraform.tfstate ...</td><td>Manual backup before any risky state operation. Terraform also writes <code class="inline">terraform.tfstate.backup</code> automatically.</td></tr>
-                <tr><td class="lineref">no backend block</td><td>Means local state. Fine for one person; Tier 3 moves it to S3 so a team and CI can share it.</td></tr>
+                <tr><td class="lineref">no backend block</td><td>State goes to <code class="inline">./terraform.tfstate</code>. Fine for one person learning, unworkable for a team &mdash; which is what labs 17 to 19 solve.</td></tr>
+                <tr><td class="lineref">terraform state list</td><td>Prints the three addresses Terraform tracks. Addresses, not names: this is how you refer to a resource in every state command.</td></tr>
+                <tr><td class="lineref">terraform state show aws_vpc.main</td><td>Shows roughly twenty attributes against the two you wrote. Everything else was assigned by AWS and recorded at apply.</td></tr>
+                <tr><td class="lineref">random_password in state</td><td>Stored as plain text. State is a secret-bearing file: never commit it, and prefer a backend that encrypts at rest.</td></tr>
+                <tr><td class="lineref">losing the file</td><td>The VPC still exists but Terraform no longer knows about it. The next apply builds a <em>second</em> one, and the first becomes an orphan nobody manages.</td></tr>
+                <tr><td class="lineref">drift</td><td>Change a tag in the console, then run <code class="inline">plan</code>. Terraform refreshes, sees reality differ from state, and proposes putting it back.</td></tr>
                 </tbody>
             </table>
-            <div class="note">Never hand-edit <code class="inline">terraform.tfstate</code>, and never commit it: it holds resource IDs and any value marked sensitive, in plain text.</div>
             <a class="lablink" href="../labmanuals/lab08-local-state.md">Practise it in Lab 08 &mdash; Local State &rarr;</a>
         </div>
         <div class="card" id="lab09-modules">
@@ -968,40 +978,46 @@ output "web_url" {
         <div class="card" id="lab11-collections">
             <span class="eyebrow">Lab 11 &middot; Collections</span>
             <h2>Lists, sets and maps, and the for expression</h2>
-            <p class="concept">HCL has three collection types. A <strong>list</strong> is ordered and keeps duplicates, addressed by position. A <strong>set</strong> is unordered and discards duplicates. A <strong>map</strong> is keyed by string. A <em>for expression</em> builds a new collection from an existing one, and the shape of the result follows the brackets you wrap it in: <code class="inline">[ ]</code> produces a list, <code class="inline">{ }</code> produces a map. Everything here evaluates at plan time, so this lab creates nothing in AWS and costs nothing to run.</p>
+            <p class="concept">HCL has three collection types. A <strong>list</strong> is ordered and keeps duplicates, addressed by position. A <strong>set</strong> is unordered and discards duplicates. A <strong>map</strong> is keyed by string. A <em>for expression</em> builds a new collection from an existing one, and the shape of the result follows the brackets: <code class="inline">[ ]</code> gives a list, <code class="inline">{ }</code> gives a map. The map then does real work &mdash; it supplies the CIDR and zone of an actual subnet, so changing a map entry changes AWS. The lab builds a free VPC and subnet, so it needs credentials.</p>
             <h3>Example</h3>
-<pre>locals {
-  # toset() discards the duplicate the list keeps; sort() gives a stable order,
-  # because a set has no order of its own.
-  unique_tag_names = sort(tolist(toset(var.tag_names)))
-
-  # A for expression over a list produces a list, still addressed by position.
-  tag_labels = [for name in var.tag_names : upper(name)]
-
-  # A for expression over a map produces a map. name is the key, subnet is the
-  # object stored under it, so subnet.cidr reaches a single attribute.
-  subnet_cidrs = { for name, subnet in var.subnets : name =&gt; subnet.cidr }
-
-  # An if clause at the end of a for expression filters the result.
-  zone_a_subnets = [for name, subnet in var.subnets : name if subnet.az == "us-east-2a"]
+<pre>variable "subnets" {
+  type = map(object({ cidr = string, az = string }))
+  default = {
+    app_a = { cidr = "10.0.1.0/24", az = "us-east-2a" }
+    app_b = { cidr = "10.0.2.0/24", az = "us-east-2b" }
+  }
 }
 
-# One resource block, one instance. Turning a collection into many copies of a
-# resource needs the count and for_each meta-arguments, which Lab 24 introduces.
-resource "terraform_data" "collections" {
-  input = local.collection_shapes
+locals {
+  unique_tag_names = sort(tolist(toset(var.tag_names)))
+  tag_labels       = [for name in var.tag_names : upper(name)]
+  subnet_cidrs     = { for name, subnet in var.subnets : name =&gt; subnet.cidr }
+  zone_a_subnets   = [for name, subnet in var.subnets : name if subnet.az == "us-east-2a"]
+}
+
+# Map indexing doing real work: one object selected by key, two of its
+# attributes reached with a dot. Change the map entry and AWS changes.
+#
+# One resource block is still one subnet. Creating one per map entry needs
+# the for_each meta-argument, which Lab 24 introduces.
+resource "aws_subnet" "app_a" {
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = var.subnets["app_a"].cidr
+  availability_zone = var.subnets["app_a"].az
 }</pre>
             <h3>Line by line</h3>
             <table>
                 <thead><tr><th style="width:30%;">Line</th><th>What it does</th></tr></thead>
                 <tbody>
-                <tr><td class="lineref">terraform_data</td><td>A built-in placeholder resource. It creates nothing in any cloud, so this lab needs no credentials and leaves nothing to destroy.</td></tr>
-                <tr><td class="lineref">toset(var.tag_names)</td><td>Converts the list to a set, which silently drops the repeated entry. Converting back with <code class="inline">tolist()</code> is what lets <code class="inline">sort()</code> apply.</td></tr>
+                <tr><td class="lineref">map(object({ cidr, az }))</td><td>A map whose values are structured. Terraform checks at plan time that every entry has both attributes with the right types.</td></tr>
+                <tr><td class="lineref">toset(var.tag_names)</td><td>Converts the list to a set, silently dropping the repeated entry. Converting back with <code class="inline">tolist()</code> is what lets <code class="inline">sort()</code> apply.</td></tr>
                 <tr><td class="lineref">sort(...)</td><td>A set has no order of its own, so Terraform may render it in any sequence. Sorting makes the output stable between runs.</td></tr>
-                <tr><td class="lineref">[for name in var.tag_names : upper(name)]</td><td>A for expression over a list. Square brackets mean the result is a list, one element per input element, order preserved.</td></tr>
-                <tr><td class="lineref">{ for name, subnet in var.subnets : name =&gt; subnet.cidr }</td><td>Iterating a map yields two loop variables, the key and the value. Braces and <code class="inline">=&gt;</code> mean the result is a map.</td></tr>
-                <tr><td class="lineref">if subnet.az == "us-east-2a"</td><td>An optional if clause filters entries out of the result. Only subnets in that zone reach the output.</td></tr>
+                <tr><td class="lineref">[for name in var.tag_names : upper(name)]</td><td>A for expression over a list. Square brackets mean a list result, one element per input, order preserved.</td></tr>
+                <tr><td class="lineref">{ for name, subnet in var.subnets : name =&gt; subnet.cidr }</td><td>Iterating a map yields two loop variables, key and value. Braces and <code class="inline">=&gt;</code> mean a map result.</td></tr>
+                <tr><td class="lineref">if subnet.az == "us-east-2a"</td><td>An optional if clause filters entries out of the result. Only subnets in that zone survive.</td></tr>
+                <tr><td class="lineref">var.subnets["app_a"].cidr</td><td>Square brackets select one object by key; the dot reaches one of its attributes. This is the value AWS actually receives as the subnet's CIDR.</td></tr>
                 <tr><td class="lineref">why not count or for_each here</td><td>Those meta-arguments turn a collection into many <em>resources</em>, which is a different subject. Lab 24 covers it. This lab is about the collections themselves.</td></tr>
+                <tr><td class="lineref">addressing by key beats by position</td><td>Because the subnet names a key rather than an index, removing <code class="inline">app_b</code> from the map leaves the real subnet untouched. A positional reference would have shifted and replaced it.</td></tr>
                 </tbody>
             </table>
             <a class="lablink" href="../labmanuals/lab11-collections.md">Practise it in Lab 11 &mdash; Collections &rarr;</a>
@@ -1009,37 +1025,43 @@ resource "terraform_data" "collections" {
         <div class="card" id="lab12-functions">
             <span class="eyebrow">Lab 12 &middot; Functions</span>
             <h2>Built-in functions transform values at plan time</h2>
-            <p class="concept">HCL has no loops or user-defined functions, but it ships a large library of built-in ones for strings, collections, CIDR arithmetic, and encoding. They evaluate during plan, so results are visible before anything is created. <code class="inline">terraform console</code> gives you an interactive prompt to test an expression before you commit it to a file.</p>
+            <p class="concept">HCL has no loops and no user-defined functions, but it ships a large library of built-in ones for strings, collections, CIDR arithmetic and encoding. They evaluate during plan, so results are visible before anything is created, and <code class="inline">terraform console</code> lets you try an expression before committing it to a file. Here the results are consumed by real resources rather than only printed: a computed CIDR becomes a subnet, and a deduplicated list becomes a security group's ingress ranges.</p>
             <h3>Example</h3>
-<pre>variable "application" {
-  type        = string
-  description = "Human-readable application name."
-  default     = "Payments API"
-}
-
-variable "cidrs" {
-  type        = list(string)
-  description = "Candidate CIDR ranges, possibly duplicated and unordered."
-  default     = ["10.0.2.0/24", "10.0.1.0/24", "10.0.1.0/24"]
-}
-
-locals {
+<pre>locals {
   slug          = lower(replace(var.application, " ", "-"))
   unique_cidrs  = sort(tolist(toset(var.cidrs)))
-  subnet_prefix = cidrsubnet("10.20.0.0/16", 8, 12)
-  configuration = jsonencode({ name = local.slug, cidrs = local.unique_cidrs })
+  cidr_count    = length(local.unique_cidrs)
+  subnet_prefix = cidrsubnet(var.vpc_cidr, var.subnet_newbits, var.subnet_netnum)
+  summary       = format("%s uses %d unique CIDR(s)", local.slug, local.cidr_count)
+}
+
+resource "aws_subnet" "derived" {
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = local.subnet_prefix   # never typed by hand
+  availability_zone = var.subnet_az
+}
+
+resource "aws_security_group" "app" {
+  vpc_id = aws_vpc.main.id
+
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = local.unique_cidrs        # deduplicated and sorted
+  }
 }</pre>
             <h3>Line by line</h3>
             <table>
                 <thead><tr><th style="width:30%;">Line</th><th>What it does</th></tr></thead>
                 <tbody>
-                <tr><td class="lineref">replace(var.application, " ", "-")</td><td>Swaps every space for a hyphen: <code class="inline">Payments-API</code>.</td></tr>
-                <tr><td class="lineref">lower(...)</td><td>Lowercases the result, giving the DNS-safe slug <code class="inline">payments-api</code>. Functions nest inside out.</td></tr>
-                <tr><td class="lineref">toset(var.cidrs)</td><td>Converts the list to a set, which discards the duplicate <code class="inline">10.0.1.0/24</code>.</td></tr>
-                <tr><td class="lineref">tolist(...) then sort(...)</td><td>Back to a list, then ordered, so the value is stable between plans and the diff stays empty.</td></tr>
-                <tr><td class="lineref">cidrsubnet("10.20.0.0/16", 8, 12)</td><td>Carves a subnet out of a parent range: add 8 bits to the /16 prefix and take block 12, giving <code class="inline">10.20.12.0/24</code>.</td></tr>
-                <tr><td class="lineref">jsonencode({ ... })</td><td>Serialises an HCL object to a JSON string, for user-data, IAM policies, or an output another tool reads.</td></tr>
-                <tr><td class="lineref">terraform console</td><td>Evaluates any of these interactively. Try <code class="inline">cidrsubnet("10.0.0.0/16", 8, 1)</code>.</td></tr>
+                <tr><td class="lineref">lower(replace(...))</td><td>Functions nest: the inner call runs first. This turns <code class="inline">"Payments API"</code> into <code class="inline">payments-api</code>, safe for a resource name.</td></tr>
+                <tr><td class="lineref">sort(tolist(toset(var.cidrs)))</td><td>Three functions in sequence: drop duplicates, convert back to a list, then order it. The result becomes the security group's real source ranges.</td></tr>
+                <tr><td class="lineref">cidrsubnet(var.vpc_cidr, newbits, netnum)</td><td>Carves a subnet out of a larger range. Derived from the VPC's own CIDR, so widening the VPC moves the subnet with it and neither is retyped.</td></tr>
+                <tr><td class="lineref">becomes aws_subnet.derived.cidr_block</td><td>This is the difference from printing it. Change <code class="inline">var.vpc_cidr</code> and the plan replaces both the VPC and the subnet together.</td></tr>
+                <tr><td class="lineref">format("%s uses %d ...")</td><td>Builds a display string with typed placeholders. <code class="inline">%d</code> requires a number, so a type error is caught at plan.</td></tr>
+                <tr><td class="lineref">jsonencode stays an output</td><td>Its real destination is an IAM policy document, which this track does not cover. Printed here so you can see the encoding, not wired to a resource.</td></tr>
+                <tr><td class="lineref">terraform console</td><td>An interactive prompt against your real variables and locals. Try an expression there before you put it in a file.</td></tr>
                 </tbody>
             </table>
             <a class="lablink" href="../labmanuals/lab12-functions.md">Practise it in Lab 12 &mdash; Functions &rarr;</a>
@@ -1198,36 +1220,45 @@ resource "terraform_data" "bootstrap" {
         <div class="card" id="lab16-workspaces">
             <span class="eyebrow">Lab 16 &middot; Workspaces</span>
             <h2>Workspaces: several states from one configuration</h2>
-            <p class="concept">A <em>workspace</em> is a named, separate state file for the same configuration directory. Every directory starts in the workspace called <code class="inline">default</code>. Switching workspace switches which state Terraform reads, so <code class="inline">dev</code> and <code class="inline">default</code> can coexist from identical code. Reference the current name as <code class="inline">terraform.workspace</code>. This lab creates nothing in AWS &mdash; the point is the state files, not the resources.</p>
+            <p class="concept">A <em>workspace</em> is a named, separate state file for the same configuration directory. Every directory starts in the workspace called <code class="inline">default</code>. Switching workspace switches which state Terraform reads, so <code class="inline">dev</code> and <code class="inline">default</code> coexist from identical code. This lab builds one free VPC per workspace, so two exist in the account at once and <code class="inline">state list</code> in either shows only its own &mdash; the isolation claim, tested rather than asserted.</p>
             <h3>Example</h3>
-<pre>locals {
-  environment = terraform.workspace
-  labels      = { environment = terraform.workspace, managed_by = "terraform" }
+<pre>variable "workspace_cidrs" {
+  type = map(string)
+  default = {
+    default = "10.16.0.0/16"
+    dev     = "10.17.0.0/16"
+  }
 }
 
-resource "terraform_data" "workspace" { input = local.labels }
+locals {
+  name     = "lab16-${terraform.workspace}"
+  vpc_cidr = lookup(var.workspace_cidrs, terraform.workspace, "10.18.0.0/16")
+}
 
-output "workspace" { value = terraform.workspace }
-output "labels" { value = terraform_data.workspace.output }
+resource "aws_vpc" "env" {
+  cidr_block = local.vpc_cidr
 
-# terraform workspace list
-# * default
+  tags = {
+    Lab         = "lab16"
+    Name        = local.name
+    Environment = terraform.workspace
+  }
+}
+
 # terraform workspace new dev
 # terraform workspace select dev
-# terraform apply
-# terraform workspace show</pre>
+# terraform apply</pre>
             <h3>Line by line</h3>
             <table>
                 <thead><tr><th style="width:30%;">Line</th><th>What it does</th></tr></thead>
                 <tbody>
-                <tr><td class="lineref">terraform.workspace</td><td>A built-in value holding the active workspace name. Available anywhere in the configuration, no variable needed.</td></tr>
-                <tr><td class="lineref">terraform_data</td><td>A placeholder resource that creates nothing. It exists so each workspace has something in its state, which is what makes the two state files visibly different.</td></tr>
-                <tr><td class="lineref">labels map</td><td>Stamps the workspace name into the resource's input, so the output proves which workspace produced it.</td></tr>
-                <tr><td class="lineref">workspace new dev</td><td>Creates the workspace and switches to it. Its state starts empty, so the first plan proposes creating everything.</td></tr>
+                <tr><td class="lineref">terraform.workspace</td><td>A built-in value holding the active workspace name. No variable declares it, and it is available anywhere in the configuration.</td></tr>
+                <tr><td class="lineref">lookup(map, key, fallback)</td><td>Selects this workspace's CIDR, falling back to a third range for any workspace name not in the map. Without distinct CIDRs the two VPCs would overlap.</td></tr>
+                <tr><td class="lineref">Name = "lab16-${terraform.workspace}"</td><td>Interpolating the workspace into every name is what stops two workspaces colliding on an AWS name. Omit it and the second apply fails.</td></tr>
+                <tr><td class="lineref">two VPCs at once</td><td>After applying in both workspaces, <code class="inline">describe-vpcs</code> shows both. Each state file lists only its own &mdash; that is the isolation.</td></tr>
+                <tr><td class="lineref">what a workspace is not</td><td>Both VPCs live in one account under one set of credentials. A workspace separates <em>state</em>, not blast radius. Production deserves a separate account, or at least separate state keys as in Lab 18.</td></tr>
                 <tr><td class="lineref">workspace select dev</td><td>Switches without creating. Always run <code class="inline">workspace show</code> before an apply you care about.</td></tr>
-                <tr><td class="lineref">in a real configuration</td><td>Interpolate <code class="inline">terraform.workspace</code> into every resource name and tag, or two workspaces will try to create the same AWS name and collide.</td></tr>
-                <tr><td class="lineref">workspace vs separate keys</td><td>Workspaces share one backend key prefix and suit short-lived sandboxes. Production boundaries deserve wholly separate state keys, as in Lab 18.</td></tr>
-                <tr><td class="lineref">do not destroy yet</td><td>Lab 20 reads both of this lab's state files. Its cleanup is deliberately deferred until after that lab.</td></tr>
+                <tr><td class="lineref">do not destroy yet</td><td>Lab 20 reads both of this lab's state files, so its cleanup is deliberately deferred until after that lab.</td></tr>
                 </tbody>
             </table>
             <a class="lablink" href="../labmanuals/lab16-workspaces.md">Practise it in Lab 16 &mdash; Workspaces &rarr;</a>
@@ -1375,6 +1406,7 @@ terraform state pull &gt; remote-copy.tfstate</pre>
                 <tr><td class="lineref">Enter a value: yes</td><td>The confirmation prompt. Answering no leaves the local state in place and the remote backend empty.</td></tr>
                 <tr><td class="lineref">terraform state list</td><td>First check after migration: the same addresses must be present as before.</td></tr>
                 <tr><td class="lineref">terraform plan</td><td>Second check, and the real one. No changes means the migrated state still matches reality, so nothing will be recreated.</td></tr>
+                <tr><td class="lineref">terraform output -raw vpc_id</td><td>Third check, and the most concrete. Record the VPC ID before migrating and compare it after: an identical ID proves the state moved while the infrastructure did not.</td></tr>
                 <tr><td class="lineref">terraform state pull</td><td>Fetches the state from the backend to stdout. Use it for backups; never edit and push it by hand.</td></tr>
                 </tbody>
             </table>
@@ -1412,6 +1444,7 @@ resource "aws_instance" "app" {
                 <tr><td class="lineref">key = "labs/dev/network/..."</td><td>Points at the network state specifically. Pointing at the wrong environment's key is the classic way to attach production subnets to a dev instance.</td></tr>
                 <tr><td class="lineref">.outputs.subnet_id</td><td>Only values the producer declared as <code class="inline">output</code> appear under <code class="inline">.outputs</code>. Undeclared internals are unreachable.</td></tr>
                 <tr><td class="lineref">read permissions</td><td>The consumer needs S3 read access to that key. Read-only is enough and is what it should be granted.</td></tr>
+                <tr><td class="lineref">in this lab</td><td>The producer is Lab 16, read over the <code class="inline">local</code> backend rather than S3, and it publishes a real <code class="inline">vpc_id</code> and <code class="inline">vpc_cidr</code>. The consumer reads a genuine VPC ID out of a state file while making no AWS call of its own.</td></tr>
                 </tbody>
             </table>
             <a class="lablink" href="../labmanuals/lab20-remote-state-consumer.md">Practise it in Lab 20 &mdash; Remote state consumer &rarr;</a>

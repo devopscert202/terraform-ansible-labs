@@ -313,8 +313,13 @@ both of which let you grant access to just the value in question.
 
 ## The capstone on a backend (lab22)
 
-Labs 17 to 20 put a `terraform_data` placeholder or a workspace label into S3 — deliberately, so a
-mistake costs nothing. Lab22 is the same backend under real infrastructure: byte for byte the
+Labs 17 and 18 put a `terraform_data` placeholder into S3 — deliberately, so a mistake costs
+nothing while you are still learning where the state key goes. Lab19 raises the stakes one notch: it
+puts a free but real `aws_vpc` in state before migrating, because "migration changes nothing in AWS"
+is only a testable claim if something in AWS is under management. The acceptance test is that
+`terraform output -raw vpc_id` returns the same ID before and after the move.
+
+Lab22 is the same backend under real infrastructure that costs money: byte for byte the
 capstone of lab10 (VPC, internet gateway, public subnet, route table, association, security group,
 EC2 with `user_data`), with `backend "s3" {}` added and nothing else changed.
 

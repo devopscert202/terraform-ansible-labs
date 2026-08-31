@@ -261,10 +261,18 @@ terraform destroy
 cd ../lab07-tfvars-secrets
 cp terraform.tfvars.example terraform.tfvars
 export TF_VAR_db_password="not-in-a-file"
-terraform apply
+terraform apply                      # 2 to add: a VPC and a subnet, tagged from tfvars
 terraform output                     # db_password shows as <sensitive>
 terraform output db_password         # named: prints in full
 terraform output db_password_length  # nonsensitive() length, no secret revealed
+terraform output vpc_tags            # the tfvars values, as AWS recorded them
+
+aws ec2 describe-vpcs --region us-east-2 \
+  --filters 'Name=tag:Lab,Values=lab07' --query 'Vpcs[].Tags'   # Project, Environment, CostCode
+
+terraform destroy
+rm -f terraform.tfvars
+unset TF_VAR_db_password
 ```
 
 ## Where next
@@ -279,4 +287,4 @@ terraform output db_password_length  # nonsensitive() length, no secret revealed
 | Lab | Description |
 |---|---|
 | [Lab 06: Variables and Outputs](../labmanuals/lab06-variables-outputs.md) | Typed variables, locals, merged tags on an EC2 instance, outputs |
-| [Lab 07: tfvars and Secrets](../labmanuals/lab07-tfvars-secrets.md) | tfvars files, `validation` blocks, sensitive variables, `nonsensitive()` |
+| [Lab 07: tfvars and Secrets](../labmanuals/lab07-tfvars-secrets.md) | tfvars files, `validation` blocks, sensitive variables, `nonsensitive()`, and tfvars values landing as tags on a real VPC |

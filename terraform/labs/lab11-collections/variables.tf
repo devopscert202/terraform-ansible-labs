@@ -1,3 +1,15 @@
+variable "aws_region" {
+  type        = string
+  description = "Region for the VPC and subnet. us-east-2 has zones a, b and c only."
+  default     = "us-east-2"
+}
+
+variable "vpc_cidr" {
+  type        = string
+  description = "CIDR of the lab VPC. Every entry in var.subnets must fit inside it."
+  default     = "10.0.0.0/16"
+}
+
 variable "tag_names" {
   type        = list(string)
   description = "A list: ordered, duplicates allowed, indexed by number."

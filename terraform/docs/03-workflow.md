@@ -41,25 +41,36 @@ read-only mode, which is why it can detect that someone deleted a resource behin
 
 ## Lab04: the full cycle at zero cost
 
-Lab04's entire configuration is one resource and one output:
+Lab04's entire configuration is two resources, linked by one reference:
 
 ```hcl
-resource "random_string" "example" {
-  length  = 12
+resource "random_string" "suffix" {
+  length  = 6
   special = false
   upper   = false
+  numeric = false
 }
 
-output "generated_value" {
-  value = random_string.example.result
+resource "aws_vpc" "lifecycle" {
+  cidr_block         = "10.4.0.0/16"
+  enable_dns_support = true
+
+  tags = {
+    Lab  = "lab04"
+    Name = "lab04-${random_string.suffix.result}"
+  }
 }
 ```
 
-`random_string` comes from the `hashicorp/random` provider. It creates nothing in any cloud, needs
-no credentials, and costs nothing — but Terraform manages it exactly like an EC2 instance. It has
-an address, it goes in state, it appears in plans, and `destroy` removes it. That makes it the
-right place to learn the mechanics of the loop, because you can create and destroy it thirty times
-in a row with no consequences.
+`random_string` comes from the `hashicorp/random` provider. It creates nothing in any cloud and
+costs nothing — but Terraform manages it exactly like an EC2 instance. It has an address, it goes in
+state, it appears in plans, and `destroy` removes it.
+
+Lab04 pairs it with a real `aws_vpc`, whose `Name` tag interpolates the generated string. A VPC is
+free, so you can still create and destroy this configuration thirty times in a row with no
+consequences, but the loop now runs against AWS rather than against your laptop. The pairing also
+makes dependency ordering visible: the string is created first and destroyed last, because the VPC
+references it, and nothing in the file declares that order.
 
 ## Reading a plan
 
@@ -107,15 +118,12 @@ wrong on your laptop, where the prompt is the last thing standing between you an
 When apply finishes:
 
 ```text
-Apply complete! Resources: 1 added, 0 changed, 0 destroyed.
-
-Outputs:
-
-generated_value = "x7kq2mzp4nrt"
+Apply complete! Resources: 2 added, 0 changed, 0 destroyed.
 ```
 
-State is now written. `terraform.tfstate` records that `random_string.example` exists and what its
-attributes are. Run `plan` again immediately and you should see
+State is now written. `terraform.tfstate` records that `random_string.suffix` and `aws_vpc.lifecycle`
+exist and what their attributes are — including the `vpc-` ID that AWS, not Terraform, chose. Run
+`plan` again immediately and you should see
 `No changes. Your infrastructure matches the configuration.` — that is idempotency, working.
 
 ## Saved plans
@@ -192,6 +200,9 @@ terraform output                 # all outputs
 terraform show                   # everything in state, human-readable
 terraform plan                   # again: expect "No changes"
 terraform destroy
+
+aws ec2 describe-vpcs --region us-east-2 \
+  --filters 'Name=tag:Lab,Values=lab04' --query 'Vpcs[].VpcId'   # expect an empty list
 ```
 
 ## Where next
@@ -203,4 +214,4 @@ terraform destroy
 
 | Lab | Description |
 |---|---|
-| [Lab 04: Plan, Apply, Destroy](../labmanuals/lab04-plan-apply-destroy.md) | The full create-and-teardown cycle with outputs, at no cost |
+| [Lab 04: Plan, Apply, Destroy](../labmanuals/lab04-plan-apply-destroy.md) | The full create-and-teardown cycle against a real VPC, at no cost |

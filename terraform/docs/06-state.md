@@ -27,16 +27,6 @@ With no `backend` block, Terraform writes `terraform.tfstate` in the working dir
 the **local backend**, and it is the default. Lab08's configuration says so explicitly:
 
 ```hcl
-terraform {
-  required_version = ">= 1.5.0"
-  required_providers {
-    random = {
-      source  = "hashicorp/random"
-      version = "~> 3.0"
-    }
-  }
-}
-
 # There is no backend block, so Terraform writes state to ./terraform.tfstate.
 resource "random_pet" "server" {
   prefix = "lab08"
@@ -48,7 +38,24 @@ resource "random_password" "db" {
   length  = 16
   special = false
 }
+
+# A real VPC, so state holds an ID that AWS also holds.
+resource "aws_vpc" "main" {
+  cidr_block         = "10.8.0.0/16"
+  enable_dns_support = true
+
+  tags = {
+    Lab  = "lab08"
+    Name = random_pet.server.id
+  }
+}
 ```
+
+That third resource is what makes the rest of this page matter. Two of the three resources are
+generated locally, so losing their record costs nothing. The VPC is different: state is the only
+copy on your machine of the `vpc-` ID AWS assigned. Delete the file and the VPC does not
+disappear — it becomes an orphan that no configuration manages, and the next `apply` builds a second
+one beside it.
 
 Local state is correct for one person experimenting. It stops being adequate the moment a second
 person or a CI job needs to apply the same configuration, because the file is on your laptop and
@@ -153,6 +160,7 @@ terraform output                              # just the outputs
 
 ```text
 $ terraform state list
+aws_vpc.main
 random_password.db
 random_pet.server
 ```
@@ -207,11 +215,15 @@ terraform apply
 ls -la terraform.tfstate                     # it exists now
 terraform state list
 terraform state show random_pet.server
+terraform state show aws_vpc.main            # ~20 attributes, two of them yours
 grep -o '"result": *"[^"]*"' terraform.tfstate   # the password, in plain text
 terraform output                             # db_password shows as <sensitive>
 terraform output db_password                 # named: prints in full
 terraform plan                               # "No changes" — idempotent
 terraform destroy
+
+aws ec2 describe-vpcs --region us-east-2 \
+  --filters 'Name=tag:Lab,Values=lab08' --query 'Vpcs[].VpcId'   # expect an empty list
 ```
 
 ## Where next
@@ -224,4 +236,4 @@ terraform destroy
 
 | Lab | Description |
 |---|---|
-| [Lab 08: Local State](../labmanuals/lab08-local-state.md) | Create and inspect `terraform.tfstate`, find a generated password in plain text, observe refresh |
+| [Lab 08: Local State](../labmanuals/lab08-local-state.md) | Create and inspect `terraform.tfstate`, match a real VPC ID against AWS, find a generated password in plain text, observe refresh |

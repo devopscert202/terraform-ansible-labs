@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Goal** | Transform values with Terraform's built-in functions inside a `locals` block, and use `terraform console` to test an expression before committing it to a file. |
+| **Goal** | Transform values with Terraform's built-in functions inside a `locals` block, test an expression in `terraform console` before committing it to a file, and let the results define a real subnet and security group. |
 | **Time** | 40–50 minutes |
 | **Tier** | Intermediate |
 | **Files** | `terraform/labs/lab12-functions/` |
@@ -22,7 +22,14 @@ see the answer immediately instead of guessing and re-running `plan`. Labs 06 an
 expression at a time; here you stay inside it. You will work through one family per step at that
 prompt, then see the same functions used for real in the configuration.
 
-This lab creates no resources, so it is free and needs no AWS credentials.
+"For real" is the part that matters. A function whose result is only printed teaches syntax and
+nothing else. So the last third of this lab builds a VPC, a subnet whose CIDR is whatever
+`cidrsubnet()` returned, and a security group whose ingress ranges are whatever
+`sort(tolist(toset(...)))` returned. Nothing in the network is typed twice: change `var.vpc_cidr` and
+the subnet moves, because the function recomputes it.
+
+A VPC, a subnet and a security group cost nothing, but they are real, so this lab needs AWS
+credentials.
 
 ## What you will build
 
@@ -31,15 +38,21 @@ This lab creates no resources, so it is free and needs no AWS credentials.
 | `local.slug` | `lower()` and `replace()` turn a display name into a safe identifier | Free |
 | `local.unique_cidrs` | `toset()`, `tolist()`, `sort()` deduplicate and order a list | Free |
 | `local.cidr_count` | `length()` counts the result | Free |
-| `local.subnet_prefix` | `cidrsubnet()` carves a subnet range out of a larger one | Free |
+| `local.subnet_prefix` | `cidrsubnet()` carves a subnet range out of `var.vpc_cidr` | Free |
 | `local.config_json` | `jsonencode()` renders an object as a JSON string | Free |
 | `local.summary` | `format()` builds a display string | Free |
+| `aws_vpc.main` | The lab's own VPC, `10.20.0.0/16` | Free |
+| `aws_subnet.derived` | A real subnet at the CIDR `cidrsubnet()` computed | Free |
+| `aws_security_group.app` | Ingress ranges taken from `local.unique_cidrs` | Free |
+
+Three managed resources, no data sources.
 
 ## Before you start
 
 - [ ] Lab 11 completed ([lab11-collections.md](lab11-collections.md))
 - [ ] You know what a list, a set, and a map are
-- [ ] Working directory: `../labs/lab12-functions/` (no AWS credentials needed)
+- [ ] AWS credentials configured for `us-east-2` (`aws sts get-caller-identity` succeeds)
+- [ ] Working directory: `../labs/lab12-functions/`
 
 ## Steps
 
@@ -179,6 +192,9 @@ cidrsubnet("10.20.0.0/16", 8, 12)
 blocks, and `12` selects the thirteenth of them, counting from zero. Doing this arithmetic by hand
 is a reliable source of outages, so let the function do it.
 
+Remember this value. `10.20.12.0/24` is the CIDR of the real subnet you create in Step 16, and it is
+never typed into the resource block.
+
 ### Step 9 — Network functions: pick a specific host address
 
 ```text
@@ -275,7 +291,69 @@ exit
 You are back at your shell prompt. If an expression is wrong the console prints the error and stays
 open, which makes it far cheaper than discovering the same mistake during an `apply`.
 
-### Step 15 — Apply and read every result at once
+### Step 15 — Read where the function results are consumed
+
+```bash
+sed -n '/^# A VPC of its own/,$p' main.tf
+```
+
+**Expected output**
+
+```text
+# A VPC of its own, so the lab never depends on the account having a default VPC.
+resource "aws_vpc" "main" {
+  cidr_block         = var.vpc_cidr
+  enable_dns_support = true
+
+  tags = local.common_tags
+}
+
+# cidrsubnet() doing real work. The CIDR below was never typed by hand: it is
+# computed from var.vpc_cidr, so this is the arithmetic the function replaced.
+resource "aws_subnet" "derived" {
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = local.subnet_prefix
+  availability_zone = var.subnet_az
+
+  tags = merge(local.common_tags, { Name = "${local.slug}-derived" })
+}
+
+# The deduplicated, sorted CIDR list becomes the real source ranges of a real
+# security group. There is no internet gateway, so nothing outside reaches this.
+resource "aws_security_group" "app" {
+  name        = "${local.slug}-sg"
+  description = "Lab 12: ingress ranges built by toset(), tolist() and sort()"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    description = "HTTPS from the deduplicated CIDR list"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = local.unique_cidrs
+  }
+
+  egress {
+    description = "All outbound"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = merge(local.common_tags, { Name = "${local.slug}-sg" })
+}
+```
+
+Read what is *absent* from those blocks. No CIDR is written out for the subnet — `local.subnet_prefix`
+supplies it. No ingress range is listed — `local.unique_cidrs` supplies them, already deduplicated
+and sorted. No resource name is written — `local.slug` supplies it. Three function families, three
+real arguments.
+
+`local.config_json` is the exception: `jsonencode()` output is still only an output here, because its
+real destination is an IAM policy document, which this track does not cover.
+
+### Step 16 — Apply and read every result at once
 
 ```bash
 terraform apply -auto-approve
@@ -284,39 +362,82 @@ terraform apply -auto-approve
 **Expected output**
 
 ```text
-Apply complete! Resources: 0 added, 0 changed, 0 destroyed.
-
-Outputs:
-
-cidr_count = 2
-config_json = "{\"cidrs\":[\"10.0.1.0/24\",\"10.0.2.0/24\"],\"name\":\"payments-api\"}"
-slug = "payments-api"
-subnet_prefix = "10.20.12.0/24"
-summary = "payments-api uses 2 unique CIDR(s)"
-unique_cidrs = tolist([
-  "10.0.1.0/24",
-  "10.0.2.0/24",
-])
+PENDING CAPTURE — rerun after credentials are restored
 ```
 
-`0 added` is correct — there are no resources, only computed outputs.
+`Plan: 3 to add, 0 to change, 0 to destroy.` Check `derived_subnet` in the outputs:
+`computed_by_cidrsubnet` and `assigned_by_aws` are both `10.20.12.0/24`. The first is what the
+function returned; the second is what AWS recorded. They match, which is the whole point.
 
-### Step 16 — Change an input and watch every derived value follow
+`security_group_ingress_cidrs` reads the ranges back off the real security group and shows two, not
+three — `toset()` removed the duplicate before it ever left your machine.
+
+### Step 17 — Confirm the derived values in state
 
 ```bash
-terraform apply -auto-approve -var 'application=Billing Service'
+terraform state show aws_subnet.derived
+terraform output derived_subnet_gateway_host
 ```
 
 **Expected output**
 
 ```text
-config_json = "{\"cidrs\":[\"10.0.1.0/24\",\"10.0.2.0/24\"],\"name\":\"billing-service\"}"
-slug = "billing-service"
-summary = "billing-service uses 2 unique CIDR(s)"
+PENDING CAPTURE — rerun after credentials are restored
 ```
 
-One input changed and three outputs updated, because each is derived rather than typed out. That is
-the reason to push transformation into functions instead of hand-writing both forms.
+`cidr_block` is `10.20.12.0/24` and `derived_subnet_gateway_host` is `10.20.12.1` — `cidrhost()`
+applied to a CIDR that came back from AWS rather than one you typed.
+
+### Step 18 — Move the VPC and watch the subnet follow
+
+The subnet's CIDR is derived from the VPC's, so changing one input should move both. Nothing is
+applied here — `plan` only reports.
+
+```bash
+terraform plan -var 'vpc_cidr=10.30.0.0/16'
+```
+
+**Expected output**
+
+```text
+PENDING CAPTURE — rerun after credentials are restored
+```
+
+Terraform proposes replacing both resources: the VPC because `cidr_block` cannot be changed in place,
+and the subnet because `cidrsubnet("10.30.0.0/16", 8, 12)` is now `10.30.12.0/24`. One edit, two
+correct consequences. Had the subnet CIDR been hardcoded, the same edit would have produced a subnet
+outside its own VPC and an `InvalidSubnet.Range` error at apply.
+
+### Step 19 — Change an input and watch every derived value follow
+
+```bash
+terraform plan -var 'application=Billing Service'
+```
+
+**Expected output**
+
+```text
+PENDING CAPTURE — rerun after credentials are restored
+```
+
+`slug`, `summary` and `config_json` all change, and the security group is proposed for replacement
+because its `name` is built from `local.slug`. One input changed and every value derived from it
+followed, because each is computed rather than typed out. That is the reason to push transformation
+into functions instead of hand-writing both forms.
+
+### Step 20 — Destroy
+
+```bash
+terraform destroy -auto-approve
+```
+
+**Expected output**
+
+```text
+PENDING CAPTURE — rerun after credentials are restored
+```
+
+`Destroy complete! Resources: 3 destroyed.`
 
 ## Done when
 
@@ -324,8 +445,12 @@ the reason to push transformation into functions instead of hand-writing both fo
 - [ ] You produced `"payments-api"` with `lower()` and `replace()`
 - [ ] `toset()` reduced three CIDRs to two, and `sort(tolist(...))` ordered them
 - [ ] `cidrsubnet("10.20.0.0/16", 8, 12)` returned `"10.20.12.0/24"`
-- [ ] `apply` prints all six outputs with `0 added`
+- [ ] `apply` reported `3 added`
+- [ ] `derived_subnet` shows `computed_by_cidrsubnet` equal to `assigned_by_aws`
+- [ ] `security_group_ingress_cidrs` lists two ranges, not three
+- [ ] Overriding `vpc_cidr` moved the subnet's CIDR without you editing the subnet
 - [ ] Overriding `application` changed `slug`, `summary`, and `config_json` together
+- [ ] `terraform destroy` reports `3 destroyed`
 
 ## If something fails
 
@@ -338,6 +463,10 @@ the reason to push transformation into functions instead of hand-writing both fo
 | Console shows `(known after apply)` | Value depends on a resource not yet created | Run `apply` first, then reopen the console |
 | Console will not exit | Waiting on an unclosed bracket or quote | Close it, or press `Ctrl-C` then type `exit` |
 | `Variables not allowed` | Function or `var.` used at the top level of a file | Move the expression inside a `locals` block |
+| `InvalidSubnet.Range: not a valid subnet of the VPC` | `subnet_newbits`/`subnet_netnum` selected a block outside `vpc_cidr` | Keep `newbits` at `8` and `netnum` in `0`–`255` for a `/16` |
+| `InvalidParameterValue: value for availability zone is invalid` | `subnet_az` outside the region | `us-east-2` has only `us-east-2a`, `us-east-2b` and `us-east-2c` |
+| `VpcLimitExceeded` | Five VPCs already exist in the region | Destroy a previous lab's VPC first |
+| `NoCredentialProviders` or `InvalidClientTokenId` | Credentials missing or expired | Refresh them and confirm with `aws sts get-caller-identity` |
 
 ## Cleanup
 

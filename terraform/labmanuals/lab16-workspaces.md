@@ -22,21 +22,35 @@ Workspaces are lightweight: they give you separate state and nothing else — no
 account, no separate credentials, no approval gate. That limitation motivates the next two labs,
 which use separate state keys instead.
 
+Reading a workspace name back out of an output only proves Terraform knows which workspace is
+active. So this lab creates a real VPC per workspace, at a different CIDR chosen by workspace name.
+By Step 10 there are **two VPCs in your account at the same time**, from one configuration
+directory, and neither state file knows the other exists. That is the isolation claim, tested
+against AWS rather than asserted.
+
 ## What you will build
 
 | Resource | Purpose | Cost |
 |---|---|---|
 | `terraform_data.workspace` | Stores a label map built from the active workspace name | Free |
-| Output `workspace` | The active workspace name | Free |
-| Output `labels` | The label map, so you can see it change per workspace | Free |
+| `aws_vpc.env` | A real VPC per workspace: `10.16.0.0/16` in `default`, `10.17.0.0/16` in `dev` | Free |
+| Outputs `workspace`, `labels` | The active workspace name and the label map | Free |
+| Outputs `vpc_id`, `vpc_cidr`, `vpc_name` | The VPC belonging to the active workspace only | Free |
+
+One managed resource per workspace, plus the placeholder — so **two** resources per workspace and
+four in total once both workspaces are applied.
 
 ## Before you start
 
 - [ ] [Lab 15 — remote-exec provisioner](lab15-remote-exec-provisioner.md) completed
 - [ ] Terraform 1.5.0 or newer (`terraform version`)
 - [ ] Read the state model notes in [../docs/12-workspaces.md](../docs/12-workspaces.md)
+- [ ] AWS credentials configured for `us-east-2` (`aws sts get-caller-identity` succeeds)
+- [ ] Room for two more VPCs in `us-east-2` — this lab holds two at once, and the default limit is
+  five per region
 
-No AWS resources and no credentials are needed.
+A VPC costs nothing, but the two this lab creates are real and stay in place until after
+[Lab 20](lab20-remote-state-consumer.md). See the Cleanup section.
 
 ## Steps
 
@@ -52,18 +66,48 @@ cat main.tf
 
 **Expected output**
 
+**Expected output** *(trimmed to the parts that matter)*
+
 ```text
-terraform { required_version = ">= 1.5.0" }
+variable "workspace_cidrs" {
+  type        = map(string)
+  description = "CIDR per workspace name. lookup() falls back for any other name."
+  default = {
+    default = "10.16.0.0/16"
+    dev     = "10.17.0.0/16"
+  }
+}
 
 locals {
   environment = terraform.workspace
   labels      = { environment = terraform.workspace, managed_by = "terraform" }
+
+  name     = "lab16-${terraform.workspace}"
+  vpc_cidr = lookup(var.workspace_cidrs, terraform.workspace, "10.18.0.0/16")
 }
 
 resource "terraform_data" "workspace" { input = local.labels }
-output "workspace" { value = terraform.workspace }
-output "labels" { value = terraform_data.workspace.output }
+
+# A real VPC per workspace. Two workspaces, two states, two VPCs in the account
+# at the same time — which is the proof that workspace state really is separate.
+resource "aws_vpc" "env" {
+  cidr_block         = local.vpc_cidr
+  enable_dns_support = true
+
+  tags = {
+    Lab         = "lab16"
+    Name        = local.name
+    Environment = terraform.workspace
+  }
+}
 ```
+
+`terraform.workspace` appears four times and does four different jobs: it names the resource, tags
+it, picks its CIDR through `lookup()`, and lands in the label map. Nothing else in the file changes
+between workspaces — a single string is the whole difference between the two environments.
+
+`lookup(map, key, fallback)` returns the fallback when the key is absent, so applying in a workspace
+called anything other than `default` or `dev` still gets a valid, non-overlapping CIDR.
 
 ### Step 2 — Initialize
 
@@ -71,11 +115,13 @@ output "labels" { value = terraform_data.workspace.output }
 terraform init
 ```
 
-**Expected output**
+**Expected output** *(trimmed)*
 
 ```text
 Initializing provider plugins...
 - terraform.io/builtin/terraform is built in to Terraform
+- Finding hashicorp/aws versions matching "~> 5.0"...
+- Installed hashicorp/aws v5.100.0 (signed by HashiCorp)
 
 Terraform has been successfully initialized!
 ```
@@ -117,30 +163,15 @@ terraform apply -auto-approve
 **Expected output**
 
 ```text
-  # terraform_data.workspace will be created
-  + resource "terraform_data" "workspace" {
-      + id     = (known after apply)
-      + input  = {
-          + environment = "default"
-          + managed_by  = "terraform"
-        }
-      + output = (known after apply)
-    }
-
-Plan: 1 to add, 0 to change, 0 to destroy.
-
-Apply complete! Resources: 1 added, 0 changed, 0 destroyed.
-
-Outputs:
-
-labels = {
-  "environment" = "default"
-  "managed_by" = "terraform"
-}
-workspace = "default"
+PENDING CAPTURE — rerun after credentials are restored
 ```
 
-`terraform.workspace` resolved to `default`, so that is what landed in the label map.
+`Plan: 2 to add, 0 to change, 0 to destroy.` then `Apply complete! Resources: 2 added, 0 changed, 0
+destroyed.`
+
+`terraform.workspace` resolved to `default`, so that is what landed in the label map, in the VPC's
+`Environment` tag, and in `vpc_name` as `lab16-default`. `vpc_cidr` is `10.16.0.0/16`, the value
+`lookup()` found under the `default` key.
 
 ### Step 6 — Create and switch to a second workspace
 
@@ -191,33 +222,41 @@ terraform apply -auto-approve
 **Expected output**
 
 ```text
-  # terraform_data.workspace will be created
-  + resource "terraform_data" "workspace" {
-      + id     = (known after apply)
-      + input  = {
-          + environment = "dev"
-          + managed_by  = "terraform"
-        }
-      + output = (known after apply)
-    }
-
-Plan: 1 to add, 0 to change, 0 to destroy.
-
-Apply complete! Resources: 1 added, 0 changed, 0 destroyed.
-
-Outputs:
-
-labels = {
-  "environment" = "dev"
-  "managed_by" = "terraform"
-}
-workspace = "dev"
+PENDING CAPTURE — rerun after credentials are restored
 ```
 
-Terraform created a *second* resource rather than modifying the first. The two workspaces do not
-know about each other.
+`Plan: 2 to add, 0 to change, 0 to destroy.` again, with `environment = "dev"`, `vpc_name` of
+`lab16-dev` and `vpc_cidr` of `10.17.0.0/16`.
 
-### Step 9 — List the workspaces
+Read that plan carefully. Terraform proposed **creating** a VPC, not modifying the one it created in
+Step 5. This workspace's state is empty, so as far as Terraform is concerned no VPC exists. The two
+workspaces do not know about each other.
+
+### Step 9 — Prove both VPCs exist in AWS at once
+
+This is the step the lab exists for. Ask AWS, not Terraform.
+
+```bash
+aws ec2 describe-vpcs --region us-east-2 \
+  --filters 'Name=tag:Lab,Values=lab16' \
+  --query 'Vpcs[].[VpcId,CidrBlock,Tags[?Key==`Name`].Value|[0]]' --output table
+```
+
+**Expected output**
+
+```text
+PENDING CAPTURE — rerun after credentials are restored
+```
+
+Two rows: `lab16-default` at `10.16.0.0/16` and `lab16-dev` at `10.17.0.0/16`. One configuration
+directory, one `main.tf`, two live networks. Neither state file mentions the other's VPC — run
+`terraform state list` in either workspace and you will see exactly one `aws_vpc.env`.
+
+That is the whole feature, and it is also the whole limitation. Both VPCs are in the *same* account
+under the *same* credentials, because a workspace separates state and nothing else. If `dev` is
+meant to be a different account, workspaces cannot give you that.
+
+### Step 10 — List the workspaces
 
 ```bash
 terraform workspace list
@@ -230,7 +269,7 @@ terraform workspace list
 * dev
 ```
 
-### Step 10 — Find the state files on disk
+### Step 11 — Find the state files on disk
 
 This layout matters in lab 20, where another module reads one of these files directly by path.
 
@@ -248,7 +287,7 @@ find . -name '*.tfstate' -not -path './.terraform/*'
 The `default` workspace keeps the plain `terraform.tfstate`; every named workspace gets its own
 file under `terraform.tfstate.d/<name>/`.
 
-### Step 11 — Switch back and confirm the first workspace survived
+### Step 12 — Switch back and confirm the first workspace survived
 
 ```bash
 terraform workspace select default
@@ -258,22 +297,25 @@ terraform output
 **Expected output**
 
 ```text
-Switched to workspace "default".
-labels = {
-  "environment" = "default"
-  "managed_by" = "terraform"
-}
-workspace = "default"
+PENDING CAPTURE — rerun after credentials are restored
 ```
 
-Switching workspaces changed nothing on either side — both states still exist independently.
+`Switched to workspace "default".` then the `default` workspace's outputs: `environment = "default"`,
+`vpc_name = "lab16-default"`, `vpc_cidr = "10.16.0.0/16"`, and the same `vpc_id` you saw in Step 5.
+
+Switching workspaces changed nothing on either side. No VPC was created, destroyed or modified —
+Terraform simply started reading a different state file, and both VPCs are still running.
 
 ## Done when
 
 - [ ] `terraform workspace list` shows both `default` and `dev`
 - [ ] `terraform state list` in the fresh `dev` workspace reported no state file
+- [ ] Each `apply` reported `2 added` — Terraform created a VPC in `dev` rather than modifying the one from `default`
 - [ ] The `labels` output read `environment = "dev"` in `dev` and `"default"` in `default`
-- [ ] Both state files exist at the paths shown in step 10
+- [ ] `aws ec2 describe-vpcs` showed **two** VPCs, `lab16-default` and `lab16-dev`, at different CIDRs
+- [ ] `terraform state list` in either workspace shows exactly one `aws_vpc.env`, never two
+- [ ] Both state files exist at the paths shown in step 11
+- [ ] Switching workspaces changed nothing in AWS
 - [ ] You can state one thing workspaces isolate and one thing they do not
 - [ ] You have **not** run the cleanup commands — lab 20 needs both state files
 
@@ -287,6 +329,9 @@ Switching workspaces changed nothing on either side — both states still exist 
 | `terraform output` prints nothing | The active workspace has never been applied | Apply in that workspace first |
 | `Cannot delete the currently selected workspace` | Tried to delete the active workspace | Select `default` first, then `terraform workspace delete dev` |
 | `Workspace is not empty` on delete | The workspace still has resources in state | Destroy in that workspace before deleting it |
+| `VpcLimitExceeded` on the second apply | Four or more VPCs already exist in `us-east-2` | Destroy another lab's VPC, then retry |
+| `InvalidVpc.Range` or overlapping CIDR | `workspace_cidrs` edited so two workspaces share a range | Give every workspace a distinct `/16` |
+| `NoCredentialProviders` or `InvalidClientTokenId` | Credentials missing or expired | Refresh them and confirm with `aws sts get-caller-identity` |
 
 ## Cleanup
 
@@ -294,9 +339,10 @@ Switching workspaces changed nothing on either side — both states still exist 
 just created — the `default` one in its step 2 and the `dev` one in its step 9. Destroying here
 makes lab 20 fail with `Failed to read state file`.
 
-Nothing in this lab is an AWS resource, so leaving it in place costs nothing. Return here after
-lab 20 and run the following. Each workspace must be destroyed separately — destroying one leaves
-the other untouched.
+The two VPCs are free, so leaving them in place costs nothing — but they are real, they count against
+the five-VPC limit in `us-east-2`, and they must not be forgotten. Go straight to Lab 20, then return
+here. Each workspace must be destroyed separately: destroying one leaves the other untouched, which
+is the same isolation you proved in Step 9.
 
 ```bash
 terraform workspace select dev
@@ -305,6 +351,22 @@ terraform workspace select default
 terraform destroy -auto-approve
 terraform workspace delete dev
 ```
+
+Then confirm both VPCs are gone:
+
+```bash
+aws ec2 describe-vpcs --region us-east-2 \
+  --filters 'Name=tag:Lab,Values=lab16' --query 'Vpcs[].VpcId'
+```
+
+**Expected output**
+
+```text
+PENDING CAPTURE — rerun after credentials are restored
+```
+
+An empty list. If one VPC remains, you destroyed only one workspace — reread the two `select` lines
+above.
 
 ## Next steps
 
