@@ -93,7 +93,14 @@ terraform -chdir=../lab16-workspaces output
 **Expected output**
 
 ```text
-PENDING CAPTURE — rerun after credentials are restored
+labels = {
+  "environment" = "default"
+  "managed_by" = "terraform"
+}
+vpc_cidr = "10.16.0.0/16"
+vpc_id = "vpc-0efb0b80941b4805e"
+vpc_name = "lab16-default"
+workspace = "default"
 ```
 
 Five outputs: `labels`, `workspace`, `vpc_cidr`, `vpc_id` and `vpc_name`. `vpc_id` is a real
@@ -151,7 +158,31 @@ terraform plan
 **Expected output**
 
 ```text
-PENDING CAPTURE — rerun after credentials are restored
+data.terraform_remote_state.upstream: Reading...
+data.terraform_remote_state.upstream: Read complete after 0s
+
+Changes to Outputs:
+  + upstream_environment = "default"
+  + upstream_outputs     = {
+      + labels    = {
+          + environment = "default"
+          + managed_by  = "terraform"
+        }
+      + vpc_cidr  = "10.16.0.0/16"
+      + vpc_id    = "vpc-0efb0b80941b4805e"
+      + vpc_name  = "lab16-default"
+      + workspace = "default"
+    }
+  + upstream_vpc_cidr    = "10.16.0.0/16"
+  + upstream_vpc_id      = "vpc-0efb0b80941b4805e"
+
+You can apply this plan to save these new output values to the Terraform
+state, without changing any real infrastructure.
+
+─────────────────────────────────────────────────────────────────────────────
+
+Note: You didn't use the -out option to save this plan, so Terraform can't
+guarantee to take exactly these actions if you run "terraform apply" now.
 ```
 
 Every value is already resolved rather than showing `(known after apply)`, including
@@ -167,7 +198,44 @@ terraform apply -auto-approve
 **Expected output**
 
 ```text
-PENDING CAPTURE — rerun after credentials are restored
+data.terraform_remote_state.upstream: Reading...
+data.terraform_remote_state.upstream: Read complete after 0s
+
+Changes to Outputs:
+  + upstream_environment = "default"
+  + upstream_outputs     = {
+      + labels    = {
+          + environment = "default"
+          + managed_by  = "terraform"
+        }
+      + vpc_cidr  = "10.16.0.0/16"
+      + vpc_id    = "vpc-0efb0b80941b4805e"
+      + vpc_name  = "lab16-default"
+      + workspace = "default"
+    }
+  + upstream_vpc_cidr    = "10.16.0.0/16"
+  + upstream_vpc_id      = "vpc-0efb0b80941b4805e"
+
+You can apply this plan to save these new output values to the Terraform
+state, without changing any real infrastructure.
+
+Apply complete! Resources: 0 added, 0 changed, 0 destroyed.
+
+Outputs:
+
+upstream_environment = "default"
+upstream_outputs = {
+  "labels" = {
+    "environment" = "default"
+    "managed_by" = "terraform"
+  }
+  "vpc_cidr" = "10.16.0.0/16"
+  "vpc_id" = "vpc-0efb0b80941b4805e"
+  "vpc_name" = "lab16-default"
+  "workspace" = "default"
+}
+upstream_vpc_cidr = "10.16.0.0/16"
+upstream_vpc_id = "vpc-0efb0b80941b4805e"
 ```
 
 `Apply complete! Resources: 0 added, 0 changed, 0 destroyed.`
@@ -207,7 +275,44 @@ terraform apply -auto-approve \
 **Expected output**
 
 ```text
-PENDING CAPTURE — rerun after credentials are restored
+data.terraform_remote_state.upstream: Reading...
+data.terraform_remote_state.upstream: Read complete after 0s
+
+Changes to Outputs:
+  ~ upstream_environment = "default" -> "dev"
+  ~ upstream_outputs     = {
+      ~ labels    = {
+          ~ environment = "default" -> "dev"
+            # (1 unchanged attribute hidden)
+        }
+      ~ vpc_cidr  = "10.16.0.0/16" -> "10.17.0.0/16"
+      ~ vpc_id    = "vpc-0efb0b80941b4805e" -> "vpc-090e81535ff58fe9c"
+      ~ vpc_name  = "lab16-default" -> "lab16-dev"
+      ~ workspace = "default" -> "dev"
+    }
+  ~ upstream_vpc_cidr    = "10.16.0.0/16" -> "10.17.0.0/16"
+  ~ upstream_vpc_id      = "vpc-0efb0b80941b4805e" -> "vpc-090e81535ff58fe9c"
+
+You can apply this plan to save these new output values to the Terraform
+state, without changing any real infrastructure.
+
+Apply complete! Resources: 0 added, 0 changed, 0 destroyed.
+
+Outputs:
+
+upstream_environment = "dev"
+upstream_outputs = {
+  "labels" = {
+    "environment" = "dev"
+    "managed_by" = "terraform"
+  }
+  "vpc_cidr" = "10.17.0.0/16"
+  "vpc_id" = "vpc-090e81535ff58fe9c"
+  "vpc_name" = "lab16-dev"
+  "workspace" = "dev"
+}
+upstream_vpc_cidr = "10.17.0.0/16"
+upstream_vpc_id = "vpc-090e81535ff58fe9c"
 ```
 
 `upstream_environment` is now `"dev"`, and `upstream_vpc_id` is a **different** `vpc-` ID —
@@ -244,10 +349,19 @@ terraform console
 **Expected output**
 
 ```text
-PENDING CAPTURE — rerun after credentials are restored
+"vpc-090e81535ff58fe9c"
+
+Error: Unsupported attribute
+
+  on <console-input> line 1:
+  (source code not available)
+
+This object does not have an attribute named "subnet_id".
+
 ```
 
-The first expression returns the VPC ID. The second fails:
+The first expression returns the VPC ID — `vpc-090e81535ff58fe9c`, the `dev` VPC, because the console
+reads the data source as step 9's apply recorded it in state. The second fails:
 
 ```text
 Error: Unsupported attribute

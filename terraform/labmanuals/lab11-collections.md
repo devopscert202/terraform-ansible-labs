@@ -329,7 +329,177 @@ terraform apply -auto-approve
 **Expected output**
 
 ```text
-PENDING CAPTURE — rerun after credentials are restored
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  + create
+
+Terraform will perform the following actions:
+
+  # aws_subnet.app_a will be created
+  + resource "aws_subnet" "app_a" {
+      + arn                                            = (known after apply)
+      + assign_ipv6_address_on_creation                = false
+      + availability_zone                              = "us-east-2a"
+      + availability_zone_id                           = (known after apply)
+      + cidr_block                                     = "10.0.1.0/24"
+      + enable_dns64                                   = false
+      + enable_resource_name_dns_a_record_on_launch    = false
+      + enable_resource_name_dns_aaaa_record_on_launch = false
+      + id                                             = (known after apply)
+      + ipv6_cidr_block_association_id                 = (known after apply)
+      + ipv6_native                                    = false
+      + map_public_ip_on_launch                        = false
+      + owner_id                                       = (known after apply)
+      + private_dns_hostname_type_on_launch            = (known after apply)
+      + tags                                           = {
+          + "Lab"  = "lab11"
+          + "Name" = "lab11-app-a"
+        }
+      + tags_all                                       = {
+          + "Lab"  = "lab11"
+          + "Name" = "lab11-app-a"
+        }
+      + vpc_id                                         = (known after apply)
+    }
+
+  # aws_vpc.main will be created
+  + resource "aws_vpc" "main" {
+      + arn                                  = (known after apply)
+      + cidr_block                           = "10.0.0.0/16"
+      + default_network_acl_id               = (known after apply)
+      + default_route_table_id               = (known after apply)
+      + default_security_group_id            = (known after apply)
+      + dhcp_options_id                      = (known after apply)
+      + enable_dns_hostnames                 = (known after apply)
+      + enable_dns_support                   = true
+      + enable_network_address_usage_metrics = (known after apply)
+      + id                                   = (known after apply)
+      + instance_tenancy                     = "default"
+      + ipv6_association_id                  = (known after apply)
+      + ipv6_cidr_block                      = (known after apply)
+      + ipv6_cidr_block_network_border_group = (known after apply)
+      + main_route_table_id                  = (known after apply)
+      + owner_id                             = (known after apply)
+      + tags                                 = {
+          + "Lab"  = "lab11"
+          + "Name" = "lab11-collections"
+        }
+      + tags_all                             = {
+          + "Lab"  = "lab11"
+          + "Name" = "lab11-collections"
+        }
+    }
+
+  # terraform_data.collections will be created
+  + resource "terraform_data" "collections" {
+      + id     = (known after apply)
+      + input  = {
+          + list_index_1  = "api"
+          + list_length   = 3
+          + map_key_app_a = "10.0.1.0/24"
+          + map_keys      = [
+              + "app_a",
+              + "app_b",
+            ]
+          + map_length    = 2
+          + set_length    = 2
+        }
+      + output = (known after apply)
+    }
+
+Plan: 3 to add, 0 to change, 0 to destroy.
+
+Changes to Outputs:
+  + app_a_subnet_from_map  = {
+      + actual_az      = "us-east-2a"
+      + actual_cidr    = "10.0.1.0/24"
+      + requested_az   = "us-east-2a"
+      + requested_cidr = "10.0.1.0/24"
+    }
+  + app_a_subnet_id        = (known after apply)
+  + collection_shapes      = (known after apply)
+  + list_has_duplicates    = [
+      + "web",
+      + "api",
+      + "web",
+    ]
+  + set_removed_duplicates = [
+      + "us-east-2a",
+      + "us-east-2b",
+    ]
+  + subnet_cidrs           = {
+      + app_a = "10.0.1.0/24"
+      + app_b = "10.0.2.0/24"
+    }
+  + tag_labels             = [
+      + "WEB",
+      + "API",
+      + "WEB",
+    ]
+  + unique_tag_names       = [
+      + "api",
+      + "web",
+    ]
+  + vpc_id                 = (known after apply)
+  + zone_a_subnets         = [
+      + "app_a",
+    ]
+terraform_data.collections: Creating...
+terraform_data.collections: Creation complete after 0s [id=d57e79e8-3f82-3807-d929-0f55773e1b5d]
+aws_vpc.main: Creating...
+aws_vpc.main: Creation complete after 4s [id=vpc-01817457dfb9c55ff]
+aws_subnet.app_a: Creating...
+aws_subnet.app_a: Creation complete after 1s [id=subnet-01c25594879924dc0]
+
+Apply complete! Resources: 3 added, 0 changed, 0 destroyed.
+
+Outputs:
+
+app_a_subnet_from_map = {
+  "actual_az" = "us-east-2a"
+  "actual_cidr" = "10.0.1.0/24"
+  "requested_az" = "us-east-2a"
+  "requested_cidr" = "10.0.1.0/24"
+}
+app_a_subnet_id = "subnet-01c25594879924dc0"
+collection_shapes = {
+  "list_index_1" = "api"
+  "list_length" = 3
+  "map_key_app_a" = "10.0.1.0/24"
+  "map_keys" = tolist([
+    "app_a",
+    "app_b",
+  ])
+  "map_length" = 2
+  "set_length" = 2
+}
+list_has_duplicates = tolist([
+  "web",
+  "api",
+  "web",
+])
+set_removed_duplicates = tolist([
+  "us-east-2a",
+  "us-east-2b",
+])
+subnet_cidrs = {
+  "app_a" = "10.0.1.0/24"
+  "app_b" = "10.0.2.0/24"
+}
+tag_labels = [
+  "WEB",
+  "API",
+  "WEB",
+]
+unique_tag_names = tolist([
+  "api",
+  "web",
+])
+vpc_id = "vpc-01817457dfb9c55ff"
+zone_a_subnets = [
+  "app_a",
+]
 ```
 
 Three resources are created and ten outputs are printed. `Plan: 3 to add, 0 to change, 0 to
@@ -384,7 +554,66 @@ terraform state show aws_subnet.app_a
 **Expected output**
 
 ```text
-PENDING CAPTURE — rerun after credentials are restored
+aws_subnet.app_a
+aws_vpc.main
+terraform_data.collections
+# terraform_data.collections:
+resource "terraform_data" "collections" {
+    id     = "d57e79e8-3f82-3807-d929-0f55773e1b5d"
+    input  = {
+        list_index_1  = "api"
+        list_length   = 3
+        map_key_app_a = "10.0.1.0/24"
+        map_keys      = [
+            "app_a",
+            "app_b",
+        ]
+        map_length    = 2
+        set_length    = 2
+    }
+    output = {
+        list_index_1  = "api"
+        list_length   = 3
+        map_key_app_a = "10.0.1.0/24"
+        map_keys      = [
+            "app_a",
+            "app_b",
+        ]
+        map_length    = 2
+        set_length    = 2
+    }
+}
+# aws_subnet.app_a:
+resource "aws_subnet" "app_a" {
+    arn                                            = "arn:aws:ec2:us-east-2:027488552956:subnet/subnet-01c25594879924dc0"
+    assign_ipv6_address_on_creation                = false
+    availability_zone                              = "us-east-2a"
+    availability_zone_id                           = "use2-az1"
+    cidr_block                                     = "10.0.1.0/24"
+    customer_owned_ipv4_pool                       = null
+    enable_dns64                                   = false
+    enable_lni_at_device_index                     = 0
+    enable_resource_name_dns_a_record_on_launch    = false
+    enable_resource_name_dns_aaaa_record_on_launch = false
+    id                                             = "subnet-01c25594879924dc0"
+    ipv6_cidr_block                                = null
+    ipv6_cidr_block_association_id                 = null
+    ipv6_native                                    = false
+    map_customer_owned_ip_on_launch                = false
+    map_public_ip_on_launch                        = false
+    outpost_arn                                    = null
+    owner_id                                       = "027488552956"
+    private_dns_hostname_type_on_launch            = "ip-name"
+    tags                                           = {
+        "Lab"  = "lab11"
+        "Name" = "lab11-app-a"
+    }
+    tags_all                                       = {
+        "Lab"  = "lab11"
+        "Name" = "lab11-app-a"
+    }
+    vpc_id                                         = "vpc-01817457dfb9c55ff"
+}
 ```
 
 `state list` reports three addresses: `aws_subnet.app_a`, `aws_vpc.main` and
@@ -410,7 +639,7 @@ terraform plan -var 'tag_names=["web","web"]'
 ```text
   # terraform_data.collections will be updated in-place
   ~ resource "terraform_data" "collections" {
-        id     = "986ba9e0-f6d6-80e7-3e64-013bd2aa2488"
+        id     = "d57e79e8-3f82-3807-d929-0f55773e1b5d"
       ~ input  = {
           ~ list_index_1  = "api" -> "web"
           ~ list_length   = 3 -> 2
@@ -437,6 +666,10 @@ terraform plan -var 'subnets={app_a={cidr="10.0.1.0/24",az="us-east-2a"}}'
 
 ```text
       ~ input  = {
+          ~ map_keys      = [
+                "app_a",
+              - "app_b",
+            ]
           ~ map_length    = 2 -> 1
             # (4 unchanged attributes hidden)
         }
@@ -472,7 +705,155 @@ terraform destroy -auto-approve
 **Expected output**
 
 ```text
-PENDING CAPTURE — rerun after credentials are restored
+terraform_data.collections: Refreshing state... [id=d57e79e8-3f82-3807-d929-0f55773e1b5d]
+aws_vpc.main: Refreshing state... [id=vpc-01817457dfb9c55ff]
+aws_subnet.app_a: Refreshing state... [id=subnet-01c25594879924dc0]
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  - destroy
+
+Terraform will perform the following actions:
+
+  # aws_subnet.app_a will be destroyed
+  - resource "aws_subnet" "app_a" {
+      - arn                                            = "arn:aws:ec2:us-east-2:027488552956:subnet/subnet-01c25594879924dc0" -> null
+      - assign_ipv6_address_on_creation                = false -> null
+      - availability_zone                              = "us-east-2a" -> null
+      - availability_zone_id                           = "use2-az1" -> null
+      - cidr_block                                     = "10.0.1.0/24" -> null
+      - enable_dns64                                   = false -> null
+      - enable_lni_at_device_index                     = 0 -> null
+      - enable_resource_name_dns_a_record_on_launch    = false -> null
+      - enable_resource_name_dns_aaaa_record_on_launch = false -> null
+      - id                                             = "subnet-01c25594879924dc0" -> null
+      - ipv6_native                                    = false -> null
+      - map_customer_owned_ip_on_launch                = false -> null
+      - map_public_ip_on_launch                        = false -> null
+      - owner_id                                       = "027488552956" -> null
+      - private_dns_hostname_type_on_launch            = "ip-name" -> null
+      - tags                                           = {
+          - "Lab"  = "lab11"
+          - "Name" = "lab11-app-a"
+        } -> null
+      - tags_all                                       = {
+          - "Lab"  = "lab11"
+          - "Name" = "lab11-app-a"
+        } -> null
+      - vpc_id                                         = "vpc-01817457dfb9c55ff" -> null
+        # (4 unchanged attributes hidden)
+    }
+
+  # aws_vpc.main will be destroyed
+  - resource "aws_vpc" "main" {
+      - arn                                  = "arn:aws:ec2:us-east-2:027488552956:vpc/vpc-01817457dfb9c55ff" -> null
+      - assign_generated_ipv6_cidr_block     = false -> null
+      - cidr_block                           = "10.0.0.0/16" -> null
+      - default_network_acl_id               = "acl-0083e2444329235ee" -> null
+      - default_route_table_id               = "rtb-0fa7c5e1e4bc0c14a" -> null
+      - default_security_group_id            = "sg-04fc1e4808d13c6b1" -> null
+      - dhcp_options_id                      = "dopt-0b3fb1f3b525c8788" -> null
+      - enable_dns_hostnames                 = false -> null
+      - enable_dns_support                   = true -> null
+      - enable_network_address_usage_metrics = false -> null
+      - id                                   = "vpc-01817457dfb9c55ff" -> null
+      - instance_tenancy                     = "default" -> null
+      - ipv6_netmask_length                  = 0 -> null
+      - main_route_table_id                  = "rtb-0fa7c5e1e4bc0c14a" -> null
+      - owner_id                             = "027488552956" -> null
+      - tags                                 = {
+          - "Lab"  = "lab11"
+          - "Name" = "lab11-collections"
+        } -> null
+      - tags_all                             = {
+          - "Lab"  = "lab11"
+          - "Name" = "lab11-collections"
+        } -> null
+        # (4 unchanged attributes hidden)
+    }
+
+  # terraform_data.collections will be destroyed
+  - resource "terraform_data" "collections" {
+      - id     = "d57e79e8-3f82-3807-d929-0f55773e1b5d" -> null
+      - input  = {
+          - list_index_1  = "api"
+          - list_length   = 3
+          - map_key_app_a = "10.0.1.0/24"
+          - map_keys      = [
+              - "app_a",
+              - "app_b",
+            ]
+          - map_length    = 2
+          - set_length    = 2
+        } -> null
+      - output = {
+          - list_index_1  = "api"
+          - list_length   = 3
+          - map_key_app_a = "10.0.1.0/24"
+          - map_keys      = [
+              - "app_a",
+              - "app_b",
+            ]
+          - map_length    = 2
+          - set_length    = 2
+        } -> null
+    }
+
+Plan: 0 to add, 0 to change, 3 to destroy.
+
+Changes to Outputs:
+  - app_a_subnet_from_map  = {
+      - actual_az      = "us-east-2a"
+      - actual_cidr    = "10.0.1.0/24"
+      - requested_az   = "us-east-2a"
+      - requested_cidr = "10.0.1.0/24"
+    } -> null
+  - app_a_subnet_id        = "subnet-01c25594879924dc0" -> null
+  - collection_shapes      = {
+      - list_index_1  = "api"
+      - list_length   = 3
+      - map_key_app_a = "10.0.1.0/24"
+      - map_keys      = [
+          - "app_a",
+          - "app_b",
+        ]
+      - map_length    = 2
+      - set_length    = 2
+    } -> null
+  - list_has_duplicates    = [
+      - "web",
+      - "api",
+      - "web",
+    ] -> null
+  - set_removed_duplicates = [
+      - "us-east-2a",
+      - "us-east-2b",
+    ] -> null
+  - subnet_cidrs           = {
+      - app_a = "10.0.1.0/24"
+      - app_b = "10.0.2.0/24"
+    } -> null
+  - tag_labels             = [
+      - "WEB",
+      - "API",
+      - "WEB",
+    ] -> null
+  - unique_tag_names       = [
+      - "api",
+      - "web",
+    ] -> null
+  - vpc_id                 = "vpc-01817457dfb9c55ff" -> null
+  - zone_a_subnets         = [
+      - "app_a",
+    ] -> null
+terraform_data.collections: Destroying... [id=d57e79e8-3f82-3807-d929-0f55773e1b5d]
+terraform_data.collections: Destruction complete after 0s
+aws_subnet.app_a: Destroying... [id=subnet-01c25594879924dc0]
+aws_subnet.app_a: Destruction complete after 2s
+aws_vpc.main: Destroying... [id=vpc-01817457dfb9c55ff]
+aws_vpc.main: Destruction complete after 1s
+
+Destroy complete! Resources: 3 destroyed.
 ```
 
 `Destroy complete! Resources: 3 destroyed.` The subnet goes first, then the VPC that contained it,

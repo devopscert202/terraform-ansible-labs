@@ -195,7 +195,104 @@ terraform plan
 **Expected output**
 
 ```text
-PENDING CAPTURE — rerun after credentials are restored
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  + create
+
+Terraform will perform the following actions:
+
+  # aws_subnet.main will be created
+  + resource "aws_subnet" "main" {
+      + arn                                            = (known after apply)
+      + assign_ipv6_address_on_creation                = false
+      + availability_zone                              = "us-east-2a"
+      + availability_zone_id                           = (known after apply)
+      + cidr_block                                     = "10.7.1.0/24"
+      + enable_dns64                                   = false
+      + enable_resource_name_dns_a_record_on_launch    = false
+      + enable_resource_name_dns_aaaa_record_on_launch = false
+      + id                                             = (known after apply)
+      + ipv6_cidr_block_association_id                 = (known after apply)
+      + ipv6_native                                    = false
+      + map_public_ip_on_launch                        = false
+      + owner_id                                       = (known after apply)
+      + private_dns_hostname_type_on_launch            = (known after apply)
+      + tags                                           = {
+          + "CostCode"    = "123"
+          + "Environment" = "dev"
+          + "Lab"         = "lab07"
+          + "Name"        = "platform-dev-subnet"
+          + "Project"     = "platform"
+        }
+      + tags_all                                       = {
+          + "CostCode"    = "123"
+          + "Environment" = "dev"
+          + "Lab"         = "lab07"
+          + "Name"        = "platform-dev-subnet"
+          + "Project"     = "platform"
+        }
+      + vpc_id                                         = (known after apply)
+    }
+
+  # aws_vpc.main will be created
+  + resource "aws_vpc" "main" {
+      + arn                                  = (known after apply)
+      + cidr_block                           = "10.7.0.0/16"
+      + default_network_acl_id               = (known after apply)
+      + default_route_table_id               = (known after apply)
+      + default_security_group_id            = (known after apply)
+      + dhcp_options_id                      = (known after apply)
+      + enable_dns_hostnames                 = (known after apply)
+      + enable_dns_support                   = true
+      + enable_network_address_usage_metrics = (known after apply)
+      + id                                   = (known after apply)
+      + instance_tenancy                     = "default"
+      + ipv6_association_id                  = (known after apply)
+      + ipv6_cidr_block                      = (known after apply)
+      + ipv6_cidr_block_network_border_group = (known after apply)
+      + main_route_table_id                  = (known after apply)
+      + owner_id                             = (known after apply)
+      + tags                                 = {
+          + "CostCode"    = "123"
+          + "Environment" = "dev"
+          + "Lab"         = "lab07"
+          + "Name"        = "platform-dev"
+          + "Project"     = "platform"
+        }
+      + tags_all                             = {
+          + "CostCode"    = "123"
+          + "Environment" = "dev"
+          + "Lab"         = "lab07"
+          + "Name"        = "platform-dev"
+          + "Project"     = "platform"
+        }
+    }
+
+Plan: 2 to add, 0 to change, 0 to destroy.
+
+Changes to Outputs:
+  + db_password        = (sensitive value)
+  + db_password_length = 19
+  + settings           = {
+      + cost_code   = "123"
+      + environment = "dev"
+      + project     = "platform"
+    }
+  + subnet_id          = (known after apply)
+  + vpc_id             = (known after apply)
+  + vpc_tags           = {
+      + CostCode    = "123"
+      + Environment = "dev"
+      + Lab         = "lab07"
+      + Name        = "platform-dev"
+      + Project     = "platform"
+    }
+
+─────────────────────────────────────────────────────────────────────────────
+
+Note: You didn't use the -out option to save this plan, so Terraform can't
+guarantee to take exactly these actions if you run "terraform apply" now.
 ```
 
 `Plan: 2 to add, 0 to change, 0 to destroy.` The VPC and subnet appear with their tags already
@@ -214,7 +311,66 @@ terraform apply -auto-approve
 **Expected output**
 
 ```text
-PENDING CAPTURE — rerun after credentials are restored
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  + create
+
+Terraform will perform the following actions:
+
+  # aws_subnet.main will be created
+  + resource "aws_subnet" "main" {
+      + arn                                            = (known after apply)
+      + assign_ipv6_address_on_creation                = false
+      + availability_zone                              = "us-east-2a"
+      + cidr_block                                     = "10.7.1.0/24"
+
+[... the two resource bodies are identical to the plan in Step 7 and are elided here ...]
+
+Plan: 2 to add, 0 to change, 0 to destroy.
+
+Changes to Outputs:
+  + db_password        = (sensitive value)
+  + db_password_length = 19
+  + settings           = {
+      + cost_code   = "123"
+      + environment = "dev"
+      + project     = "platform"
+    }
+  + subnet_id          = (known after apply)
+  + vpc_id             = (known after apply)
+  + vpc_tags           = {
+      + CostCode    = "123"
+      + Environment = "dev"
+      + Lab         = "lab07"
+      + Name        = "platform-dev"
+      + Project     = "platform"
+    }
+aws_vpc.main: Creating...
+aws_vpc.main: Creation complete after 4s [id=vpc-0566fd74a48916695]
+aws_subnet.main: Creating...
+aws_subnet.main: Creation complete after 1s [id=subnet-0ce6dc1045605b580]
+
+Apply complete! Resources: 2 added, 0 changed, 0 destroyed.
+
+Outputs:
+
+db_password = <sensitive>
+db_password_length = 19
+settings = {
+  "cost_code" = "123"
+  "environment" = "dev"
+  "project" = "platform"
+}
+subnet_id = "subnet-0ce6dc1045605b580"
+vpc_id = "vpc-0566fd74a48916695"
+vpc_tags = tomap({
+  "CostCode" = "123"
+  "Environment" = "dev"
+  "Lab" = "lab07"
+  "Name" = "platform-dev"
+  "Project" = "platform"
+})
 ```
 
 `Apply complete! Resources: 2 added, 0 changed, 0 destroyed.`
@@ -242,7 +398,17 @@ aws ec2 describe-vpcs \
 **Expected output**
 
 ```text
-PENDING CAPTURE — rerun after credentials are restored
+---------------------------------
+|         DescribeVpcs          |
++--------------+----------------+
+|      Key     |     Value      |
++--------------+----------------+
+|  CostCode    |  123           |
+|  Name        |  platform-dev  |
+|  Lab         |  lab07         |
+|  Environment |  dev           |
+|  Project     |  platform      |
++--------------+----------------+
 ```
 
 `Project`, `Environment` and `CostCode` are there, with the values from your `terraform.tfvars`. A
@@ -292,7 +458,68 @@ terraform plan -var 'environment=prod'
 **Expected output**
 
 ```text
-PENDING CAPTURE — rerun after credentials are restored
+aws_vpc.main: Refreshing state... [id=vpc-0566fd74a48916695]
+aws_subnet.main: Refreshing state... [id=subnet-0ce6dc1045605b580]
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  ~ update in-place
+
+Terraform will perform the following actions:
+
+  # aws_subnet.main will be updated in-place
+  ~ resource "aws_subnet" "main" {
+        id                                             = "subnet-0ce6dc1045605b580"
+      ~ tags                                           = {
+            "CostCode"    = "123"
+          ~ "Environment" = "dev" -> "prod"
+            "Lab"         = "lab07"
+          ~ "Name"        = "platform-dev-subnet" -> "platform-prod-subnet"
+            "Project"     = "platform"
+        }
+      ~ tags_all                                       = {
+          ~ "Environment" = "dev" -> "prod"
+          ~ "Name"        = "platform-dev-subnet" -> "platform-prod-subnet"
+            # (3 unchanged elements hidden)
+        }
+        # (19 unchanged attributes hidden)
+    }
+
+  # aws_vpc.main will be updated in-place
+  ~ resource "aws_vpc" "main" {
+        id                                   = "vpc-0566fd74a48916695"
+      ~ tags                                 = {
+            "CostCode"    = "123"
+          ~ "Environment" = "dev" -> "prod"
+            "Lab"         = "lab07"
+          ~ "Name"        = "platform-dev" -> "platform-prod"
+            "Project"     = "platform"
+        }
+      ~ tags_all                             = {
+          ~ "Environment" = "dev" -> "prod"
+          ~ "Name"        = "platform-dev" -> "platform-prod"
+            # (3 unchanged elements hidden)
+        }
+        # (18 unchanged attributes hidden)
+    }
+
+Plan: 0 to add, 2 to change, 0 to destroy.
+
+Changes to Outputs:
+  ~ settings           = {
+      ~ environment = "dev" -> "prod"
+        # (2 unchanged attributes hidden)
+    }
+  ~ vpc_tags           = {
+      ~ Environment = "dev" -> "prod"
+      ~ Name        = "platform-dev" -> "platform-prod"
+        # (3 unchanged attributes hidden)
+    }
+
+─────────────────────────────────────────────────────────────────────────────
+
+Note: You didn't use the -out option to save this plan, so Terraform can't
+guarantee to take exactly these actions if you run "terraform apply" now.
 ```
 
 `terraform.tfvars` says `dev`. The command line says `prod`. The command line wins.
@@ -367,6 +594,8 @@ Error: Invalid value for variable
     │ var.cost_code is "12345"
 
 cost_code must contain exactly three characters.
+
+This was checked by the validation rule at variables.tf:20,3-13.
 ```
 
 Validation is not limited to a fixed list of allowed values. This rule uses `length()`, and any
@@ -381,7 +610,109 @@ terraform destroy -auto-approve
 **Expected output**
 
 ```text
-PENDING CAPTURE — rerun after credentials are restored
+aws_vpc.main: Refreshing state... [id=vpc-0566fd74a48916695]
+aws_subnet.main: Refreshing state... [id=subnet-0ce6dc1045605b580]
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  - destroy
+
+Terraform will perform the following actions:
+
+  # aws_subnet.main will be destroyed
+  - resource "aws_subnet" "main" {
+      - arn                                            = "arn:aws:ec2:us-east-2:027488552956:subnet/subnet-0ce6dc1045605b580" -> null
+      - assign_ipv6_address_on_creation                = false -> null
+      - availability_zone                              = "us-east-2a" -> null
+      - availability_zone_id                           = "use2-az1" -> null
+      - cidr_block                                     = "10.7.1.0/24" -> null
+      - enable_dns64                                   = false -> null
+      - enable_lni_at_device_index                     = 0 -> null
+      - enable_resource_name_dns_a_record_on_launch    = false -> null
+      - enable_resource_name_dns_aaaa_record_on_launch = false -> null
+      - id                                             = "subnet-0ce6dc1045605b580" -> null
+      - ipv6_native                                    = false -> null
+      - map_customer_owned_ip_on_launch                = false -> null
+      - map_public_ip_on_launch                        = false -> null
+      - owner_id                                       = "027488552956" -> null
+      - private_dns_hostname_type_on_launch            = "ip-name" -> null
+      - tags                                           = {
+          - "CostCode"    = "123"
+          - "Environment" = "dev"
+          - "Lab"         = "lab07"
+          - "Name"        = "platform-dev-subnet"
+          - "Project"     = "platform"
+        } -> null
+      - tags_all                                       = {
+          - "CostCode"    = "123"
+          - "Environment" = "dev"
+          - "Lab"         = "lab07"
+          - "Name"        = "platform-dev-subnet"
+          - "Project"     = "platform"
+        } -> null
+      - vpc_id                                         = "vpc-0566fd74a48916695" -> null
+        # (4 unchanged attributes hidden)
+    }
+
+  # aws_vpc.main will be destroyed
+  - resource "aws_vpc" "main" {
+      - arn                                  = "arn:aws:ec2:us-east-2:027488552956:vpc/vpc-0566fd74a48916695" -> null
+      - assign_generated_ipv6_cidr_block     = false -> null
+      - cidr_block                           = "10.7.0.0/16" -> null
+      - default_network_acl_id               = "acl-0d61e3ebbebfba5ef" -> null
+      - default_route_table_id               = "rtb-0d14dc99f891b020f" -> null
+      - default_security_group_id            = "sg-05bca69e9de9fb9e5" -> null
+      - dhcp_options_id                      = "dopt-0b3fb1f3b525c8788" -> null
+      - enable_dns_hostnames                 = false -> null
+      - enable_dns_support                   = true -> null
+      - enable_network_address_usage_metrics = false -> null
+      - id                                   = "vpc-0566fd74a48916695" -> null
+      - instance_tenancy                     = "default" -> null
+      - ipv6_netmask_length                  = 0 -> null
+      - main_route_table_id                  = "rtb-0d14dc99f891b020f" -> null
+      - owner_id                             = "027488552956" -> null
+      - tags                                 = {
+          - "CostCode"    = "123"
+          - "Environment" = "dev"
+          - "Lab"         = "lab07"
+          - "Name"        = "platform-dev"
+          - "Project"     = "platform"
+        } -> null
+      - tags_all                             = {
+          - "CostCode"    = "123"
+          - "Environment" = "dev"
+          - "Lab"         = "lab07"
+          - "Name"        = "platform-dev"
+          - "Project"     = "platform"
+        } -> null
+        # (4 unchanged attributes hidden)
+    }
+
+Plan: 0 to add, 0 to change, 2 to destroy.
+
+Changes to Outputs:
+  - db_password        = (sensitive value) -> null
+  - db_password_length = 19 -> null
+  - settings           = {
+      - cost_code   = "123"
+      - environment = "dev"
+      - project     = "platform"
+    } -> null
+  - subnet_id          = "subnet-0ce6dc1045605b580" -> null
+  - vpc_id             = "vpc-0566fd74a48916695" -> null
+  - vpc_tags           = {
+      - CostCode    = "123"
+      - Environment = "dev"
+      - Lab         = "lab07"
+      - Name        = "platform-dev"
+      - Project     = "platform"
+    } -> null
+aws_subnet.main: Destroying... [id=subnet-0ce6dc1045605b580]
+aws_subnet.main: Destruction complete after 2s
+aws_vpc.main: Destroying... [id=vpc-0566fd74a48916695]
+aws_vpc.main: Destruction complete after 1s
+
+Destroy complete! Resources: 2 destroyed.
 ```
 
 `Destroy complete! Resources: 2 destroyed.` Confirm the account is empty of this lab's resources:
@@ -394,7 +725,7 @@ aws ec2 describe-vpcs --region us-east-2 \
 **Expected output**
 
 ```text
-PENDING CAPTURE — rerun after credentials are restored
+[]
 ```
 
 An empty list. Now remove the local secret material:

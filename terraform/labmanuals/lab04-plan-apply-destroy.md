@@ -87,7 +87,62 @@ terraform plan
 **Expected output**
 
 ```text
-PENDING CAPTURE — rerun after credentials are restored
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  + create
+
+Terraform will perform the following actions:
+
+  # aws_vpc.lifecycle will be created
+  + resource "aws_vpc" "lifecycle" {
+      + arn                                  = (known after apply)
+      + cidr_block                           = "10.4.0.0/16"
+      + default_network_acl_id               = (known after apply)
+      + default_route_table_id               = (known after apply)
+      + default_security_group_id            = (known after apply)
+      + dhcp_options_id                      = (known after apply)
+      + enable_dns_hostnames                 = (known after apply)
+      + enable_dns_support                   = true
+      + enable_network_address_usage_metrics = (known after apply)
+      + id                                   = (known after apply)
+      + instance_tenancy                     = "default"
+      + ipv6_association_id                  = (known after apply)
+      + ipv6_cidr_block                      = (known after apply)
+      + ipv6_cidr_block_network_border_group = (known after apply)
+      + main_route_table_id                  = (known after apply)
+      + owner_id                             = (known after apply)
+      + tags                                 = (known after apply)
+      + tags_all                             = (known after apply)
+    }
+
+  # random_string.suffix will be created
+  + resource "random_string" "suffix" {
+      + id          = (known after apply)
+      + length      = 6
+      + lower       = true
+      + min_lower   = 0
+      + min_numeric = 0
+      + min_special = 0
+      + min_upper   = 0
+      + number      = false
+      + numeric     = false
+      + result      = (known after apply)
+      + special     = false
+      + upper       = false
+    }
+
+Plan: 2 to add, 0 to change, 0 to destroy.
+
+Changes to Outputs:
+  + generated_value = (known after apply)
+  + vpc_id          = (known after apply)
+  + vpc_name        = (known after apply)
+
+─────────────────────────────────────────────────────────────────────────────
+
+Note: You didn't use the -out option to save this plan, so Terraform can't
+guarantee to take exactly these actions if you run "terraform apply" now.
 ```
 
 `Plan: 2 to add, 0 to change, 0 to destroy.` Terraform has no record of either resource, so it
@@ -109,7 +164,76 @@ Terraform reprints the plan and waits. Type `yes` and press Enter.
 **Expected output**
 
 ```text
-PENDING CAPTURE — rerun after credentials are restored
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  + create
+
+Terraform will perform the following actions:
+
+  # aws_vpc.lifecycle will be created
+  + resource "aws_vpc" "lifecycle" {
+      + arn                                  = (known after apply)
+      + cidr_block                           = "10.4.0.0/16"
+      + default_network_acl_id               = (known after apply)
+      + default_route_table_id               = (known after apply)
+      + default_security_group_id            = (known after apply)
+      + dhcp_options_id                      = (known after apply)
+      + enable_dns_hostnames                 = (known after apply)
+      + enable_dns_support                   = true
+      + enable_network_address_usage_metrics = (known after apply)
+      + id                                   = (known after apply)
+      + instance_tenancy                     = "default"
+      + ipv6_association_id                  = (known after apply)
+      + ipv6_cidr_block                      = (known after apply)
+      + ipv6_cidr_block_network_border_group = (known after apply)
+      + main_route_table_id                  = (known after apply)
+      + owner_id                             = (known after apply)
+      + tags                                 = (known after apply)
+      + tags_all                             = (known after apply)
+    }
+
+  # random_string.suffix will be created
+  + resource "random_string" "suffix" {
+      + id          = (known after apply)
+      + length      = 6
+      + lower       = true
+      + min_lower   = 0
+      + min_numeric = 0
+      + min_special = 0
+      + min_upper   = 0
+      + number      = false
+      + numeric     = false
+      + result      = (known after apply)
+      + special     = false
+      + upper       = false
+    }
+
+Plan: 2 to add, 0 to change, 0 to destroy.
+
+Changes to Outputs:
+  + generated_value = (known after apply)
+  + vpc_id          = (known after apply)
+  + vpc_name        = (known after apply)
+
+Do you want to perform these actions?
+  Terraform will perform the actions described above.
+  Only 'yes' will be accepted to approve.
+
+  Enter a value: yes
+
+random_string.suffix: Creating...
+random_string.suffix: Creation complete after 0s [id=xgqaoe]
+aws_vpc.lifecycle: Creating...
+aws_vpc.lifecycle: Creation complete after 4s [id=vpc-06d90b060276eebce]
+
+Apply complete! Resources: 2 added, 0 changed, 0 destroyed.
+
+Outputs:
+
+generated_value = "xgqaoe"
+vpc_id = "vpc-06d90b060276eebce"
+vpc_name = "lab04-xgqaoe"
 ```
 
 `Apply complete! Resources: 2 added, 0 changed, 0 destroyed.`
@@ -131,7 +255,10 @@ terraform output -raw vpc_id
 **Expected output**
 
 ```text
-PENDING CAPTURE — rerun after credentials are restored
+generated_value = "xgqaoe"
+vpc_id = "vpc-06d90b060276eebce"
+vpc_name = "lab04-xgqaoe"
+vpc-06d90b060276eebce
 ```
 
 ### Step 6 — Confirm the VPC exists in AWS
@@ -147,7 +274,11 @@ aws ec2 describe-vpcs --region us-east-2 \
 **Expected output**
 
 ```text
-PENDING CAPTURE — rerun after credentials are restored
+----------------------------------------------------------
+|                      DescribeVpcs                      |
++-----------------------+---------------+----------------+
+|  vpc-06d90b060276eebce|  10.4.0.0/16  |  lab04-xgqaoe  |
++-----------------------+---------------+----------------+
 ```
 
 One row, and the `VpcId` matches what `terraform output -raw vpc_id` printed. The `Name` column shows
@@ -165,7 +296,13 @@ terraform plan
 **Expected output**
 
 ```text
-PENDING CAPTURE — rerun after credentials are restored
+random_string.suffix: Refreshing state... [id=xgqaoe]
+aws_vpc.lifecycle: Refreshing state... [id=vpc-06d90b060276eebce]
+
+No changes. Your infrastructure matches the configuration.
+
+Terraform has compared your real infrastructure against your configuration
+and found no differences, so no changes are needed.
 ```
 
 `No changes. Your infrastructure matches the configuration.`
@@ -186,7 +323,78 @@ Terraform lists what will be removed and waits. Type `yes`.
 **Expected output**
 
 ```text
-PENDING CAPTURE — rerun after credentials are restored
+random_string.suffix: Refreshing state... [id=xgqaoe]
+aws_vpc.lifecycle: Refreshing state... [id=vpc-06d90b060276eebce]
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  - destroy
+
+Terraform will perform the following actions:
+
+  # aws_vpc.lifecycle will be destroyed
+  - resource "aws_vpc" "lifecycle" {
+      - arn                                  = "arn:aws:ec2:us-east-2:027488552956:vpc/vpc-06d90b060276eebce" -> null
+      - assign_generated_ipv6_cidr_block     = false -> null
+      - cidr_block                           = "10.4.0.0/16" -> null
+      - default_network_acl_id               = "acl-054364f0d61f786af" -> null
+      - default_route_table_id               = "rtb-055498aed662a0d37" -> null
+      - default_security_group_id            = "sg-048815e3056610904" -> null
+      - dhcp_options_id                      = "dopt-0b3fb1f3b525c8788" -> null
+      - enable_dns_hostnames                 = false -> null
+      - enable_dns_support                   = true -> null
+      - enable_network_address_usage_metrics = false -> null
+      - id                                   = "vpc-06d90b060276eebce" -> null
+      - instance_tenancy                     = "default" -> null
+      - ipv6_netmask_length                  = 0 -> null
+      - main_route_table_id                  = "rtb-055498aed662a0d37" -> null
+      - owner_id                             = "027488552956" -> null
+      - tags                                 = {
+          - "Lab"  = "lab04"
+          - "Name" = "lab04-xgqaoe"
+        } -> null
+      - tags_all                             = {
+          - "Lab"  = "lab04"
+          - "Name" = "lab04-xgqaoe"
+        } -> null
+        # (4 unchanged attributes hidden)
+    }
+
+  # random_string.suffix will be destroyed
+  - resource "random_string" "suffix" {
+      - id          = "xgqaoe" -> null
+      - length      = 6 -> null
+      - lower       = true -> null
+      - min_lower   = 0 -> null
+      - min_numeric = 0 -> null
+      - min_special = 0 -> null
+      - min_upper   = 0 -> null
+      - number      = false -> null
+      - numeric     = false -> null
+      - result      = "xgqaoe" -> null
+      - special     = false -> null
+      - upper       = false -> null
+    }
+
+Plan: 0 to add, 0 to change, 2 to destroy.
+
+Changes to Outputs:
+  - generated_value = "xgqaoe" -> null
+  - vpc_id          = "vpc-06d90b060276eebce" -> null
+  - vpc_name        = "lab04-xgqaoe" -> null
+
+Do you really want to destroy all resources?
+  Terraform will destroy all your managed infrastructure, as shown above.
+  There is no undo. Only 'yes' will be accepted to confirm.
+
+  Enter a value: yes
+
+aws_vpc.lifecycle: Destroying... [id=vpc-06d90b060276eebce]
+aws_vpc.lifecycle: Destruction complete after 2s
+random_string.suffix: Destroying... [id=xgqaoe]
+random_string.suffix: Destruction complete after 0s
+
+Destroy complete! Resources: 2 destroyed.
 ```
 
 `Destroy complete! Resources: 2 destroyed.`
@@ -206,7 +414,7 @@ aws ec2 describe-vpcs --region us-east-2 \
 **Expected output**
 
 ```text
-PENDING CAPTURE — rerun after credentials are restored
+[]
 ```
 
 `state list` prints nothing and `describe-vpcs` returns an empty list. Both checks matter: the first

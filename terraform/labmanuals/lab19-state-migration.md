@@ -26,11 +26,11 @@ to be true *of*. This configuration therefore builds a real VPC before you migra
 clean and the ID is byte-for-byte the same. A migration that "worked" but recreated your network is
 the exact failure this test catches, and a placeholder resource cannot catch it.
 
-**A note on the expected output below.** The S3 blocks and the commands in the Cleanup section were
-captured from a real run. Blocks that changed when the VPC was added are marked
-`PENDING CAPTURE`. Values unique to your account — bucket name, VPC id, version ids, sizes,
-timestamps — are marked *(yours will differ)*. The migration prompt in step 8 is Terraform's
-documented wording.
+**A note on the expected output below.** Every block was captured from a real run against
+Terraform v1.14.8, AWS provider v5.100.0 and AWS CLI v2. Values unique to your account — bucket
+name, VPC id, version ids, sizes, timestamps — are marked *(yours will differ)*, and the `vpc-`
+ids shown throughout are from that one run, so yours will be different but must be **consistent
+with each other** between steps 4 and 10.
 
 ## What you will build
 
@@ -130,7 +130,65 @@ ls terraform.tfstate
 **Expected output**
 
 ```text
-PENDING CAPTURE — rerun after credentials are restored
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  + create
+
+Terraform will perform the following actions:
+
+  # aws_vpc.migrated will be created
+  + resource "aws_vpc" "migrated" {
+      + arn                                  = (known after apply)
+      + cidr_block                           = "10.19.0.0/16"
+      + default_network_acl_id               = (known after apply)
+      + default_route_table_id               = (known after apply)
+      + default_security_group_id            = (known after apply)
+      + dhcp_options_id                      = (known after apply)
+      + enable_dns_hostnames                 = (known after apply)
+      + enable_dns_support                   = true
+      + enable_network_address_usage_metrics = (known after apply)
+      + id                                   = (known after apply)
+      + instance_tenancy                     = "default"
+      + ipv6_association_id                  = (known after apply)
+      + ipv6_cidr_block                      = (known after apply)
+      + ipv6_cidr_block_network_border_group = (known after apply)
+      + main_route_table_id                  = (known after apply)
+      + owner_id                             = (known after apply)
+      + tags                                 = {
+          + "Lab"  = "lab19"
+          + "Name" = "lab19-migrated"
+        }
+      + tags_all                             = {
+          + "Lab"  = "lab19"
+          + "Name" = "lab19-migrated"
+        }
+    }
+
+  # terraform_data.migrated_state will be created
+  + resource "terraform_data" "migrated_state" {
+      + id     = (known after apply)
+      + input  = "migrate with terraform init -migrate-state"
+      + output = (known after apply)
+    }
+
+Plan: 2 to add, 0 to change, 0 to destroy.
+
+Changes to Outputs:
+  + migration_instruction = (known after apply)
+  + vpc_id                = (known after apply)
+terraform_data.migrated_state: Creating...
+terraform_data.migrated_state: Creation complete after 0s [id=1f12cc0e-3c5f-7121-4466-aa017e3ef847]
+aws_vpc.migrated: Creating...
+aws_vpc.migrated: Creation complete after 3s [id=vpc-0857c1131a7717d43]
+
+Apply complete! Resources: 2 added, 0 changed, 0 destroyed.
+
+Outputs:
+
+migration_instruction = "migrate with terraform init -migrate-state"
+vpc_id = "vpc-0857c1131a7717d43"
+terraform.tfstate
 ```
 
 `Apply complete! Resources: 2 added, 0 changed, 0 destroyed.` The VPC now exists in `us-east-2`, and
@@ -149,10 +207,14 @@ terraform output -raw vpc_id
 **Expected output**
 
 ```text
-PENDING CAPTURE — rerun after credentials are restored
+aws_vpc.migrated
+terraform_data.migrated_state
+vpc-0857c1131a7717d43
 ```
 
 Two addresses — `aws_vpc.migrated` and `terraform_data.migrated_state` — and one `vpc-` ID.
+`-raw` prints the ID with no surrounding quotes and no trailing newline, so your shell prompt
+follows it on the same line.
 
 **Write that ID down.** It is the acceptance criterion for the migration: the same VPC, still
 running, still managed, after its record has moved to a different storage backend.
@@ -225,15 +287,25 @@ terraform init -migrate-state -backend-config=backend.hcl
 **Expected output** *(yours will differ)*
 
 ```text
+Initializing the backend...
 Do you want to copy existing state to the new backend?
   Pre-existing state was found while migrating the previous "local" backend to the
   newly configured "s3" backend. No existing state was found in the newly
-  configured "s3" backend. Do you want to copy this state to the new "s3" backend?
+  configured "s3" backend. Do you want to copy this state to the new "s3"
+  backend? Enter "yes" to copy and "no" to start with an empty state.
 
   Enter a value: yes
 
+Releasing state lock. This may take a few moments...
+
 Successfully configured the backend "s3"! Terraform will automatically
 use this backend unless the backend configuration changes.
+Initializing provider plugins...
+- terraform.io/builtin/terraform is built in to Terraform
+- Reusing previous version of hashicorp/aws from the dependency lock file
+- Using previously-installed hashicorp/aws v5.100.0
+
+Terraform has been successfully initialized!
 ```
 
 In an automated pipeline, add `-force-copy` to answer `yes` without prompting.
@@ -250,7 +322,14 @@ terraform plan
 **Expected output**
 
 ```text
-PENDING CAPTURE — rerun after credentials are restored
+terraform_data.migrated_state: Refreshing state... [id=1f12cc0e-3c5f-7121-4466-aa017e3ef847]
+aws_vpc.migrated: Refreshing state... [id=vpc-0857c1131a7717d43]
+
+No changes. Your infrastructure matches the configuration.
+
+Terraform has compared your real infrastructure against your configuration
+and found no differences, so no changes are needed.
+Releasing state lock. This may take a few moments...
 ```
 
 Two `Refreshing state...` lines, one per resource, then `No changes. Your infrastructure matches the
@@ -277,7 +356,9 @@ terraform output -raw vpc_id
 **Expected output**
 
 ```text
-PENDING CAPTURE — rerun after credentials are restored
+aws_vpc.migrated
+terraform_data.migrated_state
+vpc-0857c1131a7717d43
 ```
 
 The same two addresses and the same `vpc-` ID you wrote down in step 4. Nothing was created, nothing
@@ -292,7 +373,7 @@ aws s3 ls "s3://$TF_STATE_BUCKET/labs/lab19/"
 **Expected output** *(timestamp and size will differ)*
 
 ```text
-2026-08-29 12:04:11       1204 terraform.tfstate
+2026-08-31 11:44:36       2798 terraform.tfstate
 ```
 
 ### Step 12 — Note what Terraform left behind locally
@@ -307,11 +388,14 @@ ls -1 terraform.tfstate*
 **Expected output**
 
 ```text
+terraform.tfstate
 terraform.tfstate.backup
 terraform.tfstate.pre-migration
 ```
 
-The live `terraform.tfstate` is gone because state now lives in S3.
+`terraform.tfstate` is still listed, but it is now **zero bytes** — confirm with `ls -l`. The live
+state lives in S3; what remains locally is an empty shell. `terraform.tfstate.backup` holds the
+pre-migration contents Terraform saved for you, alongside the copy you took yourself in step 5.
 
 ## Done when
 
@@ -362,7 +446,63 @@ rm -rf .terraform
 **Expected output**
 
 ```text
-PENDING CAPTURE — rerun after credentials are restored
+terraform_data.migrated_state: Refreshing state... [id=1f12cc0e-3c5f-7121-4466-aa017e3ef847]
+aws_vpc.migrated: Refreshing state... [id=vpc-0857c1131a7717d43]
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  - destroy
+
+Terraform will perform the following actions:
+
+  # aws_vpc.migrated will be destroyed
+  - resource "aws_vpc" "migrated" {
+      - arn                                  = "arn:aws:ec2:us-east-2:027488552956:vpc/vpc-0857c1131a7717d43" -> null
+      - assign_generated_ipv6_cidr_block     = false -> null
+      - cidr_block                           = "10.19.0.0/16" -> null
+      - default_network_acl_id               = "acl-0a54deb9855aeac74" -> null
+      - default_route_table_id               = "rtb-0988283682436dc9d" -> null
+      - default_security_group_id            = "sg-0aa917835d9aac69b" -> null
+      - dhcp_options_id                      = "dopt-0b3fb1f3b525c8788" -> null
+      - enable_dns_hostnames                 = false -> null
+      - enable_dns_support                   = true -> null
+      - enable_network_address_usage_metrics = false -> null
+      - id                                   = "vpc-0857c1131a7717d43" -> null
+      - instance_tenancy                     = "default" -> null
+      - ipv6_netmask_length                  = 0 -> null
+      - main_route_table_id                  = "rtb-0988283682436dc9d" -> null
+      - owner_id                             = "027488552956" -> null
+      - tags                                 = {
+          - "Lab"  = "lab19"
+          - "Name" = "lab19-migrated"
+        } -> null
+      - tags_all                             = {
+          - "Lab"  = "lab19"
+          - "Name" = "lab19-migrated"
+        } -> null
+        # (4 unchanged attributes hidden)
+    }
+
+  # terraform_data.migrated_state will be destroyed
+  - resource "terraform_data" "migrated_state" {
+      - id     = "1f12cc0e-3c5f-7121-4466-aa017e3ef847" -> null
+      - input  = "migrate with terraform init -migrate-state" -> null
+      - output = "migrate with terraform init -migrate-state" -> null
+    }
+
+Plan: 0 to add, 0 to change, 2 to destroy.
+
+Changes to Outputs:
+  - migration_instruction = "migrate with terraform init -migrate-state" -> null
+  - vpc_id                = "vpc-0857c1131a7717d43" -> null
+terraform_data.migrated_state: Destroying... [id=1f12cc0e-3c5f-7121-4466-aa017e3ef847]
+terraform_data.migrated_state: Destruction complete after 0s
+aws_vpc.migrated: Destroying... [id=vpc-0857c1131a7717d43]
+aws_vpc.migrated: Destruction complete after 2s
+Releasing state lock. This may take a few moments...
+
+Destroy complete! Resources: 2 destroyed.
+[]
 ```
 
 `Destroy complete! Resources: 2 destroyed.` followed by an empty list from `describe-vpcs`. Destroy
@@ -403,26 +543,61 @@ delete: s3://tfstate-yourname-4821/labs/lab19/terraform.tfstate
 {
     "Deleted": [
         {
-            "Key": "labs/lab17/terraform.tfstate",
-            "VersionId": "6GGowVTuN3SXwuxPzVXBbiEvVvxP_CwN"
+            "Key": "labs/lab19/terraform.tfstate",
+            "VersionId": "gX7GlNMHzNXkZzMamqgCWcifxBh_6.oa"
+        },
+        {
+            "Key": "labs/lab19/terraform.tfstate.tflock",
+            "VersionId": "oPN95rovgRct5SZqXGvULlGZXwBFsbpx"
+        },
+        {
+            "Key": "labs/lab19/terraform.tfstate.tflock",
+            "VersionId": "zDhoAauDfIeu_neVAxyKYAV5xRo0nCIo"
         },
         {
             "Key": "labs/lab19/terraform.tfstate",
-            "VersionId": "9HAkQRsuDD7IbZcORcIhqwAnuA1_CDZG"
+            "VersionId": "VZ58fIHOnTEa04Q27daVrpLRX8kxnQ85"
+        },
+        {
+            "Key": "labs/lab19/terraform.tfstate.tflock",
+            "VersionId": "V_yaD6YcwZ1MV2wIjS.SYXelxR8yh7qe"
         }
     ]
 }
 {
     "Deleted": [
         {
-            "Key": "labs/lab19/terraform.tfstate",
-            "VersionId": "NmchHrPXvaXgmCdoYNYxe7e9G3k47TgZ",
+            "Key": "labs/lab19/terraform.tfstate.tflock",
+            "VersionId": "TcdPhxH4jV4oif54jvRUuViN.GGvZLnS",
             "DeleteMarker": true,
-            "DeleteMarkerVersionId": "NmchHrPXvaXgmCdoYNYxe7e9G3k47TgZ"
+            "DeleteMarkerVersionId": "TcdPhxH4jV4oif54jvRUuViN.GGvZLnS"
+        },
+        {
+            "Key": "labs/lab19/terraform.tfstate.tflock",
+            "VersionId": "lLWR3E.G1ctxV1j7RhTH2RCR_KFRLAkZ",
+            "DeleteMarker": true,
+            "DeleteMarkerVersionId": "lLWR3E.G1ctxV1j7RhTH2RCR_KFRLAkZ"
+        },
+        {
+            "Key": "labs/lab19/terraform.tfstate.tflock",
+            "VersionId": "R.hod_dVaKQYvjYbFf07cOKPjEY.u.w6",
+            "DeleteMarker": true,
+            "DeleteMarkerVersionId": "R.hod_dVaKQYvjYbFf07cOKPjEY.u.w6"
+        },
+        {
+            "Key": "labs/lab19/terraform.tfstate",
+            "VersionId": "nAICJ0VHh.8PFvG1ZJtcQv4KtQe7p_Iz",
+            "DeleteMarker": true,
+            "DeleteMarkerVersionId": "nAICJ0VHh.8PFvG1ZJtcQv4KtQe7p_Iz"
         }
     ]
 }
 ```
+
+Note the `.tflock` keys. `use_lockfile = true` writes the state lock as an S3 object beside the
+state, so every lock acquired and released during the lab left its own version and delete marker
+behind. The capture above is from a run that did only lab 19; if you carried the bucket through
+labs 17 and 18 you will see their `labs/lab17/` and `labs/lab18/` keys listed too.
 
 Each `delete-objects` call handles up to 1000 entries per request. Three labs of state produces far
 fewer, but on a long-lived bucket rerun both calls until they report nothing left. When a category
@@ -444,9 +619,11 @@ aws s3 ls "s3://$TF_STATE_BUCKET"
 **Expected output**
 
 ```text
-An error occurred (NoSuchBucket) when calling the ListObjectsV2 operation: The specified bucket
-does not exist
+aws: [ERROR]: An error occurred (NoSuchBucket) when calling the ListObjectsV2 operation: The specified bucket does not exist
 ```
+
+Older AWS CLI v2 releases print the same message without the `aws: [ERROR]:` prefix and wrap it
+across two lines. Either form is the success condition.
 
 The error is the success condition. Finally, drop the variable.
 

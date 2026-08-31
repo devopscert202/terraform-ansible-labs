@@ -123,7 +123,80 @@ terraform apply -auto-approve
 **Expected output**
 
 ```text
-PENDING CAPTURE — rerun after credentials are restored
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  + create
+
+Terraform will perform the following actions:
+
+  # aws_vpc.main will be created
+  + resource "aws_vpc" "main" {
+      + arn                                  = (known after apply)
+      + cidr_block                           = "10.8.0.0/16"
+      + default_network_acl_id               = (known after apply)
+      + default_route_table_id               = (known after apply)
+      + default_security_group_id            = (known after apply)
+      + dhcp_options_id                      = (known after apply)
+      + enable_dns_hostnames                 = (known after apply)
+      + enable_dns_support                   = true
+      + enable_network_address_usage_metrics = (known after apply)
+      + id                                   = (known after apply)
+      + instance_tenancy                     = "default"
+      + ipv6_association_id                  = (known after apply)
+      + ipv6_cidr_block                      = (known after apply)
+      + ipv6_cidr_block_network_border_group = (known after apply)
+      + main_route_table_id                  = (known after apply)
+      + owner_id                             = (known after apply)
+      + tags                                 = (known after apply)
+      + tags_all                             = (known after apply)
+    }
+
+  # random_password.db will be created
+  + resource "random_password" "db" {
+      + bcrypt_hash = (sensitive value)
+      + id          = (known after apply)
+      + length      = 16
+      + lower       = true
+      + min_lower   = 0
+      + min_numeric = 0
+      + min_special = 0
+      + min_upper   = 0
+      + number      = true
+      + numeric     = true
+      + result      = (sensitive value)
+      + special     = false
+      + upper       = true
+    }
+
+  # random_pet.server will be created
+  + resource "random_pet" "server" {
+      + id        = (known after apply)
+      + length    = 2
+      + prefix    = "lab08"
+      + separator = "-"
+    }
+
+Plan: 3 to add, 0 to change, 0 to destroy.
+
+Changes to Outputs:
+  + db_password = (sensitive value)
+  + server_name = (known after apply)
+  + vpc_id      = (known after apply)
+random_pet.server: Creating...
+random_password.db: Creating...
+random_pet.server: Creation complete after 0s [id=lab08-legible-liger]
+random_password.db: Creation complete after 0s [id=none]
+aws_vpc.main: Creating...
+aws_vpc.main: Creation complete after 4s [id=vpc-0156a9423efd5285a]
+
+Apply complete! Resources: 3 added, 0 changed, 0 destroyed.
+
+Outputs:
+
+db_password = <sensitive>
+server_name = "lab08-legible-liger"
+vpc_id = "vpc-0156a9423efd5285a"
 ```
 
 `Apply complete! Resources: 3 added, 0 changed, 0 destroyed.`
@@ -144,7 +217,7 @@ ls -l terraform.tfstate
 **Expected output**
 
 ```text
-PENDING CAPTURE — rerun after credentials are restored
+-rw-r--r--@ 1 kpakkiriswamy  wheel  3879 31 Aug 11:48 terraform.tfstate
 ```
 
 The file now exists, several kilobytes of JSON. Never edit it by hand — hand edits are how you get a
@@ -177,7 +250,43 @@ terraform state show aws_vpc.main
 **Expected output**
 
 ```text
-PENDING CAPTURE — rerun after credentials are restored
+# random_pet.server:
+resource "random_pet" "server" {
+    id        = "lab08-legible-liger"
+    length    = 2
+    prefix    = "lab08"
+    separator = "-"
+}
+# aws_vpc.main:
+resource "aws_vpc" "main" {
+    arn                                  = "arn:aws:ec2:us-east-2:027488552956:vpc/vpc-0156a9423efd5285a"
+    assign_generated_ipv6_cidr_block     = false
+    cidr_block                           = "10.8.0.0/16"
+    default_network_acl_id               = "acl-0f5377ef0cf2b5926"
+    default_route_table_id               = "rtb-0816b3e8a9b597882"
+    default_security_group_id            = "sg-0677be06982cac0fd"
+    dhcp_options_id                      = "dopt-0b3fb1f3b525c8788"
+    enable_dns_hostnames                 = false
+    enable_dns_support                   = true
+    enable_network_address_usage_metrics = false
+    id                                   = "vpc-0156a9423efd5285a"
+    instance_tenancy                     = "default"
+    ipv6_association_id                  = null
+    ipv6_cidr_block                      = null
+    ipv6_cidr_block_network_border_group = null
+    ipv6_ipam_pool_id                    = null
+    ipv6_netmask_length                  = 0
+    main_route_table_id                  = "rtb-0816b3e8a9b597882"
+    owner_id                             = "027488552956"
+    tags                                 = {
+        "Lab"  = "lab08"
+        "Name" = "lab08-legible-liger"
+    }
+    tags_all                             = {
+        "Lab"  = "lab08"
+        "Name" = "lab08-legible-liger"
+    }
+}
 ```
 
 For `random_pet.server` you wrote `length` and `prefix`; Terraform recorded those plus `id` and
@@ -200,7 +309,8 @@ aws ec2 describe-vpcs --region us-east-2 \
 **Expected output**
 
 ```text
-PENDING CAPTURE — rerun after credentials are restored
+vpc-0156a9423efd5285a
+vpc-0156a9423efd5285a
 ```
 
 The same `vpc-` ID printed twice: once from the state file on your laptop, once from AWS. State is
@@ -246,7 +356,68 @@ terraform show
 **Expected output**
 
 ```text
-PENDING CAPTURE — rerun after credentials are restored
+# aws_vpc.main:
+resource "aws_vpc" "main" {
+    arn                                  = "arn:aws:ec2:us-east-2:027488552956:vpc/vpc-0156a9423efd5285a"
+    assign_generated_ipv6_cidr_block     = false
+    cidr_block                           = "10.8.0.0/16"
+    default_network_acl_id               = "acl-0f5377ef0cf2b5926"
+    default_route_table_id               = "rtb-0816b3e8a9b597882"
+    default_security_group_id            = "sg-0677be06982cac0fd"
+    dhcp_options_id                      = "dopt-0b3fb1f3b525c8788"
+    enable_dns_hostnames                 = false
+    enable_dns_support                   = true
+    enable_network_address_usage_metrics = false
+    id                                   = "vpc-0156a9423efd5285a"
+    instance_tenancy                     = "default"
+    ipv6_association_id                  = null
+    ipv6_cidr_block                      = null
+    ipv6_cidr_block_network_border_group = null
+    ipv6_ipam_pool_id                    = null
+    ipv6_netmask_length                  = 0
+    main_route_table_id                  = "rtb-0816b3e8a9b597882"
+    owner_id                             = "027488552956"
+    tags                                 = {
+        "Lab"  = "lab08"
+        "Name" = "lab08-legible-liger"
+    }
+    tags_all                             = {
+        "Lab"  = "lab08"
+        "Name" = "lab08-legible-liger"
+    }
+}
+
+# random_password.db:
+resource "random_password" "db" {
+    bcrypt_hash = (sensitive value)
+    id          = "none"
+    length      = 16
+    lower       = true
+    min_lower   = 0
+    min_numeric = 0
+    min_special = 0
+    min_upper   = 0
+    number      = true
+    numeric     = true
+    result      = (sensitive value)
+    special     = false
+    upper       = true
+}
+
+# random_pet.server:
+resource "random_pet" "server" {
+    id        = "lab08-legible-liger"
+    length    = 2
+    prefix    = "lab08"
+    separator = "-"
+}
+
+
+Outputs:
+
+db_password = (sensitive value)
+server_name = "lab08-legible-liger"
+vpc_id = "vpc-0156a9423efd5285a"
 ```
 
 `terraform show` prints every tracked resource — all three, `aws_vpc.main` included — and then every
@@ -263,7 +434,11 @@ terraform output -raw db_password
 **Expected output**
 
 ```text
-PENDING CAPTURE — rerun after credentials are restored
+db_password = <sensitive>
+server_name = "lab08-legible-liger"
+vpc_id = "vpc-0156a9423efd5285a"
+"Znl2Yw6NGQKb9jSa"
+Znl2Yw6NGQKb9jSa
 ```
 
 Three different renderings of the same stored value: `db_password = <sensitive>` when you list all
@@ -280,7 +455,9 @@ python3 -c "import json; d=json.load(open('terraform.tfstate')); print('version'
 **Expected output**
 
 ```text
-PENDING CAPTURE — rerun after credentials are restored
+version 4
+serial 4
+resources ['aws_vpc.main', 'random_password.db', 'random_pet.server']
 ```
 
 `version` is `4`, and `resources` lists all three addresses including `aws_vpc.main`.
@@ -299,7 +476,7 @@ grep -o '"result": "[^"]*"' terraform.tfstate
 **Expected output**
 
 ```text
-PENDING CAPTURE — rerun after credentials are restored
+"result": "Znl2Yw6NGQKb9jSa"
 ```
 
 One line, `"result": "<the generated password>"`. This is the lesson the whole lab exists for. Step 9 showed this attribute as `(sensitive value)`;
@@ -317,7 +494,14 @@ terraform plan
 **Expected output**
 
 ```text
-PENDING CAPTURE — rerun after credentials are restored
+random_pet.server: Refreshing state... [id=lab08-legible-liger]
+random_password.db: Refreshing state... [id=none]
+aws_vpc.main: Refreshing state... [id=vpc-0156a9423efd5285a]
+
+No changes. Your infrastructure matches the configuration.
+
+Terraform has compared your real infrastructure against your configuration
+and found no differences, so no changes are needed.
 ```
 
 `No changes. Your infrastructure matches the configuration.` Terraform refreshed the VPC against
@@ -340,7 +524,87 @@ terraform state list
 **Expected output**
 
 ```text
-PENDING CAPTURE — rerun after credentials are restored
+random_pet.server: Refreshing state... [id=lab08-legible-liger]
+random_password.db: Refreshing state... [id=none]
+aws_vpc.main: Refreshing state... [id=vpc-0156a9423efd5285a]
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  - destroy
+
+Terraform will perform the following actions:
+
+  # aws_vpc.main will be destroyed
+  - resource "aws_vpc" "main" {
+      - arn                                  = "arn:aws:ec2:us-east-2:027488552956:vpc/vpc-0156a9423efd5285a" -> null
+      - assign_generated_ipv6_cidr_block     = false -> null
+      - cidr_block                           = "10.8.0.0/16" -> null
+      - default_network_acl_id               = "acl-0f5377ef0cf2b5926" -> null
+      - default_route_table_id               = "rtb-0816b3e8a9b597882" -> null
+      - default_security_group_id            = "sg-0677be06982cac0fd" -> null
+      - dhcp_options_id                      = "dopt-0b3fb1f3b525c8788" -> null
+      - enable_dns_hostnames                 = false -> null
+      - enable_dns_support                   = true -> null
+      - enable_network_address_usage_metrics = false -> null
+      - id                                   = "vpc-0156a9423efd5285a" -> null
+      - instance_tenancy                     = "default" -> null
+      - ipv6_netmask_length                  = 0 -> null
+      - main_route_table_id                  = "rtb-0816b3e8a9b597882" -> null
+      - owner_id                             = "027488552956" -> null
+      - tags                                 = {
+          - "Lab"  = "lab08"
+          - "Name" = "lab08-legible-liger"
+        } -> null
+      - tags_all                             = {
+          - "Lab"  = "lab08"
+          - "Name" = "lab08-legible-liger"
+        } -> null
+        # (4 unchanged attributes hidden)
+    }
+
+  # random_password.db will be destroyed
+  - resource "random_password" "db" {
+      - bcrypt_hash = (sensitive value) -> null
+      - id          = "none" -> null
+      - length      = 16 -> null
+      - lower       = true -> null
+      - min_lower   = 0 -> null
+      - min_numeric = 0 -> null
+      - min_special = 0 -> null
+      - min_upper   = 0 -> null
+      - number      = true -> null
+      - numeric     = true -> null
+      - result      = (sensitive value) -> null
+      - special     = false -> null
+      - upper       = true -> null
+    }
+
+  # random_pet.server will be destroyed
+  - resource "random_pet" "server" {
+      - id        = "lab08-legible-liger" -> null
+      - length    = 2 -> null
+      - prefix    = "lab08" -> null
+      - separator = "-" -> null
+    }
+
+Plan: 0 to add, 0 to change, 3 to destroy.
+
+Changes to Outputs:
+  - db_password = (sensitive value) -> null
+  - server_name = "lab08-legible-liger" -> null
+  - vpc_id      = "vpc-0156a9423efd5285a" -> null
+random_password.db: Destroying... [id=none]
+random_password.db: Destruction complete after 0s
+aws_vpc.main: Destroying... [id=vpc-0156a9423efd5285a]
+aws_vpc.main: Destruction complete after 2s
+random_pet.server: Destroying... [id=lab08-legible-liger]
+random_pet.server: Destruction complete after 0s
+
+Destroy complete! Resources: 3 destroyed.
+main.tf
+outputs.tf
+terraform.tfstate
+terraform.tfstate.backup
 ```
 
 `Destroy complete! Resources: 3 destroyed.` Then `ls` shows `main.tf`, `outputs.tf`,
@@ -359,7 +623,7 @@ aws ec2 describe-vpcs --region us-east-2 \
 **Expected output**
 
 ```text
-PENDING CAPTURE — rerun after credentials are restored
+[]
 ```
 
 An empty list.

@@ -362,7 +362,187 @@ terraform apply -auto-approve
 **Expected output**
 
 ```text
-PENDING CAPTURE — rerun after credentials are restored
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  + create
+
+Terraform will perform the following actions:
+
+  # aws_security_group.app will be created
+  + resource "aws_security_group" "app" {
+      + arn                    = (known after apply)
+      + description            = "Lab 12: ingress ranges built by toset(), tolist() and sort()"
+      + egress                 = [
+          + {
+              + cidr_blocks      = [
+                  + "0.0.0.0/0",
+                ]
+              + description      = "All outbound"
+              + from_port        = 0
+              + ipv6_cidr_blocks = []
+              + prefix_list_ids  = []
+              + protocol         = "-1"
+              + security_groups  = []
+              + self             = false
+              + to_port          = 0
+            },
+        ]
+      + id                     = (known after apply)
+      + ingress                = [
+          + {
+              + cidr_blocks      = [
+                  + "10.0.1.0/24",
+                  + "10.0.2.0/24",
+                ]
+              + description      = "HTTPS from the deduplicated CIDR list"
+              + from_port        = 443
+              + ipv6_cidr_blocks = []
+              + prefix_list_ids  = []
+              + protocol         = "tcp"
+              + security_groups  = []
+              + self             = false
+              + to_port          = 443
+            },
+        ]
+      + name                   = "payments-api-sg"
+      + name_prefix            = (known after apply)
+      + owner_id               = (known after apply)
+      + revoke_rules_on_delete = false
+      + tags                   = {
+          + "Lab"     = "lab12"
+          + "Name"    = "payments-api-sg"
+          + "Summary" = "payments-api uses 2 unique CIDR(s)"
+        }
+      + tags_all               = {
+          + "Lab"     = "lab12"
+          + "Name"    = "payments-api-sg"
+          + "Summary" = "payments-api uses 2 unique CIDR(s)"
+        }
+      + vpc_id                 = (known after apply)
+    }
+
+  # aws_subnet.derived will be created
+  + resource "aws_subnet" "derived" {
+      + arn                                            = (known after apply)
+      + assign_ipv6_address_on_creation                = false
+      + availability_zone                              = "us-east-2a"
+      + availability_zone_id                           = (known after apply)
+      + cidr_block                                     = "10.20.12.0/24"
+      + enable_dns64                                   = false
+      + enable_resource_name_dns_a_record_on_launch    = false
+      + enable_resource_name_dns_aaaa_record_on_launch = false
+      + id                                             = (known after apply)
+      + ipv6_cidr_block_association_id                 = (known after apply)
+      + ipv6_native                                    = false
+      + map_public_ip_on_launch                        = false
+      + owner_id                                       = (known after apply)
+      + private_dns_hostname_type_on_launch            = (known after apply)
+      + tags                                           = {
+          + "Lab"     = "lab12"
+          + "Name"    = "payments-api-derived"
+          + "Summary" = "payments-api uses 2 unique CIDR(s)"
+        }
+      + tags_all                                       = {
+          + "Lab"     = "lab12"
+          + "Name"    = "payments-api-derived"
+          + "Summary" = "payments-api uses 2 unique CIDR(s)"
+        }
+      + vpc_id                                         = (known after apply)
+    }
+
+  # aws_vpc.main will be created
+  + resource "aws_vpc" "main" {
+      + arn                                  = (known after apply)
+      + cidr_block                           = "10.20.0.0/16"
+      + default_network_acl_id               = (known after apply)
+      + default_route_table_id               = (known after apply)
+      + default_security_group_id            = (known after apply)
+      + dhcp_options_id                      = (known after apply)
+      + enable_dns_hostnames                 = (known after apply)
+      + enable_dns_support                   = true
+      + enable_network_address_usage_metrics = (known after apply)
+      + id                                   = (known after apply)
+      + instance_tenancy                     = "default"
+      + ipv6_association_id                  = (known after apply)
+      + ipv6_cidr_block                      = (known after apply)
+      + ipv6_cidr_block_network_border_group = (known after apply)
+      + main_route_table_id                  = (known after apply)
+      + owner_id                             = (known after apply)
+      + tags                                 = {
+          + "Lab"     = "lab12"
+          + "Name"    = "payments-api"
+          + "Summary" = "payments-api uses 2 unique CIDR(s)"
+        }
+      + tags_all                             = {
+          + "Lab"     = "lab12"
+          + "Name"    = "payments-api"
+          + "Summary" = "payments-api uses 2 unique CIDR(s)"
+        }
+    }
+
+Plan: 3 to add, 0 to change, 0 to destroy.
+
+Changes to Outputs:
+  + cidr_count                   = 2
+  + config_json                  = jsonencode(
+        {
+          + cidrs = [
+              + "10.0.1.0/24",
+              + "10.0.2.0/24",
+            ]
+          + name  = "payments-api"
+        }
+    )
+  + derived_subnet               = {
+      + assigned_by_aws        = "10.20.12.0/24"
+      + computed_by_cidrsubnet = "10.20.12.0/24"
+      + subnet_id              = (known after apply)
+    }
+  + derived_subnet_gateway_host  = "10.20.12.1"
+  + security_group_ingress_cidrs = [
+      + "10.0.1.0/24",
+      + "10.0.2.0/24",
+    ]
+  + slug                         = "payments-api"
+  + subnet_prefix                = "10.20.12.0/24"
+  + summary                      = "payments-api uses 2 unique CIDR(s)"
+  + unique_cidrs                 = [
+      + "10.0.1.0/24",
+      + "10.0.2.0/24",
+    ]
+  + vpc_id                       = (known after apply)
+aws_vpc.main: Creating...
+aws_vpc.main: Creation complete after 6s [id=vpc-02fb7b6743ecd2656]
+aws_subnet.derived: Creating...
+aws_security_group.app: Creating...
+aws_subnet.derived: Creation complete after 2s [id=subnet-003a9ca6d15ebc66b]
+aws_security_group.app: Creation complete after 4s [id=sg-06781f7b1cd1c6ddf]
+
+Apply complete! Resources: 3 added, 0 changed, 0 destroyed.
+
+Outputs:
+
+cidr_count = 2
+config_json = "{\"cidrs\":[\"10.0.1.0/24\",\"10.0.2.0/24\"],\"name\":\"payments-api\"}"
+derived_subnet = {
+  "assigned_by_aws" = "10.20.12.0/24"
+  "computed_by_cidrsubnet" = "10.20.12.0/24"
+  "subnet_id" = "subnet-003a9ca6d15ebc66b"
+}
+derived_subnet_gateway_host = "10.20.12.1"
+security_group_ingress_cidrs = tolist([
+  "10.0.1.0/24",
+  "10.0.2.0/24",
+])
+slug = "payments-api"
+subnet_prefix = "10.20.12.0/24"
+summary = "payments-api uses 2 unique CIDR(s)"
+unique_cidrs = tolist([
+  "10.0.1.0/24",
+  "10.0.2.0/24",
+])
+vpc_id = "vpc-02fb7b6743ecd2656"
 ```
 
 `Plan: 3 to add, 0 to change, 0 to destroy.` Check `derived_subnet` in the outputs:
@@ -382,7 +562,40 @@ terraform output derived_subnet_gateway_host
 **Expected output**
 
 ```text
-PENDING CAPTURE — rerun after credentials are restored
+# aws_subnet.derived:
+resource "aws_subnet" "derived" {
+    arn                                            = "arn:aws:ec2:us-east-2:027488552956:subnet/subnet-003a9ca6d15ebc66b"
+    assign_ipv6_address_on_creation                = false
+    availability_zone                              = "us-east-2a"
+    availability_zone_id                           = "use2-az1"
+    cidr_block                                     = "10.20.12.0/24"
+    customer_owned_ipv4_pool                       = null
+    enable_dns64                                   = false
+    enable_lni_at_device_index                     = 0
+    enable_resource_name_dns_a_record_on_launch    = false
+    enable_resource_name_dns_aaaa_record_on_launch = false
+    id                                             = "subnet-003a9ca6d15ebc66b"
+    ipv6_cidr_block                                = null
+    ipv6_cidr_block_association_id                 = null
+    ipv6_native                                    = false
+    map_customer_owned_ip_on_launch                = false
+    map_public_ip_on_launch                        = false
+    outpost_arn                                    = null
+    owner_id                                       = "027488552956"
+    private_dns_hostname_type_on_launch            = "ip-name"
+    tags                                           = {
+        "Lab"     = "lab12"
+        "Name"    = "payments-api-derived"
+        "Summary" = "payments-api uses 2 unique CIDR(s)"
+    }
+    tags_all                                       = {
+        "Lab"     = "lab12"
+        "Name"    = "payments-api-derived"
+        "Summary" = "payments-api uses 2 unique CIDR(s)"
+    }
+    vpc_id                                         = "vpc-02fb7b6743ecd2656"
+}
+"10.20.12.1"
 ```
 
 `cidr_block` is `10.20.12.0/24` and `derived_subnet_gateway_host` is `10.20.12.1` — `cidrhost()`
@@ -400,12 +613,100 @@ terraform plan -var 'vpc_cidr=10.30.0.0/16'
 **Expected output**
 
 ```text
-PENDING CAPTURE — rerun after credentials are restored
+aws_vpc.main: Refreshing state... [id=vpc-02fb7b6743ecd2656]
+aws_subnet.derived: Refreshing state... [id=subnet-003a9ca6d15ebc66b]
+aws_security_group.app: Refreshing state... [id=sg-06781f7b1cd1c6ddf]
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+-/+ destroy and then create replacement
+
+Terraform will perform the following actions:
+
+  # aws_security_group.app must be replaced
+-/+ resource "aws_security_group" "app" {
+      ~ arn                    = "arn:aws:ec2:us-east-2:027488552956:security-group/sg-06781f7b1cd1c6ddf" -> (known after apply)
+      ~ id                     = "sg-06781f7b1cd1c6ddf" -> (known after apply)
+        name                   = "payments-api-sg"
+      + name_prefix            = (known after apply)
+      ~ owner_id               = "027488552956" -> (known after apply)
+        tags                   = {
+            "Lab"     = "lab12"
+            "Name"    = "payments-api-sg"
+            "Summary" = "payments-api uses 2 unique CIDR(s)"
+        }
+      ~ vpc_id                 = "vpc-02fb7b6743ecd2656" -> (known after apply) # forces replacement
+        # (5 unchanged attributes hidden)
+    }
+
+  # aws_subnet.derived must be replaced
+-/+ resource "aws_subnet" "derived" {
+      ~ arn                                            = "arn:aws:ec2:us-east-2:027488552956:subnet/subnet-003a9ca6d15ebc66b" -> (known after apply)
+      ~ availability_zone_id                           = "use2-az1" -> (known after apply)
+      ~ cidr_block                                     = "10.20.12.0/24" -> "10.30.12.0/24" # forces replacement
+      - enable_lni_at_device_index                     = 0 -> null
+      ~ id                                             = "subnet-003a9ca6d15ebc66b" -> (known after apply)
+      + ipv6_cidr_block_association_id                 = (known after apply)
+      - map_customer_owned_ip_on_launch                = false -> null
+      ~ owner_id                                       = "027488552956" -> (known after apply)
+      ~ private_dns_hostname_type_on_launch            = "ip-name" -> (known after apply)
+        tags                                           = {
+            "Lab"     = "lab12"
+            "Name"    = "payments-api-derived"
+            "Summary" = "payments-api uses 2 unique CIDR(s)"
+        }
+      ~ vpc_id                                         = "vpc-02fb7b6743ecd2656" -> (known after apply) # forces replacement
+        # (11 unchanged attributes hidden)
+    }
+
+  # aws_vpc.main must be replaced
+-/+ resource "aws_vpc" "main" {
+      ~ arn                                  = "arn:aws:ec2:us-east-2:027488552956:vpc/vpc-02fb7b6743ecd2656" -> (known after apply)
+      - assign_generated_ipv6_cidr_block     = false -> null
+      ~ cidr_block                           = "10.20.0.0/16" -> "10.30.0.0/16" # forces replacement
+      ~ default_network_acl_id               = "acl-0578a059306a17ef5" -> (known after apply)
+      ~ default_route_table_id               = "rtb-065c8b333df48c9c1" -> (known after apply)
+      ~ default_security_group_id            = "sg-042d2ccb98d9aec3a" -> (known after apply)
+      ~ dhcp_options_id                      = "dopt-0b3fb1f3b525c8788" -> (known after apply)
+      ~ enable_dns_hostnames                 = false -> (known after apply)
+      ~ enable_network_address_usage_metrics = false -> (known after apply)
+      ~ id                                   = "vpc-02fb7b6743ecd2656" -> (known after apply)
+      + ipv6_association_id                  = (known after apply)
+      + ipv6_cidr_block                      = (known after apply)
+      + ipv6_cidr_block_network_border_group = (known after apply)
+      - ipv6_netmask_length                  = 0 -> null
+      ~ main_route_table_id                  = "rtb-065c8b333df48c9c1" -> (known after apply)
+      ~ owner_id                             = "027488552956" -> (known after apply)
+        tags                                 = {
+            "Lab"     = "lab12"
+            "Name"    = "payments-api"
+            "Summary" = "payments-api uses 2 unique CIDR(s)"
+        }
+        # (4 unchanged attributes hidden)
+    }
+
+Plan: 3 to add, 0 to change, 3 to destroy.
+
+Changes to Outputs:
+  ~ derived_subnet               = {
+      ~ assigned_by_aws        = "10.20.12.0/24" -> "10.30.12.0/24"
+      ~ computed_by_cidrsubnet = "10.20.12.0/24" -> "10.30.12.0/24"
+      ~ subnet_id              = "subnet-003a9ca6d15ebc66b" -> (known after apply)
+    }
+  ~ derived_subnet_gateway_host  = "10.20.12.1" -> "10.30.12.1"
+  ~ subnet_prefix                = "10.20.12.0/24" -> "10.30.12.0/24"
+  ~ vpc_id                       = "vpc-02fb7b6743ecd2656" -> (known after apply)
+
+─────────────────────────────────────────────────────────────────────────────
+
+Note: You didn't use the -out option to save this plan, so Terraform can't
+guarantee to take exactly these actions if you run "terraform apply" now.
 ```
 
-Terraform proposes replacing both resources: the VPC because `cidr_block` cannot be changed in place,
-and the subnet because `cidrsubnet("10.30.0.0/16", 8, 12)` is now `10.30.12.0/24`. One edit, two
-correct consequences. Had the subnet CIDR been hardcoded, the same edit would have produced a subnet
+Terraform proposes replacing all three resources: the VPC because `cidr_block` cannot be changed in place,
+the subnet because `cidrsubnet("10.30.0.0/16", 8, 12)` is now `10.30.12.0/24`, and the security group
+because its `vpc_id` is being replaced underneath it. `Plan: 3 to add, 0 to change, 3 to destroy.` —
+one edit, three correct consequences. Had the subnet CIDR been hardcoded, the same edit would have produced a subnet
 outside its own VPC and an `InvalidSubnet.Range` error at apply.
 
 ### Step 19 — Change an input and watch every derived value follow
@@ -417,7 +718,85 @@ terraform plan -var 'application=Billing Service'
 **Expected output**
 
 ```text
-PENDING CAPTURE — rerun after credentials are restored
+aws_vpc.main: Refreshing state... [id=vpc-02fb7b6743ecd2656]
+aws_subnet.derived: Refreshing state... [id=subnet-003a9ca6d15ebc66b]
+aws_security_group.app: Refreshing state... [id=sg-06781f7b1cd1c6ddf]
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  ~ update in-place
+-/+ destroy and then create replacement
+
+Terraform will perform the following actions:
+
+  # aws_security_group.app must be replaced
+-/+ resource "aws_security_group" "app" {
+      ~ arn                    = "arn:aws:ec2:us-east-2:027488552956:security-group/sg-06781f7b1cd1c6ddf" -> (known after apply)
+      ~ id                     = "sg-06781f7b1cd1c6ddf" -> (known after apply)
+      ~ name                   = "payments-api-sg" -> "billing-service-sg" # forces replacement
+      + name_prefix            = (known after apply)
+      ~ owner_id               = "027488552956" -> (known after apply)
+      ~ tags                   = {
+            "Lab"     = "lab12"
+          ~ "Name"    = "payments-api-sg" -> "billing-service-sg"
+          ~ "Summary" = "payments-api uses 2 unique CIDR(s)" -> "billing-service uses 2 unique CIDR(s)"
+        }
+      ~ tags_all               = {
+          ~ "Name"    = "payments-api-sg" -> "billing-service-sg"
+          ~ "Summary" = "payments-api uses 2 unique CIDR(s)" -> "billing-service uses 2 unique CIDR(s)"
+            # (1 unchanged element hidden)
+        }
+        # (5 unchanged attributes hidden)
+    }
+
+  # aws_subnet.derived will be updated in-place
+  ~ resource "aws_subnet" "derived" {
+        id                                             = "subnet-003a9ca6d15ebc66b"
+      ~ tags                                           = {
+            "Lab"     = "lab12"
+          ~ "Name"    = "payments-api-derived" -> "billing-service-derived"
+          ~ "Summary" = "payments-api uses 2 unique CIDR(s)" -> "billing-service uses 2 unique CIDR(s)"
+        }
+      ~ tags_all                                       = {
+          ~ "Name"    = "payments-api-derived" -> "billing-service-derived"
+          ~ "Summary" = "payments-api uses 2 unique CIDR(s)" -> "billing-service uses 2 unique CIDR(s)"
+            # (1 unchanged element hidden)
+        }
+        # (19 unchanged attributes hidden)
+    }
+
+  # aws_vpc.main will be updated in-place
+  ~ resource "aws_vpc" "main" {
+        id                                   = "vpc-02fb7b6743ecd2656"
+      ~ tags                                 = {
+            "Lab"     = "lab12"
+          ~ "Name"    = "payments-api" -> "billing-service"
+          ~ "Summary" = "payments-api uses 2 unique CIDR(s)" -> "billing-service uses 2 unique CIDR(s)"
+        }
+      ~ tags_all                             = {
+          ~ "Name"    = "payments-api" -> "billing-service"
+          ~ "Summary" = "payments-api uses 2 unique CIDR(s)" -> "billing-service uses 2 unique CIDR(s)"
+            # (1 unchanged element hidden)
+        }
+        # (18 unchanged attributes hidden)
+    }
+
+Plan: 1 to add, 2 to change, 1 to destroy.
+
+Changes to Outputs:
+  ~ config_json                  = jsonencode(
+      ~ {
+          ~ name  = "payments-api" -> "billing-service"
+            # (1 unchanged attribute hidden)
+        }
+    )
+  ~ slug                         = "payments-api" -> "billing-service"
+  ~ summary                      = "payments-api uses 2 unique CIDR(s)" -> "billing-service uses 2 unique CIDR(s)"
+
+─────────────────────────────────────────────────────────────────────────────
+
+Note: You didn't use the -out option to save this plan, so Terraform can't
+guarantee to take exactly these actions if you run "terraform apply" now.
 ```
 
 `slug`, `summary` and `config_json` all change, and the security group is proposed for replacement
@@ -434,7 +813,62 @@ terraform destroy -auto-approve
 **Expected output**
 
 ```text
-PENDING CAPTURE — rerun after credentials are restored
+aws_vpc.main: Refreshing state... [id=vpc-02fb7b6743ecd2656]
+aws_subnet.derived: Refreshing state... [id=subnet-003a9ca6d15ebc66b]
+aws_security_group.app: Refreshing state... [id=sg-06781f7b1cd1c6ddf]
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  - destroy
+
+Terraform will perform the following actions:
+
+  # aws_security_group.app will be destroyed
+  - resource "aws_security_group" "app" {
+      - arn                    = "arn:aws:ec2:us-east-2:027488552956:security-group/sg-06781f7b1cd1c6ddf" -> null
+      - description            = "Lab 12: ingress ranges built by toset(), tolist() and sort()" -> null
+
+[... the full attribute listing for aws_security_group.app, aws_subnet.derived and aws_vpc.main is elided here ...]
+
+Plan: 0 to add, 0 to change, 3 to destroy.
+
+Changes to Outputs:
+  - cidr_count                   = 2 -> null
+  - config_json                  = jsonencode(
+        {
+          - cidrs = [
+              - "10.0.1.0/24",
+              - "10.0.2.0/24",
+            ]
+          - name  = "payments-api"
+        }
+    ) -> null
+  - derived_subnet               = {
+      - assigned_by_aws        = "10.20.12.0/24"
+      - computed_by_cidrsubnet = "10.20.12.0/24"
+      - subnet_id              = "subnet-003a9ca6d15ebc66b"
+    } -> null
+  - derived_subnet_gateway_host  = "10.20.12.1" -> null
+  - security_group_ingress_cidrs = [
+      - "10.0.1.0/24",
+      - "10.0.2.0/24",
+    ] -> null
+  - slug                         = "payments-api" -> null
+  - subnet_prefix                = "10.20.12.0/24" -> null
+  - summary                      = "payments-api uses 2 unique CIDR(s)" -> null
+  - unique_cidrs                 = [
+      - "10.0.1.0/24",
+      - "10.0.2.0/24",
+    ] -> null
+  - vpc_id                       = "vpc-02fb7b6743ecd2656" -> null
+aws_subnet.derived: Destroying... [id=subnet-003a9ca6d15ebc66b]
+aws_security_group.app: Destroying... [id=sg-06781f7b1cd1c6ddf]
+aws_subnet.derived: Destruction complete after 1s
+aws_security_group.app: Destruction complete after 1s
+aws_vpc.main: Destroying... [id=vpc-02fb7b6743ecd2656]
+aws_vpc.main: Destruction complete after 0s
+
+Destroy complete! Resources: 3 destroyed.
 ```
 
 `Destroy complete! Resources: 3 destroyed.`

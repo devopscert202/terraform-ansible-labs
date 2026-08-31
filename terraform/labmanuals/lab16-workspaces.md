@@ -163,7 +163,78 @@ terraform apply -auto-approve
 **Expected output**
 
 ```text
-PENDING CAPTURE — rerun after credentials are restored
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  + create
+
+Terraform will perform the following actions:
+
+  # aws_vpc.env will be created
+  + resource "aws_vpc" "env" {
+      + arn                                  = (known after apply)
+      + cidr_block                           = "10.16.0.0/16"
+      + default_network_acl_id               = (known after apply)
+      + default_route_table_id               = (known after apply)
+      + default_security_group_id            = (known after apply)
+      + dhcp_options_id                      = (known after apply)
+      + enable_dns_hostnames                 = (known after apply)
+      + enable_dns_support                   = true
+      + enable_network_address_usage_metrics = (known after apply)
+      + id                                   = (known after apply)
+      + instance_tenancy                     = "default"
+      + ipv6_association_id                  = (known after apply)
+      + ipv6_cidr_block                      = (known after apply)
+      + ipv6_cidr_block_network_border_group = (known after apply)
+      + main_route_table_id                  = (known after apply)
+      + owner_id                             = (known after apply)
+      + tags                                 = {
+          + "Environment" = "default"
+          + "Lab"         = "lab16"
+          + "Name"        = "lab16-default"
+        }
+      + tags_all                             = {
+          + "Environment" = "default"
+          + "Lab"         = "lab16"
+          + "Name"        = "lab16-default"
+        }
+    }
+
+  # terraform_data.workspace will be created
+  + resource "terraform_data" "workspace" {
+      + id     = (known after apply)
+      + input  = {
+          + environment = "default"
+          + managed_by  = "terraform"
+        }
+      + output = (known after apply)
+    }
+
+Plan: 2 to add, 0 to change, 0 to destroy.
+
+Changes to Outputs:
+  + labels    = (known after apply)
+  + vpc_cidr  = "10.16.0.0/16"
+  + vpc_id    = (known after apply)
+  + vpc_name  = "lab16-default"
+  + workspace = "default"
+terraform_data.workspace: Creating...
+terraform_data.workspace: Creation complete after 0s [id=5fa92df3-2cc6-f2b1-357e-cf32062d8a7e]
+aws_vpc.env: Creating...
+aws_vpc.env: Creation complete after 4s [id=vpc-0efb0b80941b4805e]
+
+Apply complete! Resources: 2 added, 0 changed, 0 destroyed.
+
+Outputs:
+
+labels = {
+  "environment" = "default"
+  "managed_by" = "terraform"
+}
+vpc_cidr = "10.16.0.0/16"
+vpc_id = "vpc-0efb0b80941b4805e"
+vpc_name = "lab16-default"
+workspace = "default"
 ```
 
 `Plan: 2 to add, 0 to change, 0 to destroy.` then `Apply complete! Resources: 2 added, 0 changed, 0
@@ -222,7 +293,78 @@ terraform apply -auto-approve
 **Expected output**
 
 ```text
-PENDING CAPTURE — rerun after credentials are restored
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  + create
+
+Terraform will perform the following actions:
+
+  # aws_vpc.env will be created
+  + resource "aws_vpc" "env" {
+      + arn                                  = (known after apply)
+      + cidr_block                           = "10.17.0.0/16"
+      + default_network_acl_id               = (known after apply)
+      + default_route_table_id               = (known after apply)
+      + default_security_group_id            = (known after apply)
+      + dhcp_options_id                      = (known after apply)
+      + enable_dns_hostnames                 = (known after apply)
+      + enable_dns_support                   = true
+      + enable_network_address_usage_metrics = (known after apply)
+      + id                                   = (known after apply)
+      + instance_tenancy                     = "default"
+      + ipv6_association_id                  = (known after apply)
+      + ipv6_cidr_block                      = (known after apply)
+      + ipv6_cidr_block_network_border_group = (known after apply)
+      + main_route_table_id                  = (known after apply)
+      + owner_id                             = (known after apply)
+      + tags                                 = {
+          + "Environment" = "dev"
+          + "Lab"         = "lab16"
+          + "Name"        = "lab16-dev"
+        }
+      + tags_all                             = {
+          + "Environment" = "dev"
+          + "Lab"         = "lab16"
+          + "Name"        = "lab16-dev"
+        }
+    }
+
+  # terraform_data.workspace will be created
+  + resource "terraform_data" "workspace" {
+      + id     = (known after apply)
+      + input  = {
+          + environment = "dev"
+          + managed_by  = "terraform"
+        }
+      + output = (known after apply)
+    }
+
+Plan: 2 to add, 0 to change, 0 to destroy.
+
+Changes to Outputs:
+  + labels    = (known after apply)
+  + vpc_cidr  = "10.17.0.0/16"
+  + vpc_id    = (known after apply)
+  + vpc_name  = "lab16-dev"
+  + workspace = "dev"
+terraform_data.workspace: Creating...
+terraform_data.workspace: Creation complete after 0s [id=a754b276-cc93-5b57-72d8-b539c196df1d]
+aws_vpc.env: Creating...
+aws_vpc.env: Creation complete after 4s [id=vpc-090e81535ff58fe9c]
+
+Apply complete! Resources: 2 added, 0 changed, 0 destroyed.
+
+Outputs:
+
+labels = {
+  "environment" = "dev"
+  "managed_by" = "terraform"
+}
+vpc_cidr = "10.17.0.0/16"
+vpc_id = "vpc-090e81535ff58fe9c"
+vpc_name = "lab16-dev"
+workspace = "dev"
 ```
 
 `Plan: 2 to add, 0 to change, 0 to destroy.` again, with `environment = "dev"`, `vpc_name` of
@@ -245,10 +387,16 @@ aws ec2 describe-vpcs --region us-east-2 \
 **Expected output**
 
 ```text
-PENDING CAPTURE — rerun after credentials are restored
+------------------------------------------------------------
+|                       DescribeVpcs                       |
++-----------------------+----------------+-----------------+
+|  vpc-090e81535ff58fe9c|  10.17.0.0/16  |  lab16-dev      |
+|  vpc-0efb0b80941b4805e|  10.16.0.0/16  |  lab16-default  |
++-----------------------+----------------+-----------------+
 ```
 
-Two rows: `lab16-default` at `10.16.0.0/16` and `lab16-dev` at `10.17.0.0/16`. One configuration
+Two rows — `lab16-dev` at `10.17.0.0/16` and `lab16-default` at `10.16.0.0/16`; AWS returns them in
+its own order, not the order you applied them. One configuration
 directory, one `main.tf`, two live networks. Neither state file mentions the other's VPC — run
 `terraform state list` in either workspace and you will see exactly one `aws_vpc.env`.
 
@@ -297,7 +445,15 @@ terraform output
 **Expected output**
 
 ```text
-PENDING CAPTURE — rerun after credentials are restored
+Switched to workspace "default".
+labels = {
+  "environment" = "default"
+  "managed_by" = "terraform"
+}
+vpc_cidr = "10.16.0.0/16"
+vpc_id = "vpc-0efb0b80941b4805e"
+vpc_name = "lab16-default"
+workspace = "default"
 ```
 
 `Switched to workspace "default".` then the `default` workspace's outputs: `environment = "default"`,
@@ -362,7 +518,7 @@ aws ec2 describe-vpcs --region us-east-2 \
 **Expected output**
 
 ```text
-PENDING CAPTURE — rerun after credentials are restored
+[]
 ```
 
 An empty list. If one VPC remains, you destroyed only one workspace — reread the two `select` lines
