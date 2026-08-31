@@ -33,3 +33,6 @@ _working/
 # OS
 .DS_Store
 Thumbs.db
+
+# Local working record of the Aug 2026 restructure; not repo documentation
+TERRAFORM-RESTRUCTURE-LOG.md
