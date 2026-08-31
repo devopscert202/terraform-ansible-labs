@@ -9,6 +9,25 @@
 
 ## Overview
 
+> **This lab requires a default VPC.** It is one of only two in the track that does — Lab 15 is
+> the other. The security group here declares no `vpc_id`, because the lesson is the `dynamic`
+> block and not the network, so AWS places the group in the region's *default* VPC. Many AWS
+> accounts, including freshly issued lab and sandbox accounts, ship without one. `terraform plan`
+> cannot detect this and passes cleanly; only the apply fails, with
+> `VPCIdNotSpecified: No default VPC for this user`. Check before you begin:
+>
+> ```bash
+> aws ec2 describe-vpcs --filters Name=isDefault,Values=true --query 'Vpcs[].VpcId' --output text
+> ```
+>
+> If that prints nothing, the account has none. Create one once, and it is reused by every later
+> run:
+>
+> ```bash
+> aws ec2 create-default-vpc
+> ```
+
+
 Sometimes a resource needs many copies of a *block inside it*. A **security group** is the clearest
 example: it is an AWS firewall, and each rule you want is a separate `ingress` block nested in the
 same `aws_security_group` resource. Two ports means two near-identical blocks, and adding a third

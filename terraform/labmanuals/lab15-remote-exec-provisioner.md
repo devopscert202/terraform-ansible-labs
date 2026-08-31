@@ -9,6 +9,25 @@
 
 ## Overview
 
+> **This lab requires a default VPC.** It is one of only two in the track that does — Lab 21 is
+> the other. Every other lab builds and names its own network. Here the instance is launched with
+> `aws ec2 run-instances` and no subnet is named, so AWS places it in the region's *default* VPC.
+> Many AWS accounts, including freshly issued lab and sandbox accounts, ship without one, and the
+> failure arrives late: the CLI call fails with
+> `VPCIdNotSpecified: No default VPC for this user`. Check before you begin:
+>
+> ```bash
+> aws ec2 describe-vpcs --filters Name=isDefault,Values=true --query 'Vpcs[].VpcId' --output text
+> ```
+>
+> If that prints nothing, the account has none. Create one once, and it is reused by every later
+> run:
+>
+> ```bash
+> aws ec2 create-default-vpc
+> ```
+
+
 `remote-exec` is the sibling of `local-exec` from lab 14. Instead of running a command on your
 own machine, it opens an **SSH** connection to a server and runs the command there. SSH (Secure
 Shell) is the standard encrypted remote-login protocol; it listens on TCP port 22.
